@@ -1,0 +1,214 @@
+import { useState } from "react";
+import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield } from "lucide-react";
+import { useUser } from "@/lib/store";
+import { getDuration, levelInfo, moneySaved, cigsAvoided, formatMoney } from "@/lib/calc";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+
+export const ProfileScreen = () => {
+  const { user, dispatch } = useUser();
+  const [editing, setEditing] = useState(false);
+  const [editGoal, setEditGoal] = useState(false);
+
+  if (!user) return null;
+  const d = getDuration(user.quitDate);
+  const lvl = levelInfo(user.xp);
+  const money = moneySaved(user);
+  const goalPct = user.dreamGoal.target > 0 ? Math.min(100, (money / user.dreamGoal.target) * 100) : 0;
+
+  const [cigs, setCigs] = useState(String(user.cigsPerDay));
+  const [price, setPrice] = useState(String(user.pricePerPack));
+  const [date, setDate] = useState(new Date(user.quitDate).toISOString().slice(0, 16));
+  const [goalName, setGoalName] = useState(user.dreamGoal.name);
+  const [goalAmt, setGoalAmt] = useState(String(user.dreamGoal.target));
+
+  const saveSettings = () => {
+    dispatch({
+      type: "UPDATE",
+      payload: {
+        cigsPerDay: Number(cigs) || 1,
+        pricePerPack: Number(price) || 1,
+        quitDate: new Date(date).getTime(),
+      },
+    });
+    setEditing(false);
+    toast.success("Saved.");
+  };
+
+  const saveGoal = () => {
+    dispatch({
+      type: "UPDATE",
+      payload: { dreamGoal: { name: goalName.trim() || "Dream", target: Number(goalAmt) || 100 } },
+    });
+    setEditGoal(false);
+    toast.success("Dream updated. 🎯");
+  };
+
+  return (
+    <div className="space-y-4 pt-2">
+      <h1 className="font-display text-3xl font-black">Profile</h1>
+
+      {/* User card */}
+      <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent font-display text-2xl font-black text-primary">
+            {user.name[0]?.toUpperCase()}
+          </div>
+          <div>
+            <p className="font-display text-2xl font-black">{user.name}</p>
+            <p className="text-xs text-white/70">Quit since {new Date(user.quitDate).toLocaleDateString()}</p>
+            <p className="mt-1 text-xs font-bold text-accent">{lvl.name} · {user.xp} XP</p>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div><p className="stat-number text-xl">{d.days}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Days</p></div>
+          <div><p className="stat-number text-xl">{formatMoney(money)}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Saved</p></div>
+          <div><p className="stat-number text-xl">{cigsAvoided(user)}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Avoided</p></div>
+        </div>
+      </section>
+
+      {/* Dream goal */}
+      <section className="smoxit-card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-accent" />
+            <p className="font-display font-black">Dream Goal</p>
+          </div>
+          <button onClick={() => setEditGoal((e) => !e)} className="text-xs font-bold text-accent">
+            {editGoal ? "Cancel" : "Edit"}
+          </button>
+        </div>
+        {!editGoal ? (
+          <>
+            <p className="mt-2 font-display text-lg font-black">{user.dreamGoal.name}</p>
+            <div className="mt-2 h-3 overflow-hidden rounded-full bg-secondary">
+              <div className="h-full bg-gradient-accent" style={{ width: `${goalPct}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {formatMoney(money)} of {formatMoney(user.dreamGoal.target)} — {goalPct.toFixed(0)}% there 🎯
+            </p>
+          </>
+        ) : (
+          <div className="mt-3 space-y-2">
+            <Input value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="Goal name" />
+            <Input type="number" value={goalAmt} onChange={(e) => setGoalAmt(e.target.value)} placeholder="€ target" />
+            <Button onClick={saveGoal} className="w-full bg-accent font-bold text-primary hover:bg-accent-glow">Save Goal</Button>
+          </div>
+        )}
+      </section>
+
+      {/* Settings */}
+      <section className="smoxit-card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Pencil className="h-5 w-5 text-accent" />
+            <p className="font-display font-black">Settings</p>
+          </div>
+          <button onClick={() => setEditing((e) => !e)} className="text-xs font-bold text-accent">
+            {editing ? "Cancel" : "Edit"}
+          </button>
+        </div>
+
+        {editing ? (
+          <div className="mt-3 space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Cigarettes per day</Label>
+              <Input type="number" value={cigs} onChange={(e) => setCigs(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Price per pack (€)</Label>
+              <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Quit date</Label>
+              <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <Button onClick={saveSettings} className="w-full bg-accent font-bold text-primary hover:bg-accent-glow">Save</Button>
+          </div>
+        ) : (
+          <div className="mt-3 space-y-2 text-sm">
+            <Row label="Cigarettes/day" value={String(user.cigsPerDay)} />
+            <Row label="Price/pack" value={`€${user.pricePerPack}`} />
+            <Row label="Years smoking" value={String(user.yearsSmoking)} />
+          </div>
+        )}
+
+        <div className="mt-4 space-y-3 border-t border-border pt-3">
+          <Toggle icon={Bell} label="Daily motivation" />
+          <Toggle icon={Bell} label="Milestone alerts" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Moon className="h-4 w-4 text-muted-foreground" /> Dark mode
+            </div>
+            <Switch
+              checked={user.darkMode}
+              onCheckedChange={(v) => dispatch({ type: "UPDATE", payload: { darkMode: v } })}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Emergency support */}
+      <section className="smoxit-card">
+        <p className="font-display font-black">Need to talk to someone?</p>
+        <p className="mt-1 text-xs text-muted-foreground">Free, confidential support. You're not alone.</p>
+        <Button
+          asChild
+          variant="outline"
+          className="mt-3 w-full"
+        >
+          <a
+            href="https://www.google.com/search?q=stop+smoking+services+near+me"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Find quit support near you <ExternalLink className="ml-1 h-4 w-4" />
+          </a>
+        </Button>
+      </section>
+
+      {/* Reset */}
+      <section className="smoxit-card">
+        <Button
+          variant="ghost"
+          className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => {
+            if (confirm("Reset all your data? This can't be undone.")) {
+              dispatch({ type: "RESET" });
+            }
+          }}
+        >
+          <RotateCcw className="mr-2 h-4 w-4" /> Reset App Data
+        </Button>
+      </section>
+
+      {/* Footer */}
+      <footer className="flex items-center justify-center gap-1.5 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        <Shield className="h-3 w-3 text-accent" />
+        Science-backed · 100% Private · Real Support
+      </footer>
+    </div>
+  );
+};
+
+const Row = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex justify-between">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="font-bold">{value}</span>
+  </div>
+);
+
+const Toggle = ({ icon: Icon, label }: { icon: any; label: string }) => {
+  const [on, setOn] = useState(true);
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <Icon className="h-4 w-4 text-muted-foreground" /> {label}
+      </div>
+      <Switch checked={on} onCheckedChange={setOn} />
+    </div>
+  );
+};
