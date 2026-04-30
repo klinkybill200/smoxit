@@ -77,7 +77,7 @@ export const ToolsScreen = () => {
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <p className="font-display text-lg font-black leading-tight">CHAT<br />COACH</p>
-          <p className="mt-1 text-[11px] text-white/70">Rede mit dem Bot</p>
+          <p className="mt-1 text-[11px] text-white/70">Talk to an expert.</p>
         </button>
       </div>
 
