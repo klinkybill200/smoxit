@@ -1,0 +1,177 @@
+import { useEffect, useRef, useState } from "react";
+import { X, Send, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+interface Msg {
+  role: "user" | "assistant";
+  content: string;
+}
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/coach-chat`;
+
+const STARTER: Msg = {
+  role: "assistant",
+  content: "Hey, ich bin dein SMOXIT Coach. 💪 Was geht gerade? Craving, Stress oder einfach quatschen?",
+};
+
+interface Props {
+  onClose: () => void;
+  whyQuit?: string;
+}
+
+export const CoachChat = ({ onClose, whyQuit }: Props) => {
+  const [messages, setMessages] = useState<Msg[]>([STARTER]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    const userMsg: Msg = { role: "user", content: text };
+    const next = [...messages, userMsg];
+    setMessages(next);
+    setLoading(true);
+
+    // Inject "why quit" context into first user turn
+    const payload = whyQuit
+      ? [{ role: "system" as const, content: `User's reason to quit: "${whyQuit}"` }, ...next]
+      : next;
+
+    let acc = "";
+    const upsert = (chunk: string) => {
+      acc += chunk;
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last !== STARTER && prev.indexOf(last) > next.length - 1) {
+          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: acc } : m));
+        }
+        return [...prev, { role: "assistant", content: acc }];
+      });
+    };
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: payload }),
+      });
+      if (resp.status === 429) { toast.error("Zu viele Anfragen – kurz warten."); setLoading(false); return; }
+      if (resp.status === 402) { toast.error("Guthaben aufgebraucht. Bitte Credits aufladen."); setLoading(false); return; }
+      if (!resp.ok || !resp.body) throw new Error("stream failed");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let done = false;
+      while (!done) {
+        const { done: d, value } = await reader.read();
+        if (d) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf("\n")) !== -1) {
+          let line = buf.slice(0, idx);
+          buf = buf.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") { done = true; break; }
+          try {
+            const p = JSON.parse(json);
+            const c = p.choices?.[0]?.delta?.content;
+            if (c) upsert(c);
+          } catch {
+            buf = line + "\n" + buf;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Coach gerade nicht erreichbar.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/60 backdrop-blur-sm sm:items-center">
+      <div className="animate-slide-up flex h-[85vh] w-full max-w-[430px] flex-col rounded-t-3xl bg-card shadow-elevated sm:h-[600px] sm:rounded-3xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-accent">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="font-display font-black leading-tight">SMOXIT Coach</p>
+              <p className="text-[10px] text-muted-foreground">Always here, always cheering 💙</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-full bg-secondary p-2" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm ${
+                  m.role === "user"
+                    ? "rounded-br-sm bg-accent text-accent-foreground"
+                    : "rounded-bl-sm bg-secondary text-foreground"
+                }`}
+              >
+                {m.content || "…"}
+              </div>
+            </div>
+          ))}
+          {loading && messages[messages.length - 1]?.role === "user" && (
+            <div className="flex justify-start">
+              <div className="rounded-2xl rounded-bl-sm bg-secondary px-4 py-2 text-sm">
+                <span className="inline-flex gap-1">
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent" style={{ animationDelay: "0.15s" }} />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent" style={{ animationDelay: "0.3s" }} />
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-border p-3">
+          <div className="flex items-end gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder="Schreib deinem Coach…"
+              rows={1}
+              className="flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            />
+            <Button onClick={send} disabled={loading || !input.trim()} size="icon" className="h-10 w-10 shrink-0 rounded-full bg-accent text-primary hover:bg-accent/90">
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
