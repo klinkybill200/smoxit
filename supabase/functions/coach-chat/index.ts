@@ -14,7 +14,7 @@ Validate the user's struggle, then redirect to a concrete action: breathing, wat
 If the user mentions cravings, suggest the in-app Breathing tool or 5-min wave timer.
 If they mention slipping, never shame — reframe and refocus on the next win.
 Never recommend nicotine products or medical advice; suggest a doctor for medical questions.
-Reply in the same language as the user.`;
+Always reply in English, regardless of the language the user writes in.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
