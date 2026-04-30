@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Flame, Wind, Gamepad2, Headphones, Lightbulb, ChevronRight, X, Play, Pause, CheckCircle2 } from "lucide-react";
+import { Flame, Wind, Gamepad2, Headphones, Lightbulb, ChevronRight, X, Play, Pause, CheckCircle2, MessageCircle, Sparkles } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Confetti } from "@/components/Confetti";
+import { CoachChat } from "@/components/CoachChat";
 import { toast } from "sonner";
 import type { Trigger } from "@/lib/types";
 
-type Tool = "menu" | "breathing" | "game" | "audio" | "tips";
+type Tool = "menu" | "breathing" | "game" | "audio" | "tips" | "coach";
 
 const triggers: { id: Trigger; label: string; emoji: string }[] = [
   { id: "stress", label: "Stress", emoji: "😰" },
