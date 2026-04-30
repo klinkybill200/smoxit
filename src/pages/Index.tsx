@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Settings } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { AuthScreen } from "@/components/AuthScreen";
@@ -11,6 +12,7 @@ import { ToolsScreen } from "@/screens/ToolsScreen";
 import { HealthScreen } from "@/screens/HealthScreen";
 import { CommunityScreen } from "@/screens/CommunityScreen";
 import { ProfileScreen } from "@/screens/ProfileScreen";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const { session, loading: authLoading } = useAuth();
@@ -31,7 +33,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col">
+        {/* Settings gear top right */}
+        <button
+          onClick={() => setTab("profile")}
+          aria-label="Settings"
+          className={cn(
+            "absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 text-muted-foreground shadow-sm backdrop-blur-md transition-smooth hover:text-accent hover:scale-105",
+            tab === "profile" && "text-accent ring-2 ring-accent/40",
+          )}
+        >
+          <Settings className="h-5 w-5" strokeWidth={2.25} />
+        </button>
+
         <main key={tab} className="animate-fade-in flex-1 px-4 pb-6">
           {tab === "home" && <HomeScreen />}
           {tab === "progress" && <ProgressScreen />}

@@ -1,4 +1,4 @@
-import { Home, BarChart3, AlertTriangle, HeartPulse, Users, User } from "lucide-react";
+import { Home, BarChart3, AlertTriangle, HeartPulse, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type Tab = "home" | "progress" | "tools" | "health" | "community" | "profile";
@@ -10,7 +10,6 @@ const leftTabs: { id: Tab; label: string; icon: typeof Home }[] = [
 const rightTabs: { id: Tab; label: string; icon: typeof Home }[] = [
   { id: "health", label: "Health", icon: HeartPulse },
   { id: "community", label: "Community", icon: Users },
-  { id: "profile", label: "Profile", icon: User },
 ];
 
 interface Props {
