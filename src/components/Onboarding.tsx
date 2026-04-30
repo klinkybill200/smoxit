@@ -20,7 +20,7 @@ export const Onboarding = () => {
   const { dispatch } = useUser();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [quitDate, setQuitDate] = useState(() => new Date().toISOString().slice(0, 16));
+  const [quitDate, setQuitDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [cigsPerDay, setCigsPerDay] = useState("15");
   const [pricePerPack, setPricePerPack] = useState("8");
   const [yearsSmoking, setYearsSmoking] = useState("5");
@@ -88,15 +88,15 @@ export const Onboarding = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="qd" className="text-white/80">Quit date & time</Label>
+                <Label htmlFor="qd" className="text-white/80">Quit date</Label>
                 <Input
                   id="qd"
-                  type="datetime-local"
+                  type="date"
                   value={quitDate}
                   onChange={(e) => setQuitDate(e.target.value)}
-                  className="h-12 border-white/20 bg-white/5 text-white"
+                  className="h-12 border-white/20 bg-white/5 text-white [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
-                <p className="text-xs text-white/50">Can be now, or anytime in the past 30 days.</p>
+                <p className="text-xs text-white/50">Can be today, or anytime in the past 30 days.</p>
               </div>
             </div>
           )}
