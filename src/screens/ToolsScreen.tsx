@@ -135,8 +135,8 @@ const ToolCard = ({ icon: Icon, label, desc, onClick }: any) => (
 );
 
 const ModalShell = ({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) => (
-  <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/60 backdrop-blur-sm sm:items-center">
-    <div className="animate-slide-up w-full max-w-[430px] rounded-t-3xl bg-card p-5 shadow-elevated sm:rounded-3xl">
+  <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/60 px-3 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:pt-6">
+    <div className="animate-slide-up w-full max-w-[430px] rounded-3xl bg-card p-5 shadow-elevated">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-xl font-black">{title}</h2>
         <button onClick={onClose} className="rounded-full bg-secondary p-2" aria-label="Close">
