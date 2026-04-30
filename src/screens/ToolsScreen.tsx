@@ -63,21 +63,25 @@ export const ToolsScreen = () => {
           onClick={() => setShowCravingFlow(true)}
           className="relative overflow-hidden rounded-3xl bg-destructive p-5 text-left text-destructive-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
         >
-          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
-          <Flame className="mb-2 h-7 w-7" strokeWidth={2.5} />
-          <p className="font-display text-lg font-black leading-tight">I HAVE<br />CRAVINGS. NOW.</p>
-          <p className="mt-1 text-[11px] text-white/80">Tap. Breathe. Win.</p>
+          <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
+          <div className="relative">
+            <Flame className="mb-2 h-7 w-7 text-white" strokeWidth={2.5} />
+            <p className="font-display text-lg font-black leading-tight">I HAVE<br />CRAVINGS. NOW.</p>
+            <p className="mt-1 text-[11px] text-white/80">Tap. Breathe. Win.</p>
+          </div>
         </button>
         <button
           onClick={() => setActive("coach")}
           className="relative overflow-hidden rounded-3xl bg-primary p-5 text-left text-primary-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
         >
-          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent/20" />
-          <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent/20" />
+          <div className="relative">
+            <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <p className="font-display text-lg font-black leading-tight">CHAT<br />COACH</p>
+            <p className="mt-1 text-[11px] text-white/70">Talk to an expert.</p>
           </div>
-          <p className="font-display text-lg font-black leading-tight">CHAT<br />COACH</p>
-          <p className="mt-1 text-[11px] text-white/70">Talk to an expert.</p>
         </button>
       </div>
 
