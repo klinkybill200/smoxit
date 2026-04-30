@@ -1,6 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, ReactNode } from "react";
 import type { UserData, CravingEntry, MoodEntry, BreathHold } from "./types";
 import { todayKey } from "./calc";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./auth";
 
 const STORAGE_KEY = "smoxit:user";
 
@@ -52,33 +54,72 @@ const reducer = (state: UserData | null, action: Action): UserData | null => {
 
 interface Ctx {
   user: UserData | null;
+  loading: boolean;
   dispatch: React.Dispatch<Action>;
 }
 
 const UserContext = createContext<Ctx | null>(null);
 
-const loadInitial = (): UserData | null => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as UserData;
-  } catch {
-    return null;
-  }
-};
-
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, dispatch] = useReducer(reducer, null, loadInitial);
+  const { session, user: authUser, loading: authLoading } = useAuth();
+  const [user, dispatch] = useReducer(reducer, null);
+  const loadingRef = useRef(true);
+  const hydratedForUserId = useRef<string | null>(null);
 
+  // Hydrate from Cloud whenever auth user changes
   useEffect(() => {
-    if (user) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(user)); } catch {}
-      // dark mode toggle
-      document.documentElement.classList.toggle("dark", !!user.darkMode);
-    } else {
+    if (authLoading) return;
+    if (!authUser) {
+      // logged out
+      dispatch({ type: "RESET" });
+      hydratedForUserId.current = null;
+      loadingRef.current = false;
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      return;
     }
-  }, [user]);
+    if (hydratedForUserId.current === authUser.id) return;
+
+    loadingRef.current = true;
+    hydratedForUserId.current = authUser.id;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("user_data")
+        .select("data")
+        .eq("user_id", authUser.id)
+        .maybeSingle();
+
+      if (!error && data?.data) {
+        dispatch({ type: "INIT_USER", payload: data.data as UserData });
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data.data)); } catch {}
+      } else {
+        // No cloud data → fresh user, will be created via Onboarding
+        dispatch({ type: "RESET" });
+      }
+      loadingRef.current = false;
+    })();
+  }, [authUser, authLoading]);
+
+  // Persist to localStorage AND cloud (debounced)
+  const saveTimer = useRef<number | null>(null);
+  useEffect(() => {
+    if (!user || !authUser) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(user)); } catch {}
+    document.documentElement.classList.toggle("dark", !!user.darkMode);
+
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(async () => {
+      await supabase.from("user_data").upsert(
+        { user_id: authUser.id, data: user as any },
+        { onConflict: "user_id" }
+      );
+      // Mark onboarding complete on profile
+      await supabase
+        .from("profiles")
+        .update({ onboarding_completed: true })
+        .eq("user_id", authUser.id);
+    }, 600);
+  }, [user, authUser]);
 
   // Refresh challenge date daily
   useEffect(() => {
@@ -89,7 +130,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
-  const value = useMemo(() => ({ user, dispatch }), [user]);
+  const value = useMemo(
+    () => ({ user, loading: authLoading || loadingRef.current, dispatch }),
+    [user, authLoading]
+  );
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
