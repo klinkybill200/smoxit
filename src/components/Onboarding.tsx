@@ -211,9 +211,9 @@ export const Onboarding = () => {
           {step === 4 && (
             <Button
               onClick={finish}
-              className="h-14 w-full bg-accent text-base font-bold text-primary shadow-button hover:bg-accent-glow"
+              className="ml-auto h-14 flex-1 bg-accent px-3 text-sm font-bold text-primary shadow-button hover:bg-accent-glow"
             >
-              START YOUR QUIT JOURNEY <ArrowRight className="ml-2 h-5 w-5" />
+              START JOURNEY <ArrowRight className="ml-1 h-5 w-5 shrink-0" />
             </Button>
           )}
         </div>
