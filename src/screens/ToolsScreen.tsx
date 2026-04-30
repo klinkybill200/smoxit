@@ -213,14 +213,13 @@ const BreathingModal = ({ onClose }: { onClose: () => void }) => {
   const [phase, setPhase] = useState<"Inhale" | "Hold" | "Exhale">("Inhale");
   const [cycle, setCycle] = useState(0);
   useEffect(() => {
-    const seq: typeof phase[] = ["Inhale", "Hold", "Exhale"];
-    let idx = 0;
-    const tick = () => {
-      idx = (idx + 1) % 3;
-      setPhase(seq[idx]);
-      if (idx === 0) setCycle((c) => c + 1);
-    };
-    const i = setInterval(tick, 4000);
+    // 8s cycle synced with the CSS animation: 0-3s Inhale, 3-5s Hold, 5-8s Exhale
+    const start = Date.now();
+    const i = setInterval(() => {
+      const t = ((Date.now() - start) / 1000) % 8;
+      setPhase(t < 3 ? "Inhale" : t < 5 ? "Hold" : "Exhale");
+      setCycle(Math.floor((Date.now() - start) / 8000));
+    }, 200);
     return () => clearInterval(i);
   }, []);
 
@@ -228,19 +227,8 @@ const BreathingModal = ({ onClose }: { onClose: () => void }) => {
     <ModalShell onClose={onClose} title="Breathe with Me">
       <div className="flex flex-col items-center py-6">
         <div className="relative flex h-56 w-56 items-center justify-center">
-          <div
-            className="absolute inset-0 rounded-full bg-gradient-accent transition-transform duration-[4000ms] ease-in-out"
-            style={{
-              transform: phase === "Inhale" ? "scale(1)" : phase === "Hold" ? "scale(1)" : "scale(0.6)",
-              opacity: 0.3,
-            }}
-          />
-          <div
-            className="absolute h-32 w-32 rounded-full bg-accent shadow-button transition-transform duration-[4000ms] ease-in-out"
-            style={{
-              transform: phase === "Inhale" ? "scale(1.4)" : phase === "Hold" ? "scale(1.4)" : "scale(0.7)",
-            }}
-          />
+          <div className="animate-breathe-flow-soft absolute inset-0 rounded-full bg-gradient-accent" />
+          <div className="animate-breathe-flow absolute h-32 w-32 rounded-full bg-accent shadow-button" />
           <p className="relative font-display text-2xl font-black text-primary">{phase}</p>
         </div>
         <p className="mt-6 text-sm text-muted-foreground">Cycle {Math.min(cycle + 1, 4)} of 4</p>
