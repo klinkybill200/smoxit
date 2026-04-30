@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth";
 import { UserProvider } from "@/lib/store";
 import Index from "./pages/Index.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
+import Demo from "./pages/Demo.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { InstallPrompt } from "./components/InstallPrompt";
 
@@ -22,6 +23,7 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/demo" element={<Demo />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
