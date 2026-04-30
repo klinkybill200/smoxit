@@ -37,7 +37,7 @@ export const AuthScreen = () => {
     <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col">
       <div className="mx-auto w-full max-w-[430px] flex-1 flex flex-col px-6 py-12">
         <div className="flex flex-col items-center mb-12 mt-8">
-          <SmoxitLogo size={120} variant="light" />
+          <SmoxitLogo size={64} variant="light" />
           <p className="mt-4 text-primary-foreground/70 text-center text-lg font-semibold">
             Quit Today. Win Forever.
           </p>
