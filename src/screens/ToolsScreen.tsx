@@ -65,7 +65,7 @@ export const ToolsScreen = () => {
         >
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
           <Flame className="mb-2 h-7 w-7" strokeWidth={2.5} />
-          <p className="font-display text-lg font-black leading-tight">CRAVING<br />JETZT</p>
+          <p className="font-display text-lg font-black leading-tight">I HAVE<br />CRAVINGS. NOW.</p>
           <p className="mt-1 text-[11px] text-white/80">Tap. Breathe. Win.</p>
         </button>
         <button
