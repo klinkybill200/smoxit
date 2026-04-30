@@ -57,16 +57,29 @@ export const ToolsScreen = () => {
       <h1 className="font-display text-3xl font-black">Tools</h1>
       <p className="text-sm text-muted-foreground">You're stronger than this craving.</p>
 
-      {/* Big craving button */}
-      <button
-        onClick={() => setShowCravingFlow(true)}
-        className="relative w-full overflow-hidden rounded-3xl bg-destructive p-7 text-left text-destructive-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
-      >
-        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
-        <Flame className="mb-3 h-9 w-9" strokeWidth={2.5} />
-        <p className="font-display text-2xl font-black leading-tight">I HAVE A CRAVING<br />RIGHT NOW</p>
-        <p className="mt-1 text-sm text-white/80">Tap. Breathe. Win.</p>
-      </button>
+      {/* Emergency action row: Craving + Coach Chat */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => setShowCravingFlow(true)}
+          className="relative overflow-hidden rounded-3xl bg-destructive p-5 text-left text-destructive-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
+        >
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
+          <Flame className="mb-2 h-7 w-7" strokeWidth={2.5} />
+          <p className="font-display text-lg font-black leading-tight">CRAVING<br />JETZT</p>
+          <p className="mt-1 text-[11px] text-white/80">Tap. Breathe. Win.</p>
+        </button>
+        <button
+          onClick={() => setActive("coach")}
+          className="relative overflow-hidden rounded-3xl bg-primary p-5 text-left text-primary-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
+        >
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent/20" />
+          <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
+          <p className="font-display text-lg font-black leading-tight">CHAT<br />COACH</p>
+          <p className="mt-1 text-[11px] text-white/70">Rede mit dem Bot</p>
+        </button>
+      </div>
 
       {/* Quick tools */}
       <div className="grid grid-cols-2 gap-3">
