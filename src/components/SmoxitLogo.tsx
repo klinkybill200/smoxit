@@ -18,7 +18,7 @@ export const SmoxitLogo = ({ className = "", size = 32, hideText = false, varian
         )}
         <path
           d="M11 11 L20 20 L11 29 M29 11 L20 20 L29 29"
-          stroke={isLight ? "#FFFFFF" : "hsl(var(--accent))"}
+          stroke="hsl(var(--accent))"
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
