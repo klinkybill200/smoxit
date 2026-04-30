@@ -39,8 +39,8 @@ const Index = () => {
           onClick={() => setTab("profile")}
           aria-label="Settings"
           className={cn(
-            "absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 text-muted-foreground shadow-sm backdrop-blur-md transition-smooth hover:text-accent hover:scale-105",
-            tab === "profile" && "text-accent ring-2 ring-accent/40",
+            "absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-primary-foreground/80 backdrop-blur-md transition-smooth hover:text-primary-foreground hover:bg-white/15 hover:scale-105",
+            tab === "profile" && "text-accent ring-2 ring-accent/40 bg-white/15",
           )}
         >
           <Settings className="h-5 w-5" strokeWidth={2.25} />
