@@ -48,12 +48,11 @@ export const BottomNav = ({ active, onChange }: Props) => (
           onClick={() => onChange("tools")}
           aria-label="Notfall – Tools"
           className={cn(
-            "-mt-7 flex h-16 w-16 items-center justify-center rounded-full border-4 border-card bg-destructive text-destructive-foreground shadow-elevated transition-bounce hover:scale-110 active:scale-95",
+            "animate-sos-breathe -mt-7 flex h-16 w-16 items-center justify-center rounded-full border-4 border-card bg-destructive text-destructive-foreground transition-bounce hover:scale-110 active:scale-95",
             active === "tools" && "ring-4 ring-destructive/30",
           )}
         >
-          <span className="absolute -inset-1 animate-ping rounded-full bg-destructive/40" />
-          <AlertTriangle className="relative h-7 w-7" strokeWidth={2.75} />
+          <AlertTriangle className="animate-sos-icon-breathe h-7 w-7" strokeWidth={2.75} />
         </button>
       </div>
 
