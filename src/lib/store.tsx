@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, ReactNode } from "react";
 import type { UserData, CravingEntry, MoodEntry, BreathHold } from "./types";
 import { todayKey } from "./calc";
 import { supabase } from "@/integrations/supabase/client";
