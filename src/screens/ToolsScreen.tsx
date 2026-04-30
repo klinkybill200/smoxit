@@ -117,6 +117,7 @@ export const ToolsScreen = () => {
       {active === "game" && <GameModal onClose={() => setActive("menu")} />}
       {active === "audio" && <AudioModal onClose={() => setActive("menu")} />}
       {active === "tips" && <TipsModal onClose={() => setActive("menu")} />}
+      {active === "coach" && <CoachChat onClose={() => setActive("menu")} whyQuit={user.whyQuit} />}
     </div>
   );
 };
