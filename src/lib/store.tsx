@@ -90,7 +90,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (!error && data?.data) {
-        dispatch({ type: "INIT_USER", payload: data.data as UserData });
+        dispatch({ type: "INIT_USER", payload: data.data as unknown as UserData });
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data.data)); } catch {}
       } else {
         // No cloud data → fresh user, will be created via Onboarding
