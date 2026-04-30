@@ -12,7 +12,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/coach-chat`;
 
 const STARTER: Msg = {
   role: "assistant",
-  content: "Hey, ich bin dein SMOXIT Coach. 💪 Was geht gerade? Craving, Stress oder einfach quatschen?",
+  content: "Hey, I'm your SMOXIT Coach. 💪 What's up? Craving, stress, or just want to talk?",
 };
 
 interface Props {
@@ -65,8 +65,8 @@ export const CoachChat = ({ onClose, whyQuit }: Props) => {
         },
         body: JSON.stringify({ messages: payload }),
       });
-      if (resp.status === 429) { toast.error("Zu viele Anfragen – kurz warten."); setLoading(false); return; }
-      if (resp.status === 402) { toast.error("Guthaben aufgebraucht. Bitte Credits aufladen."); setLoading(false); return; }
+      if (resp.status === 429) { toast.error("Too many requests – please wait a moment."); setLoading(false); return; }
+      if (resp.status === 402) { toast.error("Credits exhausted. Please top up."); setLoading(false); return; }
       if (!resp.ok || !resp.body) throw new Error("stream failed");
 
       const reader = resp.body.getReader();
@@ -97,15 +97,15 @@ export const CoachChat = ({ onClose, whyQuit }: Props) => {
       }
     } catch (e) {
       console.error(e);
-      toast.error("Coach gerade nicht erreichbar.");
+      toast.error("Coach is not reachable right now.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/60 backdrop-blur-sm sm:items-center">
-      <div className="animate-slide-up flex h-[85vh] w-full max-w-[430px] flex-col rounded-t-3xl bg-card shadow-elevated sm:h-[600px] sm:rounded-3xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 px-3 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] backdrop-blur-sm">
+      <div className="animate-slide-up flex max-h-full w-full max-w-[430px] flex-col overflow-hidden rounded-3xl bg-card shadow-elevated" style={{ height: "min(600px, 100%)" }}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export const CoachChat = ({ onClose, whyQuit }: Props) => {
                   send();
                 }
               }}
-              placeholder="Schreib deinem Coach…"
+              placeholder="Message your coach…"
               rows={1}
               className="flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
