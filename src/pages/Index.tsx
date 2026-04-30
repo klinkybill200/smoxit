@@ -20,7 +20,7 @@ const Index = () => {
   if (authLoading || (session && userLoading)) {
     return (
       <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col items-center justify-center">
-        <SmoxitLogo size={64} />
+        <SmoxitLogo size={64} variant="light" />
         <p className="mt-6 text-primary-foreground/70 animate-pulse">Loading...</p>
       </div>
     );

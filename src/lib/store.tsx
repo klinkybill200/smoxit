@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, ReactNode } from "react";
 import type { UserData, CravingEntry, MoodEntry, BreathHold } from "./types";
 import { todayKey } from "./calc";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,7 +63,7 @@ const UserContext = createContext<Ctx | null>(null);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { session, user: authUser, loading: authLoading } = useAuth();
   const [user, dispatch] = useReducer(reducer, null);
-  const loadingRef = useRef(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const hydratedForUserId = useRef<string | null>(null);
 
   // Hydrate from Cloud whenever auth user changes
@@ -73,13 +73,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // logged out
       dispatch({ type: "RESET" });
       hydratedForUserId.current = null;
-      loadingRef.current = false;
+      setDataLoading(false);
       try { localStorage.removeItem(STORAGE_KEY); } catch {}
       return;
     }
     if (hydratedForUserId.current === authUser.id) return;
 
-    loadingRef.current = true;
+    setDataLoading(true);
     hydratedForUserId.current = authUser.id;
 
     (async () => {
@@ -96,7 +96,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         // No cloud data → fresh user, will be created via Onboarding
         dispatch({ type: "RESET" });
       }
-      loadingRef.current = false;
+      setDataLoading(false);
     })();
   }, [authUser, authLoading]);
 
@@ -131,8 +131,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const value = useMemo(
-    () => ({ user, loading: authLoading || loadingRef.current, dispatch }),
-    [user, authLoading]
+    () => ({ user, loading: authLoading || dataLoading, dispatch }),
+    [user, authLoading, dataLoading]
   );
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
