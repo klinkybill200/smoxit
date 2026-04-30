@@ -8,6 +8,7 @@ import { UserProvider } from "@/lib/store";
 import Index from "./pages/Index.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { InstallPrompt } from "./components/InstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <InstallPrompt />
           </UserProvider>
         </AuthProvider>
       </BrowserRouter>
