@@ -1,65 +1,76 @@
 import { useState } from "react";
-import { Mail, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Random password — user never sees or needs it (we use magic links for return logins)
-const generatePassword = () =>
-  crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "").slice(0, 8) + "Aa1!";
+type Step = "email" | "code";
 
 export const AuthScreen = () => {
+  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sendCode = async (targetEmail: string) => {
+    // No emailRedirectTo → Supabase sends a 6-digit code instead of a magic link.
+    const { error } = await supabase.auth.signInWithOtp({
+      email: targetEmail,
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw error;
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = email.trim().toLowerCase();
     if (!normalized) return;
     setLoading(true);
     try {
-      // 1. Check if user already exists
-      const { data: check, error: checkErr } = await supabase.functions.invoke(
-        "check-user-exists",
-        { body: { email: normalized } },
-      );
-      if (checkErr) throw checkErr;
+      await sendCode(normalized);
+      setEmail(normalized);
+      setStep("code");
+      toast.success("Code sent! Check your inbox.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong. Try again.";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (check?.exists) {
-        // Returning user → send magic link
-        const { error } = await supabase.auth.signInWithOtp({
-          email: normalized,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-            shouldCreateUser: false,
-          },
-        });
-        if (error) throw error;
-        setSentTo(normalized);
-        toast.success("Welcome back! Magic link sent.");
-      } else {
-        // New user → sign up with random password & log in immediately
-        const password = generatePassword();
-        const { error: signUpErr } = await supabase.auth.signUp({
-          email: normalized,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-        });
-        if (signUpErr) throw signUpErr;
-        // Auto-confirm is enabled, so we can sign in immediately
-        const { error: signInErr } = await supabase.auth.signInWithPassword({
-          email: normalized,
-          password,
-        });
-        if (signInErr) throw signInErr;
-        toast.success("Let's get you set up!");
-        // AuthProvider listener will pick up the session and Index will switch to Onboarding
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong. Try again.");
+  const handleVerify = async (value: string) => {
+    if (value.length !== 6) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: value,
+        type: "email",
+      });
+      if (error) throw error;
+      toast.success("You're in! 🎉");
+      // AuthProvider will pick up the session and route accordingly.
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Invalid or expired code.";
+      toast.error(msg);
+      setCode("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    try {
+      await sendCode(email);
+      toast.success("New code sent.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Couldn't resend code.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -75,12 +86,12 @@ export const AuthScreen = () => {
           </p>
         </div>
 
-        {!sentTo ? (
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+        {step === "email" ? (
+          <form onSubmit={handleEmailSubmit} className="flex-1 flex flex-col">
             <div className="space-y-2 mb-6">
               <h2 className="text-2xl font-bold">Welcome 👋</h2>
               <p className="text-primary-foreground/70 text-sm">
-                Enter your email — new users start right away, returning users get a magic link.
+                Enter your email — we'll send you a 6-digit code to sign in.
               </p>
             </div>
 
@@ -103,7 +114,7 @@ export const AuthScreen = () => {
                 disabled={loading || !email.trim()}
                 className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90"
               >
-                {loading ? "Just a sec..." : "Continue"}
+                {loading ? "Sending code..." : "Send code"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -113,22 +124,64 @@ export const AuthScreen = () => {
             </p>
           </form>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <div className="rounded-full bg-accent/20 p-6 mb-6">
-              <CheckCircle2 className="h-12 w-12 text-accent" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Check your inbox!</h2>
-            <p className="text-primary-foreground/70 mb-8 max-w-xs">
-              We sent a magic link to <strong className="text-primary-foreground">{sentTo}</strong>.
-              Click it to sign in.
-            </p>
-            <Button
-              variant="ghost"
-              onClick={() => { setSentTo(null); setEmail(""); }}
-              className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10"
+          <div className="flex-1 flex flex-col">
+            <button
+              type="button"
+              onClick={() => { setStep("email"); setCode(""); }}
+              className="self-start flex items-center gap-1 text-sm text-primary-foreground/70 hover:text-primary-foreground mb-6"
             >
-              Use a different email
-            </Button>
+              <ArrowLeft className="h-4 w-4" /> Back
+            </button>
+
+            <div className="rounded-full bg-accent/20 p-4 mb-6 self-center">
+              <CheckCircle2 className="h-10 w-10 text-accent" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-center mb-2">Enter your code</h2>
+            <p className="text-primary-foreground/70 text-sm text-center mb-8">
+              We sent a 6-digit code to{" "}
+              <strong className="text-primary-foreground">{email}</strong>
+            </p>
+
+            <div className="flex justify-center mb-6">
+              <InputOTP
+                maxLength={6}
+                value={code}
+                onChange={(v) => {
+                  setCode(v);
+                  if (v.length === 6) handleVerify(v);
+                }}
+                disabled={loading}
+                autoFocus
+              >
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className="h-12 w-10 text-lg bg-white/10 border-white/20 text-primary-foreground"
+                    />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            {loading && (
+              <p className="text-center text-primary-foreground/70 text-sm animate-pulse">
+                Verifying...
+              </p>
+            )}
+
+            <div className="mt-auto pt-8 text-center">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={loading}
+                className="text-sm text-primary-foreground/70 hover:text-primary-foreground underline-offset-4 hover:underline disabled:opacity-50"
+              >
+                Didn't get it? Resend code
+              </button>
+            </div>
           </div>
         )}
       </div>
