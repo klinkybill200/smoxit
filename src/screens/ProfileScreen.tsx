@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield } from "lucide-react";
+import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { useUser } from "@/lib/store";
 import { getDuration, levelInfo, moneySaved, cigsAvoided, formatMoney } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 
 export const ProfileScreen = () => {
   const { user, dispatch } = useUser();
+  const { user: authUser, signOut } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editGoal, setEditGoal] = useState(false);
 
@@ -170,8 +172,23 @@ export const ProfileScreen = () => {
         </Button>
       </section>
 
-      {/* Reset */}
-      <section className="smoxit-card">
+      {/* Account */}
+      <section className="smoxit-card space-y-3">
+        {authUser?.email && (
+          <p className="text-xs text-muted-foreground text-center">
+            Signed in as <span className="font-bold text-foreground">{authUser.email}</span>
+          </p>
+        )}
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={async () => {
+            await signOut();
+            toast.success("Signed out");
+          }}
+        >
+          <LogOut className="mr-2 h-4 w-4" /> Sign Out
+        </Button>
         <Button
           variant="ghost"
           className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
