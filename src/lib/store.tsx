@@ -58,7 +58,7 @@ interface Ctx {
   dispatch: React.Dispatch<Action>;
 }
 
-const UserContext = createContext<Ctx | null>(null);
+export const UserContext = createContext<Ctx | null>(null);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { session, user: authUser, loading: authLoading } = useAuth();
