@@ -1,7 +1,9 @@
 project_id = "lbtkcmrpdosvsyvtogkn"
 
-[functions.coach-chat]
-verify_jwt = false
-
-[functions.check-user-exists]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.check-user-exists]
+    verify_jwt = false
+  [functions.coach-chat]
+    verify_jwt = false
