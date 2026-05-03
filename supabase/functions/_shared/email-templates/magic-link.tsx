@@ -73,7 +73,7 @@ const codeBox = {
 const codeText = {
   fontSize: '36px',
   fontWeight: 'bold' as const,
-  letterSpacing: '8px',
+  letterSpacing: '6px',
   color: 'hsl(215, 60%, 10%)',
   margin: '0',
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
