@@ -32,7 +32,7 @@ export const AuthScreen = () => {
       setEmail(normalized);
       setSent(true);
       setCode("");
-      toast.success("We sent a 6-digit code to your inbox.");
+      toast.success("We sent an 8-digit code to your inbox.");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong. Try again.";
       toast.error(msg);
@@ -62,7 +62,7 @@ export const AuthScreen = () => {
 
   const onCodeChange = (value: string) => {
     setCode(value);
-    if (value.length === 6 && !verifying) {
+    if (value.length === 8 && !verifying) {
       void handleVerify(value);
     }
   };
@@ -130,12 +130,12 @@ export const AuthScreen = () => {
               </div>
               <h2 className="text-2xl font-bold mb-2">Check your inbox</h2>
               <p className="text-primary-foreground/70 text-sm mb-8 max-w-xs">
-                We sent a 6-digit code to{" "}
+                We sent an 8-digit code to{" "}
                 <strong className="text-primary-foreground">{email}</strong>.
               </p>
 
               <InputOTP
-                maxLength={6}
+                maxLength={8}
                 value={code}
                 onChange={onCodeChange}
                 disabled={verifying}
@@ -143,7 +143,7 @@ export const AuthScreen = () => {
                 containerClassName="justify-center"
               >
                 <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                  {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <InputOTPSlot
                       key={i}
                       index={i}
