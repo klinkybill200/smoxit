@@ -130,12 +130,12 @@ export const AuthScreen = () => {
               </div>
               <h2 className="text-2xl font-bold mb-2">Check your inbox</h2>
               <p className="text-primary-foreground/70 text-sm mb-8 max-w-xs">
-                We sent a 6-digit code to{" "}
+                We sent an 8-digit code to{" "}
                 <strong className="text-primary-foreground">{email}</strong>.
               </p>
 
               <InputOTP
-                maxLength={6}
+                maxLength={8}
                 value={code}
                 onChange={onCodeChange}
                 disabled={verifying}
@@ -143,7 +143,7 @@ export const AuthScreen = () => {
                 containerClassName="justify-center"
               >
                 <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                  {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <InputOTPSlot
                       key={i}
                       index={i}
