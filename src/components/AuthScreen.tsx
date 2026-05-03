@@ -62,7 +62,7 @@ export const AuthScreen = () => {
 
   const onCodeChange = (value: string) => {
     setCode(value);
-    if (value.length === 6 && !verifying) {
+    if (value.length === 8 && !verifying) {
       void handleVerify(value);
     }
   };
