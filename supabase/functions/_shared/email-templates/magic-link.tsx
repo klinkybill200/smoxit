@@ -29,7 +29,7 @@ export const MagicLinkEmail = ({
       <Container style={container}>
         <Heading style={h1}>Your login code</Heading>
         <Text style={text}>
-          Enter this 6-digit code in the {siteName} app to sign in. The code
+          Enter this code in the {siteName} app to sign in. The code
           expires in 10 minutes.
         </Text>
         <Section style={codeBox}>
