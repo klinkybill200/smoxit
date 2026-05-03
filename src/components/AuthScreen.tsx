@@ -32,7 +32,7 @@ export const AuthScreen = () => {
       setEmail(normalized);
       setSent(true);
       setCode("");
-      toast.success("We sent a 6-digit code to your inbox.");
+      toast.success("We sent an 8-digit code to your inbox.");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong. Try again.";
       toast.error(msg);
