@@ -77,7 +77,7 @@ export const AuthScreen = () => {
     <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col">
       {refCode && (
         <div className="bg-[hsl(142,72%,29%)] px-4 py-2.5 text-center text-sm font-bold text-white">
-          🎉 You've been invited! Your first month includes a $5 discount.
+          🎉 You've been invited! Enjoy your 3-day free trial.
         </div>
       )}
       <div className="mx-auto w-full max-w-[430px] flex-1 flex flex-col px-6 py-12">

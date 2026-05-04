@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { useUser, createDefaultUser } from "@/lib/store";
+import { useCurrency } from "@/lib/currency";
 
 const motivationOptions = [
   { id: "health", label: "Health", icon: Heart },
@@ -18,6 +19,7 @@ const motivationOptions = [
 
 export const Onboarding = () => {
   const { dispatch } = useUser();
+  const currency = useCurrency();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [quitDate, setQuitDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -113,7 +115,7 @@ export const Onboarding = () => {
                 <Input type="number" inputMode="numeric" value={cigsPerDay} onChange={(e) => setCigsPerDay(e.target.value)} className="h-12 border-white/20 bg-white/5 text-white" />
               </div>
               <div className="space-y-2">
-                <Label className="text-white/80">Price per pack (€)</Label>
+                <Label className="text-white/80">Price per pack ({currency.symbol})</Label>
                 <Input type="number" inputMode="decimal" value={pricePerPack} onChange={(e) => setPricePerPack(e.target.value)} className="h-12 border-white/20 bg-white/5 text-white" />
               </div>
               <div className="space-y-2">
