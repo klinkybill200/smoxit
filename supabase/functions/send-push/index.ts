@@ -1,0 +1,144 @@
+// deno-lint-ignore-file no-explicit-any
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import webpush from "https://esm.sh/web-push@3.6.7";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version",
+};
+
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:support@smoxit.app";
+
+webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+);
+
+interface PushPayload {
+  title: string;
+  body: string;
+  url?: string;
+  tag?: string;
+  icon?: string;
+}
+
+const POOL = {
+  daily_morning: [
+    { title: "Day starts now 💪", body: "Open SMOXIT and grab your daily XP." },
+    { title: "Good morning, fighter", body: "Log your mood and keep the streak alive." },
+    { title: "Today's challenge awaits", body: "Tap to claim your daily mission." },
+    { title: "Your future-self says hi 👋", body: "5 sec to log your check-in." },
+  ],
+  daily_evening: [
+    { title: "Don't break the streak 🔥", body: "Quick mood check before bed?" },
+    { title: "One more habit win", body: "Log your day and earn XP." },
+    { title: "End the day strong", body: "Tap for tonight's reflection." },
+  ],
+  craving_window: [
+    { title: "Craving incoming?", body: "Open the breathing tool. 60 sec, you've got this." },
+    { title: "Beat the urge", body: "Tap for a 4-4-4 reset." },
+  ],
+};
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent: number; cleaned: number }> {
+  const { data: subs, error } = await supabase
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("user_id", userId);
+
+  if (error || !subs || subs.length === 0) return { sent: 0, cleaned: 0 };
+
+  let sent = 0;
+  let cleaned = 0;
+  for (const s of subs) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        JSON.stringify(payload),
+      );
+      sent++;
+    } catch (e: any) {
+      const code = e?.statusCode;
+      if (code === 404 || code === 410) {
+        await supabase.from("push_subscriptions").delete().eq("id", s.id);
+        cleaned++;
+      } else {
+        console.error("push error", code, e?.body || e?.message);
+      }
+    }
+  }
+  return { sent, cleaned };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const url = new URL(req.url);
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const mode: string = body.mode || url.searchParams.get("mode") || "test";
+
+    // Direct test send to a specific user
+    if (mode === "test") {
+      const userId: string | undefined = body.user_id;
+      if (!userId) return new Response(JSON.stringify({ error: "user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const result = await sendToUser(userId, {
+        title: body.title || "SMOXIT test",
+        body: body.body || "Push works! 🚀",
+        url: body.url || "/",
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Cron: daily morning push to opted-in users (rate-limited per profile.last_push_sent_at)
+    if (mode === "daily_morning" || mode === "daily_evening") {
+      const pool = POOL[mode];
+      const cutoff = new Date(Date.now() - 6 * 3600 * 1000).toISOString(); // min 6h between pushes
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, last_push_sent_at")
+        .eq("push_opt_in", true)
+        .or(`last_push_sent_at.is.null,last_push_sent_at.lt.${cutoff}`)
+        .limit(500);
+
+      let total = 0;
+      for (const p of profiles ?? []) {
+        const msg = pick(pool);
+        const r = await sendToUser(p.user_id, { ...msg, url: "/" });
+        if (r.sent > 0) {
+          total += r.sent;
+          await supabase.from("profiles").update({ last_push_sent_at: new Date().toISOString() }).eq("user_id", p.user_id);
+        }
+      }
+      return new Response(JSON.stringify({ ok: true, mode, recipients: profiles?.length ?? 0, sent: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Milestone push: { mode: "milestone", user_id, title, body }
+    if (mode === "milestone") {
+      const userId: string | undefined = body.user_id;
+      if (!userId) return new Response(JSON.stringify({ error: "user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const r = await sendToUser(userId, {
+        title: body.title || "Milestone unlocked! 🏆",
+        body: body.body || "Open SMOXIT to celebrate.",
+        url: "/",
+        tag: "milestone",
+      });
+      return new Response(JSON.stringify({ ok: true, ...r }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ error: "unknown mode" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  } catch (e: any) {
+    console.error(e);
+    return new Response(JSON.stringify({ error: e?.message || "error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+});
