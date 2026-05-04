@@ -6,6 +6,7 @@ import { Confetti } from "@/components/Confetti";
 import { CoachChat } from "@/components/CoachChat";
 import { toast } from "sonner";
 import type { Trigger } from "@/lib/types";
+import { awardXp, type XpEventType } from "@/lib/xp";
 
 type Tool = "menu" | "breathing" | "game" | "audio" | "tips" | "coach";
 
@@ -42,6 +43,7 @@ export const ToolsScreen = () => {
     });
     if (resisted) {
       dispatch({ type: "ADD_XP", payload: 25 });
+      void awardXp("craving_resisted", { extra: crypto.randomUUID(), silent: true });
       setConfetti((c) => c + 1);
       toast.success("+25 XP — You crushed that craving! 💪");
     } else {
@@ -49,6 +51,14 @@ export const ToolsScreen = () => {
     }
     setShowCravingFlow(false);
     setActive("menu");
+  };
+
+  const openTool = async (tool: Tool, xpKey: XpEventType | null) => {
+    setActive(tool);
+    if (xpKey) {
+      const granted = await awardXp(xpKey, { silent: true });
+      if (granted > 0) dispatch({ type: "ADD_XP", payload: granted });
+    }
   };
 
   return (
