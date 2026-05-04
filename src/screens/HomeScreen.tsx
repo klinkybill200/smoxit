@@ -19,6 +19,15 @@ export const HomeScreen = () => {
     return () => clearInterval(i);
   }, []);
 
+  // Daily login XP — once per day
+  useEffect(() => {
+    (async () => {
+      const granted = await awardXp("daily_login", { silent: true });
+      if (granted > 0) dispatch({ type: "ADD_XP", payload: granted });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!user) return null;
   const d = getDuration(user.quitDate);
   const money = moneySaved(user);
@@ -38,8 +47,12 @@ export const HomeScreen = () => {
   })();
 
   const setMood = (mood: 1 | 2 | 3 | 4 | 5) => {
+    const wasNew = !todayMood;
     dispatch({ type: "ADD_MOOD", payload: { date: today, mood } });
-    if (!todayMood) dispatch({ type: "ADD_XP", payload: 10 });
+    if (wasNew) {
+      dispatch({ type: "ADD_XP", payload: 10 });
+      void awardXp("mood_checkin", { silent: true });
+    }
   };
 
   return (
