@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Mail, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Mail, ArrowRight, ArrowLeft, CheckCircle2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/input-otp";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { supabase } from "@/integrations/supabase/client";
+import { captureReferralFromUrl } from "@/lib/subscription";
 import { toast } from "sonner";
 
 export const AuthScreen = () => {
@@ -17,6 +18,11 @@ export const AuthScreen = () => {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [sent, setSent] = useState(false);
+  const [refCode, setRefCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRefCode(captureReferralFromUrl());
+  }, []);
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
