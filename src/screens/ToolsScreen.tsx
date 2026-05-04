@@ -7,6 +7,7 @@ import { CoachChat } from "@/components/CoachChat";
 import { toast } from "sonner";
 import type { Trigger } from "@/lib/types";
 import { awardXp, type XpEventType } from "@/lib/xp";
+import { todayKey } from "@/lib/calc";
 
 type Tool = "menu" | "breathing" | "game" | "audio" | "tips" | "coach";
 
