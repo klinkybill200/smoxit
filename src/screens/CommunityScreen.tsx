@@ -3,6 +3,7 @@ import { Heart, UserPlus, Send, Quote } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ReferralCard } from "@/components/ReferralCard";
 import { toast } from "sonner";
 import type { CommunityPost } from "@/lib/types";
 
@@ -63,6 +64,9 @@ export const CommunityScreen = () => {
           <UserPlus className="mr-2 h-4 w-4" /> Invite a Buddy
         </Button>
       </section>
+
+      {/* Referral card */}
+      <ReferralCard />
 
       {/* Composer */}
       <section className="smoxit-card">

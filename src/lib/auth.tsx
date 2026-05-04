@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { applyPendingReferral } from "./subscription";
 
 interface AuthCtx {
   session: Session | null;
@@ -17,9 +18,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // 1. Set up listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       setLoading(false);
+      if (sess?.user && event === "SIGNED_IN") {
+        setTimeout(() => { void applyPendingReferral(sess.user.id); }, 0);
+      }
     });
     // 2. Then check existing session
     supabase.auth.getSession().then(({ data }) => {

@@ -107,6 +107,13 @@ export type Database = {
           email: string | null
           id: string
           onboarding_completed: boolean
+          referral_code: string | null
+          referral_credits: number
+          referred_by: string | null
+          stripe_customer_id: string | null
+          subscription_current_period_end: string | null
+          subscription_status: string
+          trial_start: string
           updated_at: string
           user_id: string
         }
@@ -115,6 +122,13 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          referral_code?: string | null
+          referral_credits?: number
+          referred_by?: string | null
+          stripe_customer_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_status?: string
+          trial_start?: string
           updated_at?: string
           user_id: string
         }
@@ -123,8 +137,45 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          referral_code?: string | null
+          referral_credits?: number
+          referred_by?: string | null
+          stripe_customer_id?: string | null
+          subscription_current_period_end?: string | null
+          subscription_status?: string
+          trial_start?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_user_id: string
+          referrer_user_id: string
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_user_id: string
+          referrer_user_id: string
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_user_id?: string
+          referrer_user_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -189,6 +240,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_referral_code: { Args: never; Returns: string }
       move_to_dlq: {
         Args: {
           dlq_name: string
