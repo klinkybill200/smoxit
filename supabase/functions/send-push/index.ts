@@ -110,10 +110,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, ...result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Cron: daily morning push to opted-in users (rate-limited per profile.last_push_sent_at)
-    if (mode === "daily_morning" || mode === "daily_evening") {
-      const pool = POOL[mode];
-      const cutoff = new Date(Date.now() - 6 * 3600 * 1000).toISOString(); // min 6h between pushes
+    // Cron: bulk push modes (rate-limited per profile.last_push_sent_at)
+    if (
+      mode === "daily_morning" ||
+      mode === "daily_evening" ||
+      mode === "daily_mood" ||
+      mode === "weekly_lung"
+    ) {
+      const pool = POOL[mode as keyof typeof POOL];
+      // Weekly pushes need a longer rate-limit window so they don't get suppressed by daily ones
+      const minHours = mode === "weekly_lung" ? 20 : 6;
+      const cutoff = new Date(Date.now() - minHours * 3600 * 1000).toISOString();
 
       const { data: profiles } = await supabase
         .from("profiles")
