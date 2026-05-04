@@ -47,6 +47,31 @@ export const ProgressScreen = () => {
 
   useEffect(() => { setPushPerm(getPushPermission()); }, []);
 
+  // Local milestone-push trigger: when a new badge unlocks, fire a self-push
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const seen = new Set<string>(JSON.parse(localStorage.getItem("smoxit:badges-seen") || "[]"));
+      const ctxNow = { days: getDuration(user.quitDate).days, cigsAvoided: cigsAvoided(user), xp: user.xp };
+      const fresh = badges.filter((b) => b.unlock(ctxNow) && !seen.has(b.id));
+      if (fresh.length === 0) return;
+      fresh.forEach((b) => seen.add(b.id));
+      localStorage.setItem("smoxit:badges-seen", JSON.stringify(Array.from(seen)));
+      // Only push if user opted in
+      if (getPushPermission() !== "granted") return;
+      import("@/integrations/supabase/client").then(async ({ supabase }) => {
+        const { data } = await supabase.auth.getUser();
+        const uid = data.user?.id;
+        if (!uid) return;
+        const b = fresh[0];
+        await supabase.functions.invoke("send-push", {
+          body: { mode: "milestone", user_id: uid, title: `🏆 ${b.label} unlocked!`, body: b.desc },
+        });
+      });
+    } catch {}
+  }, [user?.xp, user?.quitDate, user?.cravings.length]);
+
+
   if (!user) return null;
   const d = getDuration(user.quitDate);
   const lvl = levelInfo(user.xp);
