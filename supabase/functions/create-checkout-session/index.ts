@@ -60,9 +60,9 @@ Deno.serve(async (req) => {
       cancel_url: `${origin}/?checkout=cancel`,
       allow_promotion_codes: true,
       subscription_data: {
-        metadata: { user_id: user.id, referred_by: profile?.referred_by ?? "" },
+        metadata: { user_id: user.id, referred_by: profile?.referred_by ?? "", currency },
       },
-      metadata: { user_id: user.id, referred_by: profile?.referred_by ?? "" },
+      metadata: { user_id: user.id, referred_by: profile?.referred_by ?? "", currency },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

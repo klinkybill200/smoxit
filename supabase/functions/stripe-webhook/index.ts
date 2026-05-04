@@ -114,7 +114,7 @@ async function handleInvoicePaid(event: Stripe.Event) {
   // Find referrer by referral_code
   const { data: referrer } = await supaAdmin
     .from("profiles")
-    .select("user_id, stripe_customer_id, referral_credits, email")
+    .select("user_id, stripe_customer_id, referral_credits, email, preferred_currency")
     .eq("referral_code", referredProfile.referred_by)
     .maybeSingle();
   if (!referrer || referrer.user_id === referredProfile.user_id) return;
@@ -143,13 +143,18 @@ async function handleInvoicePaid(event: Stripe.Event) {
     });
   }
 
-  // Apply $5 credit to referrer's Stripe customer balance
+  // Apply referral credit in the referrer's currency
+  // Stripe Customer Balance is single-currency per customer; we credit
+  // 5 EUR for EUR users, 5 USD for USD users.
+  const referrerCurrency: "eur" | "usd" =
+    referrer.preferred_currency === "eur" ? "eur" : "usd";
+
   if (referrer.stripe_customer_id) {
     try {
       // Negative balance = credit owed to customer (reduces next invoice)
       await stripe.customers.createBalanceTransaction(referrer.stripe_customer_id, {
-        amount: -500, // -$5.00 in cents
-        currency: "usd",
+        amount: -500, // -5.00 in minor units
+        currency: referrerCurrency,
         description: `Referral credit — invited ${referredProfile.user_id}`,
       });
     } catch (e) {
