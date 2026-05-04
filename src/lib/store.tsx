@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, ReactNode } from "react";
-import type { UserData, CravingEntry, MoodEntry, BreathHold } from "./types";
+import type { UserData, CravingEntry, MoodEntry, BreathHold, DailyLog } from "./types";
 import { todayKey } from "./calc";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
@@ -13,6 +13,7 @@ type Action =
   | { type: "ADD_MOOD"; payload: MoodEntry }
   | { type: "ADD_BREATH"; payload: BreathHold }
   | { type: "TOGGLE_CHALLENGE"; payload: string }
+  | { type: "UPSERT_DAILY_LOG"; payload: DailyLog }
   | { type: "ADD_XP"; payload: number }
   | { type: "RESET" };
 
@@ -42,6 +43,14 @@ const reducer = (state: UserData | null, action: Action): UserData | null => {
           : [...state.completedChallenges, id],
         xp: has ? Math.max(0, state.xp - 15) : state.xp + 15,
       };
+    }
+    case "UPSERT_DAILY_LOG": {
+      if (!state) return state;
+      const existing = state.dailyLogs ?? [];
+      const prev = existing.find((l) => l.date === action.payload.date);
+      const merged = { ...(prev ?? { date: action.payload.date }), ...action.payload };
+      const next = [...existing.filter((l) => l.date !== action.payload.date), merged];
+      return { ...state, dailyLogs: next };
     }
     case "ADD_XP":
       return state ? { ...state, xp: state.xp + action.payload } : state;
@@ -156,6 +165,7 @@ export const createDefaultUser = (partial: Partial<UserData>): UserData => ({
   cravings: [],
   moods: [],
   breathHolds: [],
+  dailyLogs: [],
   completedChallenges: [],
   challengeDate: todayKey(),
   xp: 0,

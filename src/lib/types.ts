@@ -23,6 +23,13 @@ export interface BreathHold {
   seconds: number;
 }
 
+export interface DailyLog {
+  date: string;       // YYYY-MM-DD
+  hydration?: number; // glasses (0..12)
+  sleep?: number;     // hours (0..14)
+  energy?: 1 | 2 | 3 | 4 | 5;
+}
+
 export interface CommunityPost {
   id: string;
   text: string;
@@ -44,6 +51,7 @@ export interface UserData {
   cravings: CravingEntry[];
   moods: MoodEntry[];
   breathHolds: BreathHold[];
+  dailyLogs?: DailyLog[];
   completedChallenges: string[]; // dateKey-challengeId
   challengeDate: string;
   xp: number;

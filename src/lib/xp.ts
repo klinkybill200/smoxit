@@ -14,6 +14,11 @@ export type XpEventType =
   | "craving_resisted"      // 25 XP, free (already wired in ToolsScreen)
   | "breath_session"        // 8 XP, daily
   | "daily_login"           // 5 XP, daily
+  // Health tracking
+  | "lung_capacity_logged"  // 10 XP, daily
+  | "hydration_logged"      // 5 XP, daily
+  | "sleep_logged"          // 5 XP, daily
+  | "energy_logged"         // 5 XP, daily
   // Engagement actions
   | "coach_chat_message"    // 3 XP, free (cap server-side later)
   | "tool_breathing_used"   // 5 XP, daily
@@ -33,6 +38,10 @@ export const XP_DEFS: Record<XpEventType, XpDef> = {
   craving_resisted:    { amount: 25, dedupe: "free",  label: "Craving crushed" },
   breath_session:      { amount: 8,  dedupe: "daily", label: "Breath session" },
   daily_login:         { amount: 5,  dedupe: "daily", label: "Daily check-in" },
+  lung_capacity_logged:{ amount: 10, dedupe: "daily", label: "Lung capacity logged" },
+  hydration_logged:    { amount: 5,  dedupe: "daily", label: "Hydration logged" },
+  sleep_logged:        { amount: 5,  dedupe: "daily", label: "Sleep logged" },
+  energy_logged:       { amount: 5,  dedupe: "daily", label: "Energy logged" },
   coach_chat_message:  { amount: 3,  dedupe: "free",  label: "Coach message" },
   tool_breathing_used: { amount: 5,  dedupe: "daily", label: "Breathing tool" },
   tool_game_used:      { amount: 5,  dedupe: "daily", label: "Distraction game" },
