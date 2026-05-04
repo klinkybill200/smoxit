@@ -111,6 +111,8 @@ Deno.serve(async (req) => {
     }
 
     // Cron: bulk push modes (rate-limited per profile.last_push_sent_at)
+    // Triggered hourly by cron. We fan out only to users whose LOCAL time
+    // (profiles.push_timezone) matches the desired hour/weekday for that mode.
     if (
       mode === "daily_morning" ||
       mode === "daily_evening" ||
@@ -118,19 +120,56 @@ Deno.serve(async (req) => {
       mode === "weekly_lung"
     ) {
       const pool = POOL[mode as keyof typeof POOL];
+
+      // Local-time targeting per mode
+      const TARGET: Record<string, { hour: number; weekday?: number }> = {
+        // weekday: 0=Sun .. 6=Sat (matches Date#getDay equivalent below)
+        daily_morning: { hour: 8 },
+        daily_evening: { hour: 20 },
+        daily_mood: { hour: 17 },
+        weekly_lung: { hour: 16, weekday: 0 },
+      };
+      const target = TARGET[mode];
+
       // Weekly pushes need a longer rate-limit window so they don't get suppressed by daily ones
       const minHours = mode === "weekly_lung" ? 20 : 6;
       const cutoff = new Date(Date.now() - minHours * 3600 * 1000).toISOString();
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, last_push_sent_at")
+        .select("user_id, last_push_sent_at, push_timezone")
         .eq("push_opt_in", true)
         .or(`last_push_sent_at.is.null,last_push_sent_at.lt.${cutoff}`)
-        .limit(500);
+        .limit(2000);
+
+      const now = new Date();
+      const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+      function localMatches(tz: string | null): boolean {
+        const zone = tz || "UTC";
+        try {
+          const fmt = new Intl.DateTimeFormat("en-US", {
+            timeZone: zone,
+            hour: "numeric",
+            hour12: false,
+            weekday: "short",
+          });
+          const parts = fmt.formatToParts(now);
+          const hourStr = parts.find((p) => p.type === "hour")?.value ?? "";
+          const wdStr = parts.find((p) => p.type === "weekday")?.value ?? "";
+          const hour = parseInt(hourStr, 10) % 24;
+          if (hour !== target.hour) return false;
+          if (target.weekday !== undefined && WD[target.weekday] !== wdStr) return false;
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      const eligible = (profiles ?? []).filter((p) => localMatches(p.push_timezone));
 
       let total = 0;
-      for (const p of profiles ?? []) {
+      for (const p of eligible) {
         const msg = pick(pool);
         const r = await sendToUser(p.user_id, { ...msg, url: "/" });
         if (r.sent > 0) {
@@ -138,7 +177,7 @@ Deno.serve(async (req) => {
           await supabase.from("profiles").update({ last_push_sent_at: new Date().toISOString() }).eq("user_id", p.user_id);
         }
       }
-      return new Response(JSON.stringify({ ok: true, mode, recipients: profiles?.length ?? 0, sent: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ ok: true, mode, candidates: profiles?.length ?? 0, eligible: eligible.length, sent: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Milestone push: { mode: "milestone", user_id, title, body }
