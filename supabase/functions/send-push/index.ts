@@ -43,6 +43,17 @@ const POOL = {
     { title: "Craving incoming?", body: "Open the breathing tool. 60 sec, you've got this." },
     { title: "Beat the urge", body: "Tap for a 4-4-4 reset." },
   ],
+  daily_mood: [
+    { title: "How do you feel today? 💚", body: "Log your mood in 5 seconds and earn XP." },
+    { title: "Mood check-in", body: "One tap. Track your progress." },
+    { title: "Quick reflection", body: "Rate today's mood and keep your streak alive." },
+    { title: "Your mind matters 🧠", body: "Take 5 sec for today's mood log." },
+  ],
+  weekly_lung: [
+    { title: "Lung capacity check 🫁", body: "Time for your weekly breath-hold test!" },
+    { title: "How strong are your lungs?", body: "Log this week's breath hold and watch the curve grow." },
+    { title: "Weekly lung test 💨", body: "30 seconds: hold your breath, track the win." },
+  ],
 };
 
 function pick<T>(arr: T[]): T {
