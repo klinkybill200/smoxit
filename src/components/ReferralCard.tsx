@@ -14,7 +14,7 @@ export const ReferralCard = () => {
   const link = `https://my.smoxit.app/?ref=${sub.referralCode}`;
   const days = user ? getDuration(user.quitDate).days : 0;
   const saved = user ? moneySaved(user) : 0;
-  const message = `I've been smoke-free for ${days} days with SMOXIT and saved ${formatMoney(saved)} 🚭 Join me and we both get $5 off: ${link}`;
+  const message = `I've been smoke-free for ${days} days with SMOXIT and saved ${formatMoney(saved)} 🚭 Try it free for 3 days: ${link}`;
 
   const copy = async () => {
     try {
