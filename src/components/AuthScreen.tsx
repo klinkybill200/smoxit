@@ -75,6 +75,11 @@ export const AuthScreen = () => {
 
   return (
     <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col">
+      {refCode && (
+        <div className="bg-[hsl(142,72%,29%)] px-4 py-2.5 text-center text-sm font-bold text-white">
+          🎉 You've been invited! Your first month includes a $5 discount.
+        </div>
+      )}
       <div className="mx-auto w-full max-w-[430px] flex-1 flex flex-col px-6 py-12">
         <div className="flex flex-col items-center mb-12 mt-8">
           <SmoxitLogo size={64} variant="light" />
@@ -88,7 +93,7 @@ export const AuthScreen = () => {
             <div className="space-y-2 mb-6">
               <h2 className="text-2xl font-bold">Welcome 👋</h2>
               <p className="text-primary-foreground/70 text-sm">
-                Enter your email — we'll send you a 6-digit code to sign in.
+                Enter your email — we'll send you an 8-digit code to sign in.
               </p>
             </div>
 
@@ -115,6 +120,16 @@ export const AuthScreen = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
+
+            <p className="mt-4 text-xs text-center text-primary-foreground/70">
+              Start your free 3-day trial — no credit card required
+            </p>
+
+            {refCode && (
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-accent">
+                <Gift className="h-3.5 w-3.5" /> Referral code applied: <strong>{refCode}</strong>
+              </p>
+            )}
 
             <p className="mt-auto pt-8 text-xs text-center text-primary-foreground/50">
               No password needed.
