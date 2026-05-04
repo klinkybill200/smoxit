@@ -65,6 +65,9 @@ export const CommunityScreen = () => {
         </Button>
       </section>
 
+      {/* Referral card */}
+      <ReferralCard />
+
       {/* Composer */}
       <section className="smoxit-card">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Share Your Win</p>
