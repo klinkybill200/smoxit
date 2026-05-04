@@ -11,7 +11,8 @@ Deno.serve(async (req) => {
 
   try {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2024-11-20.acacia" });
-    const priceId = Deno.env.get("STRIPE_PRICE_ID")!;
+    const priceUsd = Deno.env.get("STRIPE_PRICE_ID")!; // existing = USD
+    const priceEur = Deno.env.get("STRIPE_PRICE_ID_EUR") ?? priceUsd;
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return new Response(JSON.stringify({ error: "no auth" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -27,9 +28,12 @@ Deno.serve(async (req) => {
     const supaAdmin = createClient(supabaseUrl, serviceKey);
     const { data: profile } = await supaAdmin
       .from("profiles")
-      .select("stripe_customer_id, referred_by, referral_code")
+      .select("stripe_customer_id, referred_by, referral_code, preferred_currency")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    const currency: "eur" | "usd" = profile?.preferred_currency === "eur" ? "eur" : "usd";
+    const priceId = currency === "eur" ? priceEur : priceUsd;
 
     // Find or create Stripe customer
     let customerId = profile?.stripe_customer_id ?? null;
