@@ -3,6 +3,7 @@ import { Trophy, Lock, Check, Share2, Zap, Star } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useUser } from "@/lib/store";
 import { getDuration, levelInfo, todayKey, moneySaved, cigsAvoided } from "@/lib/calc";
+import { useCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Confetti } from "@/components/Confetti";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ const dailyChallenges = [
 
 export const ProgressScreen = () => {
   const { user, dispatch } = useUser();
+  const currency = useCurrency();
   const [confetti, setConfetti] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
 
@@ -81,7 +83,7 @@ export const ProgressScreen = () => {
   };
 
   const share = () => {
-    const text = `I've been smoke-free for ${d.days} days with SMOXIT! 🎉 ${cigsAvoided(user)} cigarettes avoided. €${moneySaved(user).toFixed(2)} saved.`;
+    const text = `I've been smoke-free for ${d.days} days with SMOXIT! 🎉 ${cigsAvoided(user)} cigarettes avoided. ${currency.format(moneySaved(user))} saved.`;
     if (navigator.share) navigator.share({ title: "SMOXIT", text }).catch(() => {});
     else {
       navigator.clipboard?.writeText(text);
@@ -147,7 +149,7 @@ export const ProgressScreen = () => {
                   borderRadius: 12,
                   fontSize: 12,
                 }}
-                formatter={(v: number) => [`€${v}`, "Saved"]}
+                formatter={(v: number) => [`${currency.symbol}${v}`, "Saved"]}
               />
               <Bar dataKey="money" fill="hsl(var(--accent))" radius={[8, 8, 0, 0]} />
             </BarChart>
