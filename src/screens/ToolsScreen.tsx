@@ -7,6 +7,7 @@ import { CoachChat } from "@/components/CoachChat";
 import { toast } from "sonner";
 import type { Trigger } from "@/lib/types";
 import { awardXp, type XpEventType } from "@/lib/xp";
+import { todayKey } from "@/lib/calc";
 
 type Tool = "menu" | "breathing" | "game" | "audio" | "tips" | "coach";
 
@@ -220,8 +221,10 @@ const CravingModal = ({ onClose, whyQuit, onLog }: { onClose: () => void; whyQui
 };
 
 const BreathingModal = ({ onClose }: { onClose: () => void }) => {
+  const { dispatch } = useUser();
   const [phase, setPhase] = useState<"Inhale" | "Hold" | "Exhale">("Inhale");
   const [cycle, setCycle] = useState(0);
+  const logged = useRef(false);
   useEffect(() => {
     // 8s cycle synced with the CSS animation: 0-3s Inhale, 3-5s Hold, 5-8s Exhale
     const start = Date.now();
@@ -232,6 +235,19 @@ const BreathingModal = ({ onClose }: { onClose: () => void }) => {
     }, 200);
     return () => clearInterval(i);
   }, []);
+
+  // Log a breathing session (seconds=0 marks "session", not a lung-capacity test)
+  // after the user completes 3 full cycles. Powers the "3 breathing sessions" weekly quest.
+  useEffect(() => {
+    if (cycle >= 3 && !logged.current) {
+      logged.current = true;
+      dispatch({ type: "ADD_BREATH", payload: { date: todayKey(), seconds: 0 } });
+      void awardXp("breath_session", { silent: true }).then((g) => {
+        if (g > 0) dispatch({ type: "ADD_XP", payload: g });
+      });
+      toast.success("Breathing session logged 🫁");
+    }
+  }, [cycle, dispatch]);
 
   return (
     <ModalShell onClose={onClose} title="Breathe with Me">
