@@ -106,8 +106,11 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          last_push_sent_at: string | null
           onboarding_completed: boolean
           preferred_currency: string | null
+          push_opt_in: boolean
+          push_timezone: string | null
           referral_code: string | null
           referral_credits: number
           referred_by: string | null
@@ -122,8 +125,11 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_push_sent_at?: string | null
           onboarding_completed?: boolean
           preferred_currency?: string | null
+          push_opt_in?: boolean
+          push_timezone?: string | null
           referral_code?: string | null
           referral_credits?: number
           referred_by?: string | null
@@ -138,8 +144,11 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_push_sent_at?: string | null
           onboarding_completed?: boolean
           preferred_currency?: string | null
+          push_opt_in?: boolean
+          push_timezone?: string | null
           referral_code?: string | null
           referral_credits?: number
           referred_by?: string | null
@@ -148,6 +157,39 @@ export type Database = {
           subscription_status?: string
           trial_start?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_used_at: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_used_at?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string
+          p256dh?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -227,6 +269,36 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      xp_events: {
+        Row: {
+          created_at: string
+          dedupe_key: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+          xp_amount: number
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+          xp_amount?: number
         }
         Relationships: []
       }
