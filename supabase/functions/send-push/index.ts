@@ -43,6 +43,17 @@ const POOL = {
     { title: "Craving incoming?", body: "Open the breathing tool. 60 sec, you've got this." },
     { title: "Beat the urge", body: "Tap for a 4-4-4 reset." },
   ],
+  daily_mood: [
+    { title: "How do you feel today? 💚", body: "Log your mood in 5 seconds and earn XP." },
+    { title: "Mood check-in", body: "One tap. Track your progress." },
+    { title: "Quick reflection", body: "Rate today's mood and keep your streak alive." },
+    { title: "Your mind matters 🧠", body: "Take 5 sec for today's mood log." },
+  ],
+  weekly_lung: [
+    { title: "Lung capacity check 🫁", body: "Time for your weekly breath-hold test!" },
+    { title: "How strong are your lungs?", body: "Log this week's breath hold and watch the curve grow." },
+    { title: "Weekly lung test 💨", body: "30 seconds: hold your breath, track the win." },
+  ],
 };
 
 function pick<T>(arr: T[]): T {
@@ -99,10 +110,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, ...result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Cron: daily morning push to opted-in users (rate-limited per profile.last_push_sent_at)
-    if (mode === "daily_morning" || mode === "daily_evening") {
-      const pool = POOL[mode];
-      const cutoff = new Date(Date.now() - 6 * 3600 * 1000).toISOString(); // min 6h between pushes
+    // Cron: bulk push modes (rate-limited per profile.last_push_sent_at)
+    if (
+      mode === "daily_morning" ||
+      mode === "daily_evening" ||
+      mode === "daily_mood" ||
+      mode === "weekly_lung"
+    ) {
+      const pool = POOL[mode as keyof typeof POOL];
+      // Weekly pushes need a longer rate-limit window so they don't get suppressed by daily ones
+      const minHours = mode === "weekly_lung" ? 20 : 6;
+      const cutoff = new Date(Date.now() - minHours * 3600 * 1000).toISOString();
 
       const { data: profiles } = await supabase
         .from("profiles")
