@@ -56,12 +56,12 @@ export const formatMoney = (n: number, currency?: Currency) => formatCurrency(n,
 
 // XP formula
 export const levelInfo = (xp: number) => {
-  const levels = ["Beginner", "Fighter", "Warrior", "Champion", "Legend", "Immortal"];
-  const thresholds = [0, 100, 300, 700, 1500, 3000];
+  const levels = ["Beginner", "Fighter", "Warrior", "Champion", "Legend", "Immortal", "Mythic", "Eternal"];
+  const thresholds = [0, 100, 300, 700, 1500, 3000, 5000, 8000];
   let level = 0;
   for (let i = 0; i < thresholds.length; i++) if (xp >= thresholds[i]) level = i;
   const current = thresholds[level];
-  const next = thresholds[level + 1] ?? thresholds[level] + 1500;
+  const next = thresholds[level + 1] ?? thresholds[level] + 3000;
   const progress = ((xp - current) / (next - current)) * 100;
   return { name: levels[level], level, xp, current, next, progress: Math.min(100, progress) };
 };
