@@ -81,7 +81,7 @@ export const ToolsScreen = () => {
           </div>
         </button>
         <button
-          onClick={() => setActive("coach")}
+          onClick={() => openTool("coach", null)}
           className="relative overflow-hidden rounded-3xl bg-primary p-5 text-left text-primary-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
         >
           <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent/20" />
@@ -97,10 +97,10 @@ export const ToolsScreen = () => {
 
       {/* Quick tools */}
       <div className="grid grid-cols-2 gap-3">
-        <ToolCard icon={Wind} label="Breathing" desc="4-4-4 exercise" onClick={() => setActive("breathing")} />
-        <ToolCard icon={Gamepad2} label="Distraction" desc="Tap mini-game" onClick={() => setActive("game")} />
-        <ToolCard icon={Headphones} label="Meditation" desc="Guided audio" onClick={() => setActive("audio")} />
-        <ToolCard icon={Lightbulb} label="Quick Tips" desc="Beat it fast" onClick={() => setActive("tips")} />
+        <ToolCard icon={Wind} label="Breathing" desc="4-4-4 exercise" onClick={() => openTool("breathing", "tool_breathing_used")} />
+        <ToolCard icon={Gamepad2} label="Distraction" desc="Tap mini-game" onClick={() => openTool("game", "tool_game_used")} />
+        <ToolCard icon={Headphones} label="Meditation" desc="Guided audio" onClick={() => openTool("audio", "tool_audio_used")} />
+        <ToolCard icon={Lightbulb} label="Quick Tips" desc="Beat it fast" onClick={() => openTool("tips", "tool_tips_viewed")} />
       </div>
 
       {/* Recent cravings */}
