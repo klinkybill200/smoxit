@@ -107,6 +107,7 @@ export type Database = {
           email: string | null
           id: string
           onboarding_completed: boolean
+          preferred_currency: string | null
           referral_code: string | null
           referral_credits: number
           referred_by: string | null
@@ -122,6 +123,7 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          preferred_currency?: string | null
           referral_code?: string | null
           referral_credits?: number
           referred_by?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          preferred_currency?: string | null
           referral_code?: string | null
           referral_credits?: number
           referred_by?: string | null
