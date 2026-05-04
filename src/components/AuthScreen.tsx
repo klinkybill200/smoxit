@@ -127,7 +127,7 @@ export const AuthScreen = () => {
 
             {refCode && (
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-accent">
-                <Gift className="h-3.5 w-3.5" /> Referral code applied: <strong>{refCode}</strong>
+                <Gift className="h-3.5 w-3.5" /> Invited by <strong>{refCode}</strong> — enjoy your 3-day free trial
               </p>
             )}
 
