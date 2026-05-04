@@ -15,3 +15,5 @@ project_id = "lbtkcmrpdosvsyvtogkn"
     verify_jwt = true
   [functions.get-portal-session]
     verify_jwt = true
+  [functions.send-push]
+    verify_jwt = false
