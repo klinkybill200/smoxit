@@ -520,7 +520,7 @@ const LungModal = ({
   const [elapsed, setElapsed] = useState(0);
 
   // Live timer
-  useMemo(() => {
+  useEffect(() => {
     if (!running) return;
     const start = Date.now();
     const i = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 100) / 10), 100);
