@@ -5,6 +5,7 @@ import { getDuration, moneySaved, cigsAvoided, lifeGainedMinutes, formatLifeGain
 import { useCurrency } from "@/lib/currency";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Button } from "@/components/ui/button";
+import { awardXp } from "@/lib/xp";
 
 const moods = ["😩", "😕", "😐", "🙂", "🤩"] as const;
 
