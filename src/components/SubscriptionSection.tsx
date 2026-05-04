@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { CreditCard, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
+import { useCurrency, CURRENCIES, type Currency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,6 +19,7 @@ const formatTrialRemaining = (ms: number) => {
 
 export const SubscriptionSection = () => {
   const sub = useSubscription();
+  const currency = useCurrency();
   const [loading, setLoading] = useState(false);
 
   const openPortal = async () => {
@@ -40,7 +43,7 @@ export const SubscriptionSection = () => {
   let display = "";
   if (sub.status === "loading") display = "Loading…";
   else if (sub.status === "active")
-    display = `✅ Premium – $9.95/month · Next billing: ${formatDate(sub.currentPeriodEnd)}`;
+    display = `✅ Premium – ${currency.priceLabel}/month · Next billing: ${formatDate(sub.currentPeriodEnd)}`;
   else if (sub.status === "trialing" && sub.msUntilTrialEnd > 0)
     display = `⏳ Free Trial – ${formatTrialRemaining(sub.msUntilTrialEnd)}`;
   else if (sub.status === "past_due")
@@ -49,7 +52,7 @@ export const SubscriptionSection = () => {
     display = `❌ Canceled – access until ${formatDate(sub.currentPeriodEnd)}`;
   else display = "❌ No active subscription";
 
-  const credits = sub.referralCredits * 5;
+  const credits = sub.referralCredits * currency.referralCreditAmount;
 
   return (
     <section className="smoxit-card">
@@ -62,9 +65,28 @@ export const SubscriptionSection = () => {
 
       {sub.referredCount > 0 && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Referral credits earned: <span className="font-bold text-accent">${credits}</span> ({sub.referredCount} friend{sub.referredCount === 1 ? "" : "s"})
+          Referral credits earned: <span className="font-bold text-accent">{currency.symbol}{credits}</span> ({sub.referredCount} friend{sub.referredCount === 1 ? "" : "s"})
         </p>
       )}
+
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-secondary/40 px-3 py-2">
+        <span className="text-xs font-semibold text-muted-foreground">Currency</span>
+        <Select
+          value={currency.code}
+          onValueChange={(v) => {
+            currency.setCurrency(v as Currency);
+            toast.success(`Switched to ${CURRENCIES[v as Currency].label}`);
+          }}
+        >
+          <SelectTrigger className="h-8 w-[140px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="eur">{CURRENCIES.eur.label}</SelectItem>
+            <SelectItem value="usd">{CURRENCIES.usd.label}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="mt-4 space-y-2">
         <Button
