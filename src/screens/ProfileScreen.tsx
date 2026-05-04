@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUser } from "@/lib/store";
-import { getDuration, levelInfo, moneySaved, cigsAvoided, formatMoney } from "@/lib/calc";
+import { getDuration, levelInfo, moneySaved, cigsAvoided } from "@/lib/calc";
+import { useCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 export const ProfileScreen = () => {
   const { user, dispatch } = useUser();
   const { user: authUser, signOut } = useAuth();
+  const currency = useCurrency();
   const [editing, setEditing] = useState(false);
   const [editGoal, setEditGoal] = useState(false);
 
@@ -68,7 +70,7 @@ export const ProfileScreen = () => {
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div><p className="stat-number text-xl">{d.days}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Days</p></div>
-          <div><p className="stat-number text-xl">{formatMoney(money)}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Saved</p></div>
+          <div><p className="stat-number text-xl">{currency.format(money)}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Saved</p></div>
           <div><p className="stat-number text-xl">{cigsAvoided(user)}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Avoided</p></div>
         </div>
       </section>
@@ -91,13 +93,13 @@ export const ProfileScreen = () => {
               <div className="h-full bg-gradient-accent" style={{ width: `${goalPct}%` }} />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              {formatMoney(money)} of {formatMoney(user.dreamGoal.target)} — {goalPct.toFixed(0)}% there 🎯
+              {currency.format(money)} of {currency.format(user.dreamGoal.target)} — {goalPct.toFixed(0)}% there 🎯
             </p>
           </>
         ) : (
           <div className="mt-3 space-y-2">
             <Input value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="Goal name" />
-            <Input type="number" value={goalAmt} onChange={(e) => setGoalAmt(e.target.value)} placeholder="€ target" />
+            <Input type="number" value={goalAmt} onChange={(e) => setGoalAmt(e.target.value)} placeholder={`${currency.symbol} target`} />
             <Button onClick={saveGoal} className="w-full bg-accent font-bold text-primary hover:bg-accent-glow">Save Goal</Button>
           </div>
         )}
@@ -122,7 +124,7 @@ export const ProfileScreen = () => {
               <Input type="number" value={cigs} onChange={(e) => setCigs(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Price per pack (€)</Label>
+              <Label className="text-xs">Price per pack ({currency.symbol})</Label>
               <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div className="space-y-1">
@@ -134,7 +136,7 @@ export const ProfileScreen = () => {
         ) : (
           <div className="mt-3 space-y-2 text-sm">
             <Row label="Cigarettes/day" value={String(user.cigsPerDay)} />
-            <Row label="Price/pack" value={`€${user.pricePerPack}`} />
+            <Row label="Price/pack" value={`${currency.symbol}${user.pricePerPack}`} />
             <Row label="Years smoking" value={String(user.yearsSmoking)} />
           </div>
         )}

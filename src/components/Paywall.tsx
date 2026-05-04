@@ -6,7 +6,8 @@ import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { useSubscription } from "@/lib/subscription";
 import { useUser } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { getDuration, moneySaved, formatMoney } from "@/lib/calc";
+import { getDuration, moneySaved } from "@/lib/calc";
+import { useCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,6 +29,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
   const { user } = useUser();
   const { signOut } = useAuth();
   const sub = useSubscription();
+  const currency = useCurrency();
   const [loading, setLoading] = useState(false);
 
   const days = user ? getDuration(user.quitDate).days : 0;
@@ -80,7 +82,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
           {user && days > 0 && (
             <p className="mt-3 text-center text-sm text-primary-foreground/85">
               You're already <strong className="text-accent">{days} days smoke-free</strong>{" "}
-              and saved <strong className="text-accent">{formatMoney(saved)}</strong> — don't stop now.
+              and saved <strong className="text-accent">{currency.format(saved)}</strong> — don't stop now.
             </p>
           )}
         </div>
@@ -90,7 +92,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
           <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]">
             <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="font-display text-4xl font-black text-foreground">$9.95</span>
+              <span className="font-display text-4xl font-black text-foreground">{currency.priceLabel}</span>
               <span className="text-sm text-muted-foreground">/ month</span>
             </div>
             <ul className="mt-4 space-y-2.5">
@@ -108,7 +110,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
             disabled={loading}
             className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Subscribe for $9.95/month"}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : `Subscribe for ${currency.priceLabel}/month`}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Settings, Flame, Coins, Cigarette, Heart, Trophy, Sparkles } from "lucide-react";
 import { useUser } from "@/lib/store";
-import { getDuration, moneySaved, cigsAvoided, lifeGainedMinutes, formatLifeGained, formatMoney, milestoneTagline, quoteOfDay, todayKey } from "@/lib/calc";
+import { getDuration, moneySaved, cigsAvoided, lifeGainedMinutes, formatLifeGained, milestoneTagline, quoteOfDay, todayKey } from "@/lib/calc";
+import { useCurrency } from "@/lib/currency";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +10,7 @@ const moods = ["😩", "😕", "😐", "🙂", "🤩"] as const;
 
 export const HomeScreen = () => {
   const { user, dispatch } = useUser();
+  const currency = useCurrency();
   const [, force] = useState(0);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export const HomeScreen = () => {
 
       {/* Stats grid */}
       <section className="grid grid-cols-2 gap-3">
-        <StatCard icon={Coins} label="Money Saved" value={formatMoney(money)} />
+        <StatCard icon={Coins} label="Money Saved" value={currency.format(money)} />
         <StatCard icon={Cigarette} label="Cigs Avoided" value={String(avoided)} />
         <StatCard icon={Heart} label="Life Gained" value={formatLifeGained(life)} />
         <StatCard icon={Trophy} label="Streak" value={`${d.days}d`} />
@@ -100,7 +102,7 @@ export const HomeScreen = () => {
           <div className="h-full rounded-full bg-gradient-accent transition-all duration-500" style={{ width: `${goalPct}%` }} />
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          {formatMoney(money)} of {formatMoney(user.dreamGoal.target)} saved 🎯
+          {currency.format(money)} of {currency.format(user.dreamGoal.target)} saved 🎯
         </p>
       </section>
 

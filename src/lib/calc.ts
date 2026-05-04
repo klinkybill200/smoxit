@@ -49,7 +49,10 @@ export const formatLifeGained = (minutes: number) => {
   return `${days.toFixed(1)} days`;
 };
 
-export const formatMoney = (n: number) => `€${n.toFixed(2)}`;
+import { formatCurrency, type Currency } from "./currency";
+
+/** @deprecated Prefer useCurrency().format() in components for currency-aware output */
+export const formatMoney = (n: number, currency?: Currency) => formatCurrency(n, currency);
 
 // XP formula
 export const levelInfo = (xp: number) => {

@@ -1,20 +1,22 @@
 import { Copy, Share2, Gift } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { useSubscription } from "@/lib/subscription";
-import { getDuration, moneySaved, formatMoney } from "@/lib/calc";
+import { getDuration, moneySaved } from "@/lib/calc";
+import { useCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const ReferralCard = () => {
   const { user } = useUser();
   const sub = useSubscription();
+  const currency = useCurrency();
 
   if (!sub.referralCode) return null;
 
   const link = `https://my.smoxit.app/?ref=${sub.referralCode}`;
   const days = user ? getDuration(user.quitDate).days : 0;
   const saved = user ? moneySaved(user) : 0;
-  const message = `I've been smoke-free for ${days} days with SMOXIT and saved ${formatMoney(saved)} 🚭 Try it free for 3 days: ${link}`;
+  const message = `I've been smoke-free for ${days} days with SMOXIT and saved ${currency.format(saved)} 🚭 Try it free for 3 days: ${link}`;
 
   const copy = async () => {
     try {
@@ -36,18 +38,20 @@ export const ReferralCard = () => {
     }
   };
 
-  const credited = sub.referralCredits * 5;
+  const creditPerFriend = currency.referralCreditAmount;
+  const credited = sub.referralCredits * creditPerFriend;
+  const sym = currency.symbol;
 
   return (
     <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent">
-        <Gift className="h-3.5 w-3.5" /> Invite Friends · Earn $5
+        <Gift className="h-3.5 w-3.5" /> Invite Friends · Earn {sym}{creditPerFriend}
       </div>
       <p className="mt-2 font-display text-xl font-black leading-snug text-balance">
-        Invite a friend. Get $5 off.
+        Invite a friend. Get {sym}{creditPerFriend} off.
       </p>
       <p className="mt-1 text-sm text-primary-foreground/80">
-        For every friend who subscribes, we apply $5 to your next bill.
+        For every friend who subscribes, we apply {sym}{creditPerFriend} to your next bill.
       </p>
 
       <div className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-center font-mono text-base font-bold tracking-wider">
@@ -55,7 +59,7 @@ export const ReferralCard = () => {
       </div>
 
       <p className="mt-3 text-xs text-primary-foreground/75">
-        {sub.referredCount} friend{sub.referredCount === 1 ? "" : "s"} invited · ${credited} credited so far
+        {sub.referredCount} friend{sub.referredCount === 1 ? "" : "s"} invited · {sym}{credited} credited so far
       </p>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
