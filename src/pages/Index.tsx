@@ -17,12 +17,28 @@ import { CommunityScreen } from "@/screens/CommunityScreen";
 import { ProfileScreen } from "@/screens/ProfileScreen";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { captureSquadInviteFromUrl, applyPendingSquadInvite } from "@/lib/squadInvite";
 
 const Index = () => {
   const { session, loading: authLoading } = useAuth();
   const { user, loading: userLoading } = useUser();
   const sub = useSubscription();
   const [tab, setTab] = useState<Tab>("home");
+
+  // Capture squad invite from URL early so it survives sign-up
+  useEffect(() => { captureSquadInviteFromUrl(); }, []);
+
+  // After sign-in, auto-join pending squad and switch to community tab
+  useEffect(() => {
+    if (!session?.user) return;
+    (async () => {
+      const name = await applyPendingSquadInvite(session.user.id);
+      if (name) {
+        toast.success(`Joined squad ${name} 🎉`);
+        setTab("community");
+      }
+    })();
+  }, [session?.user?.id]);
 
   // Handle Stripe checkout return
   useEffect(() => {
@@ -35,6 +51,12 @@ const Index = () => {
       window.history.replaceState({}, "", window.location.pathname);
     } else if (status === "cancel") {
       window.history.replaceState({}, "", window.location.pathname);
+    }
+    // Clean ?squad= param after capture
+    if (params.get("squad")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("squad");
+      window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
