@@ -802,14 +802,109 @@ interface Participation {
   challenge_id: string; user_id: string; xp_earned: number; days_completed: number; last_completed_date: string | null;
 }
 
+interface AutoChallenge {
+  id: string;
+  title: string;
+  emoji: string;
+  desc: string;
+  xp: number;
+  /** progress 0..1 */
+  progress: () => number;
+  current: () => number;
+  target: number;
+  unit: string;
+}
+
 const ChallengesTab = ({ userId }: { userId: string }) => {
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const { user } = useUser();
+  const [featured, setFeatured] = useState<Challenge | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
   const [myPart, setMyPart] = useState<Participation | null>(null);
-  const [leaderboard, setLeaderboard] = useState<{ user_id: string; xp_earned: number }[]>([]);
   const [past, setPast] = useState<Challenge[]>([]);
-  const [scope, setScope] = useState<"global" | "squad">("global");
   const [myXp, setMyXp] = useState(0);
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
+
+  // Build auto-tracked challenges from user data
+  const autoChallenges = useMemo<AutoChallenge[]>(() => {
+    if (!user) return [];
+    const now = Date.now();
+    const last7 = (ts: number) => now - ts < 7 * 86400000;
+    const cravings7 = user.cravings.filter((c) => last7(c.timestamp) && c.resisted).length;
+    const breaths7 = user.breathHolds.filter((b) => last7(new Date(b.date).getTime())).length;
+    const moods7 = user.moods.filter((m) => last7(new Date(m.date).getTime())).length;
+    const days = getDuration(user.quitDate).days;
+    const logs = user.dailyLogs ?? [];
+    const hydration7 = logs.filter((l) => last7(new Date(l.date).getTime())).reduce((s, l) => s + (l.hydration ?? 0), 0);
+
+    return [
+      {
+        id: "wk-cravings-5",
+        title: "Crush 5 cravings",
+        emoji: "🔥",
+        desc: "This week",
+        xp: 50,
+        target: 5,
+        unit: "won",
+        current: () => cravings7,
+        progress: () => Math.min(1, cravings7 / 5),
+      },
+      {
+        id: "wk-breaths-5",
+        title: "5 breath sessions",
+        emoji: "🌬️",
+        desc: "This week",
+        xp: 40,
+        target: 5,
+        unit: "done",
+        current: () => breaths7,
+        progress: () => Math.min(1, breaths7 / 5),
+      },
+      {
+        id: "wk-mood-7",
+        title: "7 mood check-ins",
+        emoji: "😊",
+        desc: "Daily for 7 days",
+        xp: 50,
+        target: 7,
+        unit: "logs",
+        current: () => moods7,
+        progress: () => Math.min(1, moods7 / 7),
+      },
+      {
+        id: "wk-hydration-40",
+        title: "40 glasses of water",
+        emoji: "💧",
+        desc: "This week",
+        xp: 40,
+        target: 40,
+        unit: "glasses",
+        current: () => hydration7,
+        progress: () => Math.min(1, hydration7 / 40),
+      },
+      {
+        id: "ms-7-days",
+        title: "7 days smoke-free",
+        emoji: "🏆",
+        desc: "Streak milestone",
+        xp: 100,
+        target: 7,
+        unit: "days",
+        current: () => days,
+        progress: () => Math.min(1, days / 7),
+      },
+      {
+        id: "ms-30-days",
+        title: "30 days smoke-free",
+        emoji: "👑",
+        desc: "Long-term win",
+        xp: 200,
+        target: 30,
+        unit: "days",
+        current: () => days,
+        progress: () => Math.min(1, days / 30),
+      },
+    ];
+  }, [user]);
 
   const load = async () => {
     const today = new Date().toISOString().slice(0, 10);
@@ -817,15 +912,13 @@ const ChallengesTab = ({ userId }: { userId: string }) => {
       .from("challenges").select("*")
       .lte("start_date", today).gte("end_date", today)
       .order("start_date", { ascending: false }).limit(1).maybeSingle();
-    setChallenge(active as any);
+    setFeatured(active as any);
 
     if (active) {
       const { count } = await supabase.from("challenge_participants").select("*", { count: "exact", head: true }).eq("challenge_id", active.id);
       setParticipantCount(count ?? 0);
       const { data: mine } = await supabase.from("challenge_participants").select("*").eq("challenge_id", active.id).eq("user_id", userId).maybeSingle();
       setMyPart(mine as any);
-      const { data: lb } = await supabase.from("challenge_participants").select("user_id,xp_earned").eq("challenge_id", active.id).order("xp_earned", { ascending: false }).limit(10);
-      setLeaderboard((lb ?? []) as any);
     }
 
     const { data: pastList } = await supabase.from("challenges").select("*").lt("end_date", today).order("end_date", { ascending: false }).limit(6);
@@ -833,37 +926,49 @@ const ChallengesTab = ({ userId }: { userId: string }) => {
 
     const { data: xpRow } = await supabase.from("user_xp").select("total_xp").eq("user_id", userId).maybeSingle();
     setMyXp(xpRow?.total_xp ?? 0);
+
+    // Hydrate completed set from xp_events (to mark tiles as done across reloads)
+    const { data: events } = await supabase
+      .from("xp_events")
+      .select("dedupe_key")
+      .eq("user_id", userId)
+      .like("dedupe_key", "daily_challenge:auto-%");
+    setCompleted(new Set((events ?? []).map((e: any) => e.dedupe_key.replace("daily_challenge:", ""))));
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
+  // Auto-complete tracked challenges when threshold reached
+  useEffect(() => {
+    if (!user || autoChallenges.length === 0) return;
+    autoChallenges.forEach(async (c) => {
+      const week = todayKey().slice(0, 7); // group monthly
+      const dedupe = `auto-${c.id}-${week}`;
+      if (completed.has(dedupe)) return;
+      if (c.progress() >= 1) {
+        const granted = await awardXp("daily_challenge", { extra: dedupe });
+        if (granted > 0) {
+          toast.success(`🏅 ${c.title} complete! +${c.xp} XP`);
+          setCompleted((s) => new Set(s).add(dedupe));
+          load();
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoChallenges, completed]);
+
   const join = async () => {
-    if (!challenge) return;
-    const { error } = await supabase.from("challenge_participants").insert({ challenge_id: challenge.id, user_id: userId });
+    if (!featured) return;
+    const { error } = await supabase.from("challenge_participants").insert({ challenge_id: featured.id, user_id: userId });
     if (error) { toast.error("Could not join"); return; }
     awardXp("challenge_joined", { silent: true });
     toast.success("You're in! 🔥");
     load();
   };
 
-  const completeToday = async () => {
-    if (!challenge || !myPart) return;
-    const today = new Date().toISOString().slice(0, 10);
-    if (myPart.last_completed_date === today) { toast.info("Already done today"); return; }
-    const updated = {
-      days_completed: myPart.days_completed + 1,
-      xp_earned: myPart.xp_earned + 20,
-      last_completed_date: today,
-    };
-    await supabase.from("challenge_participants").update(updated).match({ challenge_id: challenge.id, user_id: userId });
-    awardXp("challenge_day", { silent: true });
-    toast.success("+20 XP — keep going!");
-    load();
-  };
-
   const lvl = levelFromXp(myXp);
-  const daysLeft = challenge ? Math.max(0, Math.ceil((new Date(challenge.end_date).getTime() - Date.now()) / 86400000)) : 0;
-  const progressPct = challenge?.target_participants ? Math.min(100, (participantCount / challenge.target_participants) * 100) : 0;
+  const daysLeft = featured ? Math.max(0, Math.ceil((new Date(featured.end_date).getTime() - Date.now()) / 86400000)) : 0;
+  const progressPct = featured?.target_participants ? Math.min(100, (participantCount / featured.target_participants) * 100) : 0;
 
   return (
     <div className="space-y-4">
@@ -879,77 +984,50 @@ const ChallengesTab = ({ userId }: { userId: string }) => {
         <Trophy className="h-4 w-4 text-accent" />
       </div>
 
-      {!challenge && <p className="text-center text-xs text-muted-foreground py-8">No active challenge right now. Check back soon!</p>}
-
-      {challenge && (
-        <>
-          <div className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-widest text-accent">Active challenge</p>
-              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{daysLeft}d left</span>
-            </div>
-            <p className="mt-1 font-display text-xl font-black">{challenge.title}</p>
-            <p className="mt-1 text-xs opacity-80">{challenge.description}</p>
-            <div className="mt-3">
-              <p className="text-[10px] opacity-70">{participantCount.toLocaleString()} / {(challenge.target_participants ?? 0).toLocaleString()} joined</p>
-              <Progress value={progressPct} className="mt-1 h-1.5 bg-white/10" />
-            </div>
-            <Button
-              onClick={join}
-              disabled={!!myPart}
-              className="mt-4 h-10 w-full bg-accent font-bold text-accent-foreground hover:bg-accent-glow"
-            >
-              {myPart ? "✓ Joined" : "Join Challenge"}
-            </Button>
+      {/* Featured global challenge */}
+      {featured && (
+        <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-accent">🌍 Global · {daysLeft}d left</p>
+            <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{participantCount.toLocaleString()} joined</span>
           </div>
-
-          {myPart && (
-            <div className="smoxit-card space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your progress</p>
-                <span className="text-xs font-bold text-accent">+{myPart.xp_earned} XP</span>
-              </div>
-              <p className="font-display text-lg font-black">{myPart.days_completed}/7 days</p>
-              <Progress value={(myPart.days_completed / 7) * 100} className="h-1.5" />
-              <ul className="mt-2 space-y-1 text-xs">
-                {(challenge.daily_tasks ?? []).map((task, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <span className="text-accent">•</span> {task}
-                  </li>
-                ))}
-              </ul>
-              <Button onClick={completeToday} size="sm" className="mt-2 w-full bg-accent text-accent-foreground hover:bg-accent-glow">
-                Complete today's task
-              </Button>
-            </div>
-          )}
-
-          <div className="smoxit-card">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Leaderboard</p>
-              <div className="flex gap-1 rounded-full bg-secondary p-0.5 text-[10px] font-bold">
-                <button onClick={() => setScope("global")} className={`rounded-full px-2 py-0.5 ${scope === "global" ? "bg-accent text-accent-foreground" : ""}`}>Global</button>
-                <button onClick={() => setScope("squad")} className={`rounded-full px-2 py-0.5 ${scope === "squad" ? "bg-accent text-accent-foreground" : ""}`}>Squad</button>
-              </div>
-            </div>
-            <div className="mt-2 space-y-1">
-              {leaderboard.length === 0 && <p className="text-center text-xs text-muted-foreground py-3">No participants yet</p>}
-              {leaderboard.map((row, i) => (
-                <div key={row.user_id} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 font-bold">{i + 1}</span>
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: anonColor(row.user_id) }}>
-                      {anonName(row.user_id).charAt(0)}
-                    </div>
-                    <span className={row.user_id === userId ? "font-bold text-accent" : ""}>{anonName(row.user_id)}</span>
-                  </div>
-                  <span className="font-bold">{row.xp_earned} XP</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+          <p className="mt-1 font-display text-base font-black leading-tight">{featured.title}</p>
+          <p className="text-[11px] opacity-80 line-clamp-2">{featured.description}</p>
+          <Progress value={progressPct} className="mt-2 h-1 bg-white/10" />
+          <Button onClick={join} disabled={!!myPart} size="sm" className="mt-3 h-8 w-full bg-accent text-xs font-bold text-accent-foreground hover:bg-accent-glow">
+            {myPart ? "✓ You're in" : "Join"}
+          </Button>
+        </div>
       )}
+
+      {/* Auto-tracked challenge tiles */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your challenges</p>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Sparkles className="h-3 w-3" /> auto-tracked</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {autoChallenges.map((c) => {
+            const week = todayKey().slice(0, 7);
+            const isDone = completed.has(`auto-${c.id}-${week}`) || c.progress() >= 1;
+            const pct = c.progress() * 100;
+            return (
+              <div key={c.id} className={`relative rounded-2xl border p-3 ${isDone ? "border-accent bg-accent/10" : "border-border bg-card"}`}>
+                <div className="flex items-start justify-between">
+                  <span className="text-xl">{c.emoji}</span>
+                  {isDone ? <CheckCircle2 className="h-4 w-4 text-accent" /> : <span className="text-[10px] font-bold text-accent">+{c.xp}</span>}
+                </div>
+                <p className="mt-1 text-xs font-bold leading-tight">{c.title}</p>
+                <p className="text-[10px] text-muted-foreground">{c.desc}</p>
+                <div className="mt-2">
+                  <Progress value={pct} className="h-1" />
+                  <p className="mt-1 text-[10px] text-muted-foreground">{Math.min(c.current(), c.target)}/{c.target} {c.unit}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {past.length > 0 && (
         <section>
