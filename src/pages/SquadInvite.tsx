@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
-import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
-import { SQUAD_INVITE_KEY, applyPendingSquadInvite } from "@/lib/squadInvite";
+import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Mail, Share2 } from "lucide-react";
+import { SQUAD_INVITE_KEY, applyPendingSquadInvite, buildSquadShareMessage } from "@/lib/squadInvite";
 import { AuthScreen } from "@/components/AuthScreen";
 import { toast } from "sonner";
 
