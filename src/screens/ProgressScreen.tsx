@@ -119,14 +119,11 @@ export const ProgressScreen = () => {
   };
 
   const share = () => {
-    const text = `I've been smoke-free for ${d.days} days with SMOXIT! 🎉 ${cigsAvoided(user)} cigarettes avoided. ${currency.format(moneySaved(user))} saved.`;
-    if (navigator.share) {
-      navigator.share({ title: "SMOXIT", text }).then(() => awardXp("share_milestone")).catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(text);
-      awardXp("share_milestone");
-      toast.success("Milestone copied!");
-    }
+    shareGlobal({
+      kind: "milestone",
+      title: "My SMOXIT progress",
+      text: `I've been smoke-free for ${d.days} days with SMOXIT! 🎉 ${cigsAvoided(user)} cigarettes avoided. ${currency.format(moneySaved(user))} saved.`,
+    });
   };
 
   const togglePush = async () => {
