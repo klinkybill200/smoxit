@@ -107,12 +107,13 @@ const SquadInvite = () => {
       navigate("/", { replace: true });
     };
     const message = buildSquadShareMessage(code, preview.name);
-    const shareWhatsApp = () => {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    };
-    const shareEmail = () => {
-      const subject = `Join my SMOXIT Quit-Squad ${preview.name}`;
-      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    const openShare = () => {
+      share({
+        kind: "generic",
+        title: `Join my SMOXIT Quit-Squad ${preview.name}`,
+        text: message,
+        url: buildSquadShareUrl(code),
+      });
     };
     return (
       <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col items-center justify-center px-6 text-center">
