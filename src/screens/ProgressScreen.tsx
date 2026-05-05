@@ -14,8 +14,7 @@ import { toast } from "sonner";
 import { dailyChallenges, weeklyQuests, monthlyQuests, isQuestComplete } from "@/lib/quests";
 import { awardXp } from "@/lib/xp";
 import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
-import { useShare } from "@/components/ShareSheet";
-import { ShareButton } from "@/components/ShareSheet";
+import { useShare, ShareButton } from "@/components/ShareSheet";
 
 interface Badge {
   id: string;
