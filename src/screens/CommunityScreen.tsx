@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { anonName, anonColor, levelFromXp, timeAgo, generateSquadCode, CATEGORY_META, type Category } from "@/lib/community";
+import { useProfiles, displayName, displayInitial, displayColor } from "@/lib/profiles";
 import { getDuration, moneySaved, todayKey } from "@/lib/calc";
 import { awardXp } from "@/lib/xp";
 import { ReferralCard } from "@/components/ReferralCard";
@@ -216,9 +217,17 @@ const PostCard = ({
   const [showAll, setShowAll] = useState(false);
   const [draft, setDraft] = useState("");
   const cat = CATEGORY_META[post.category];
-  const name = anonName(post.user_id);
-  const color = anonColor(post.user_id);
-  const initial = name.charAt(0).toUpperCase();
+
+  const userIds = useMemo(
+    () => Array.from(new Set([post.user_id, ...comments.map((c) => c.user_id)])),
+    [post.user_id, comments],
+  );
+  const profiles = useProfiles(userIds);
+  const authorProfile = profiles[post.user_id];
+  const name = displayName(authorProfile, post.user_id);
+  const color = displayColor(post.user_id);
+  const initial = displayInitial(authorProfile, post.user_id);
+  const avatarUrl = authorProfile?.avatar_url;
 
   const loadComments = async () => {
     const { data } = await supabase.from("comments").select("*").eq("post_id", post.id).order("created_at");
@@ -247,8 +256,8 @@ const PostCard = ({
   return (
     <div className="smoxit-card space-y-3">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-bold text-white text-sm" style={{ background: color }}>
-          {initial}
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white text-sm" style={{ background: color }}>
+          {avatarUrl ? <img src={avatarUrl} alt={name} className="h-full w-full object-cover" /> : initial}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold truncate">{name}</p>
@@ -275,17 +284,21 @@ const PostCard = ({
 
       {openComments && (
         <div className="space-y-2 border-t border-border pt-3">
-          {visible.map((c) => (
-            <div key={c.id} className="flex gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: anonColor(c.user_id) }}>
-                {anonName(c.user_id).charAt(0)}
+          {visible.map((c) => {
+            const cp = profiles[c.user_id];
+            const cName = displayName(cp, c.user_id);
+            return (
+              <div key={c.id} className="flex gap-2">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white" style={{ background: displayColor(c.user_id) }}>
+                  {cp?.avatar_url ? <img src={cp.avatar_url} alt={cName} className="h-full w-full object-cover" /> : cName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 rounded-lg bg-secondary px-3 py-2">
+                  <p className="text-[11px] font-bold">{cName} <span className="ml-1 font-normal text-muted-foreground">{timeAgo(c.created_at)}</span></p>
+                  <p className="text-xs">{c.content}</p>
+                </div>
               </div>
-              <div className="flex-1 rounded-lg bg-secondary px-3 py-2">
-                <p className="text-[11px] font-bold">{anonName(c.user_id)} <span className="ml-1 font-normal text-muted-foreground">{timeAgo(c.created_at)}</span></p>
-                <p className="text-xs">{c.content}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {comments.length > 3 && !showAll && (
             <button onClick={() => setShowAll(true)} className="text-xs font-bold text-accent">
               Show all {comments.length} comments

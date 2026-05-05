@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut, Camera, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUser } from "@/lib/store";
 import { getDuration, levelInfo, moneySaved, cigsAvoided } from "@/lib/calc";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { SubscriptionSection } from "@/components/SubscriptionSection";
+import { supabase } from "@/integrations/supabase/client";
+import { invalidateProfile } from "@/lib/profiles";
 import { toast } from "sonner";
 
 export const ProfileScreen = () => {
@@ -17,6 +19,67 @@ export const ProfileScreen = () => {
   const currency = useCurrency();
   const [editing, setEditing] = useState(false);
   const [editGoal, setEditGoal] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!authUser) return;
+    supabase
+      .from("profiles")
+      .select("avatar_url,display_name")
+      .eq("user_id", authUser.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setAvatarUrl(data?.avatar_url ?? null);
+        setDisplayName(data?.display_name ?? "");
+      });
+  }, [authUser]);
+
+  const handleAvatarPick = () => fileRef.current?.click();
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !authUser) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${authUser.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", authUser.id);
+      if (profErr) throw profErr;
+      setAvatarUrl(url);
+      invalidateProfile(authUser.id);
+      toast.success("Profile picture updated");
+    } catch (err: any) {
+      toast.error(err.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const saveDisplayName = async () => {
+    if (!authUser) return;
+    const name = displayName.trim().slice(0, 40);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: name || null })
+      .eq("user_id", authUser.id);
+    if (error) { toast.error("Could not save name"); return; }
+    invalidateProfile(authUser.id);
+    toast.success("Name updated");
+  };
 
   if (!user) return null;
   const d = getDuration(user.quitDate);
@@ -59,14 +122,49 @@ export const ProfileScreen = () => {
       {/* User card */}
       <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent font-display text-2xl font-black text-primary">
-            {user.name[0]?.toUpperCase()}
-          </div>
-          <div>
-            <p className="font-display text-2xl font-black">{user.name}</p>
+          <button
+            type="button"
+            onClick={handleAvatarPick}
+            disabled={uploading}
+            className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-display text-2xl font-black text-primary ring-2 ring-white/20 transition active:scale-95"
+            aria-label="Change profile picture"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <span>{(displayName || user.name)[0]?.toUpperCase()}</span>
+            )}
+            <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
+              {uploading ? <Loader2 className="h-5 w-5 animate-spin text-white" /> : <Camera className="h-5 w-5 text-white" />}
+            </span>
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-2xl font-black truncate">{displayName || user.name}</p>
             <p className="text-xs text-white/70">Quit since {new Date(user.quitDate).toLocaleDateString()}</p>
             <p className="mt-1 text-xs font-bold text-accent">{lvl.name} · {user.xp} XP</p>
           </div>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <Input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value.slice(0, 40))}
+            placeholder="Display name (shown in community)"
+            className="h-9 bg-white/10 text-sm text-white placeholder:text-white/50 border-white/20"
+          />
+          <Button
+            onClick={saveDisplayName}
+            size="sm"
+            className="h-9 bg-accent font-bold text-primary hover:bg-accent-glow"
+          >
+            Save
+          </Button>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div><p className="stat-number text-xl">{d.days}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Days</p></div>
