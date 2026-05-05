@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Heart, MessageCircle, Repeat2, Send, Plus, X, Crown, Trophy, Users, Copy, LogOut } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Send, Plus, X, Crown, Trophy, Users, Copy, LogOut, Share2, Mail, MessageSquare, Sparkles, CheckCircle2 } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { anonName, anonColor, levelFromXp, timeAgo, generateSquadCode, CATEGORY_META, type Category } from "@/lib/community";
-import { getDuration, moneySaved } from "@/lib/calc";
+import { getDuration, moneySaved, todayKey } from "@/lib/calc";
 import { awardXp } from "@/lib/xp";
 import { ReferralCard } from "@/components/ReferralCard";
+import { buildSquadShareUrl, buildSquadShareMessage } from "@/lib/squadInvite";
 
 type SubTab = "feed" | "squads" | "challenges";
 
