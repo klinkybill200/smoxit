@@ -11,6 +11,7 @@ import Demo from "./pages/Demo.tsx";
 import SquadInvite from "./pages/SquadInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { InstallPrompt } from "./components/InstallPrompt";
+import { ShareProvider } from "./components/ShareSheet";
 
 const queryClient = new QueryClient();
 
