@@ -98,6 +98,39 @@ const SquadInvite = () => {
     );
   }
 
+  if (joined && preview) {
+    const openChat = () => {
+      try { sessionStorage.setItem("smoxit:open_tab", "community"); } catch {}
+      navigate("/", { replace: true });
+    };
+    return (
+      <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col items-center justify-center px-6 text-center">
+        <div className="animate-fade-in flex flex-col items-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/20 backdrop-blur">
+            <CheckCircle2 className="h-12 w-12 text-accent" strokeWidth={2.5} />
+          </div>
+          <h1 className="mt-6 text-3xl font-bold">You're in! 🎉</h1>
+          <p className="mt-3 max-w-xs text-primary-foreground/80">
+            Welcome to <span className="font-semibold text-accent">{preview.name}</span>. Your squad is ready to cheer you on.
+          </p>
+          <div className="mt-6 rounded-2xl bg-white/10 px-5 py-3 backdrop-blur">
+            <div className="text-xs uppercase tracking-wider text-primary-foreground/60">Members</div>
+            <div className="text-2xl font-bold">{(preview.member_count ?? 0) + 1}</div>
+          </div>
+          <Button size="lg" className="mt-8 h-14 w-full max-w-xs text-base font-semibold" onClick={openChat}>
+            <MessageCircle className="mr-1 h-5 w-5" /> Open Squad chat
+          </Button>
+          <button
+            className="mt-3 text-sm text-primary-foreground/70 underline-offset-4 hover:underline"
+            onClick={() => navigate("/", { replace: true })}
+          >
+            Go to dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col">
       <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col px-6 pt-12 pb-10">
