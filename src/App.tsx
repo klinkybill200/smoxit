@@ -8,6 +8,7 @@ import { UserProvider } from "@/lib/store";
 import Index from "./pages/Index.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
 import Demo from "./pages/Demo.tsx";
+import SquadInvite from "./pages/SquadInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { InstallPrompt } from "./components/InstallPrompt";
 
