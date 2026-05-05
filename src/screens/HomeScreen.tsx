@@ -88,10 +88,46 @@ export const HomeScreen = () => {
 
       {/* Stats grid */}
       <section className="grid grid-cols-2 gap-3">
-        <StatCard icon={Coins} label="Money Saved" value={currency.format(money)} />
-        <StatCard icon={Cigarette} label="Cigs Avoided" value={String(avoided)} />
-        <StatCard icon={Heart} label="Life Gained" value={formatLifeGained(life)} />
-        <StatCard icon={Trophy} label="Streak" value={`${d.days}d`} />
+        <StatCard
+          icon={Coins}
+          label="Money Saved"
+          value={currency.format(money)}
+          share={{
+            kind: "money_saved",
+            title: "Money saved with SMOXIT",
+            text: `I've saved ${currency.format(money)} by quitting smoking with SMOXIT 💸`,
+          }}
+        />
+        <StatCard
+          icon={Cigarette}
+          label="Cigs Avoided"
+          value={String(avoided)}
+          share={{
+            kind: "cigs_avoided",
+            title: "Cigs avoided",
+            text: `${avoided} cigarettes I didn't smoke thanks to SMOXIT 🚭`,
+          }}
+        />
+        <StatCard
+          icon={Heart}
+          label="Life Gained"
+          value={formatLifeGained(life)}
+          share={{
+            kind: "life_gained",
+            title: "Life gained",
+            text: `I just gained ${formatLifeGained(life)} of life back by quitting smoking ❤️`,
+          }}
+        />
+        <StatCard
+          icon={Trophy}
+          label="Streak"
+          value={`${d.days}d`}
+          share={{
+            kind: "streak",
+            title: "Smoke-free streak",
+            text: `${d.days} days smoke-free and counting 🔥`,
+          }}
+        />
       </section>
 
       {/* Why I Quit */}
