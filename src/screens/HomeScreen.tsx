@@ -147,7 +147,16 @@ export const HomeScreen = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Dream Goal</p>
             <p className="font-display text-lg font-black">{user.dreamGoal.name}</p>
           </div>
-          <p className="text-sm font-bold text-accent">{goalPct.toFixed(0)}%</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-accent">{goalPct.toFixed(0)}%</p>
+            <ShareButton
+              intent={{
+                kind: "dream_goal",
+                title: "My dream goal",
+                text: `I'm ${goalPct.toFixed(0)}% closer to my dream "${user.dreamGoal.name}" — funded by quitting smoking with SMOXIT 🎯`,
+              }}
+            />
+          </div>
         </div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-secondary">
           <div className="h-full rounded-full bg-gradient-accent transition-all duration-500" style={{ width: `${goalPct}%` }} />
