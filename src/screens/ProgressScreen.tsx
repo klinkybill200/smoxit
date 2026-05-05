@@ -40,6 +40,7 @@ const badges: Badge[] = [
 
 export const ProgressScreen = () => {
   const { user, dispatch } = useUser();
+  const { share: shareGlobal } = useShare();
   const currency = useCurrency();
   const [confetti, setConfetti] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
