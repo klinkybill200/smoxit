@@ -6,6 +6,7 @@ import { useCurrency } from "@/lib/currency";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Button } from "@/components/ui/button";
 import { awardXp } from "@/lib/xp";
+import { ShareButton } from "@/components/ShareSheet";
 
 const moods = ["😩", "😕", "😐", "🙂", "🤩"] as const;
 
@@ -87,10 +88,46 @@ export const HomeScreen = () => {
 
       {/* Stats grid */}
       <section className="grid grid-cols-2 gap-3">
-        <StatCard icon={Coins} label="Money Saved" value={currency.format(money)} />
-        <StatCard icon={Cigarette} label="Cigs Avoided" value={String(avoided)} />
-        <StatCard icon={Heart} label="Life Gained" value={formatLifeGained(life)} />
-        <StatCard icon={Trophy} label="Streak" value={`${d.days}d`} />
+        <StatCard
+          icon={Coins}
+          label="Money Saved"
+          value={currency.format(money)}
+          share={{
+            kind: "money_saved",
+            title: "Money saved with SMOXIT",
+            text: `I've saved ${currency.format(money)} by quitting smoking with SMOXIT 💸`,
+          }}
+        />
+        <StatCard
+          icon={Cigarette}
+          label="Cigs Avoided"
+          value={String(avoided)}
+          share={{
+            kind: "cigs_avoided",
+            title: "Cigs avoided",
+            text: `${avoided} cigarettes I didn't smoke thanks to SMOXIT 🚭`,
+          }}
+        />
+        <StatCard
+          icon={Heart}
+          label="Life Gained"
+          value={formatLifeGained(life)}
+          share={{
+            kind: "life_gained",
+            title: "Life gained",
+            text: `I just gained ${formatLifeGained(life)} of life back by quitting smoking ❤️`,
+          }}
+        />
+        <StatCard
+          icon={Trophy}
+          label="Streak"
+          value={`${d.days}d`}
+          share={{
+            kind: "streak",
+            title: "Smoke-free streak",
+            text: `${d.days} days smoke-free and counting 🔥`,
+          }}
+        />
       </section>
 
       {/* Why I Quit */}
@@ -110,7 +147,16 @@ export const HomeScreen = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Dream Goal</p>
             <p className="font-display text-lg font-black">{user.dreamGoal.name}</p>
           </div>
-          <p className="text-sm font-bold text-accent">{goalPct.toFixed(0)}%</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-accent">{goalPct.toFixed(0)}%</p>
+            <ShareButton
+              intent={{
+                kind: "dream_goal",
+                title: "My dream goal",
+                text: `I'm ${goalPct.toFixed(0)}% closer to my dream "${user.dreamGoal.name}" — funded by quitting smoking with SMOXIT 🎯`,
+              }}
+            />
+          </div>
         </div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-secondary">
           <div className="h-full rounded-full bg-gradient-accent transition-all duration-500" style={{ width: `${goalPct}%` }} />
@@ -160,8 +206,19 @@ export const HomeScreen = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
-  <div className="smoxit-card">
+const StatCard = ({
+  icon: Icon,
+  label,
+  value,
+  share,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  share?: import("@/lib/share").ShareIntent;
+}) => (
+  <div className="smoxit-card relative">
+    {share && <ShareButton intent={share} className="absolute right-2 top-2" />}
     <Icon className="mb-2 h-5 w-5 text-accent" />
     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
     <p className="stat-number mt-1 text-2xl text-foreground">{value}</p>

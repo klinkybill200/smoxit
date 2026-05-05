@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { dailyChallenges, weeklyQuests, monthlyQuests, isQuestComplete } from "@/lib/quests";
 import { awardXp } from "@/lib/xp";
 import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
+import { useShare, ShareButton } from "@/components/ShareSheet";
 
 interface Badge {
   id: string;
@@ -39,6 +40,7 @@ const badges: Badge[] = [
 
 export const ProgressScreen = () => {
   const { user, dispatch } = useUser();
+  const { share: shareGlobal } = useShare();
   const currency = useCurrency();
   const [confetti, setConfetti] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
@@ -118,14 +120,11 @@ export const ProgressScreen = () => {
   };
 
   const share = () => {
-    const text = `I've been smoke-free for ${d.days} days with SMOXIT! 🎉 ${cigsAvoided(user)} cigarettes avoided. ${currency.format(moneySaved(user))} saved.`;
-    if (navigator.share) {
-      navigator.share({ title: "SMOXIT", text }).then(() => awardXp("share_milestone")).catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(text);
-      awardXp("share_milestone");
-      toast.success("Milestone copied!");
-    }
+    shareGlobal({
+      kind: "milestone",
+      title: "My SMOXIT progress",
+      text: `I've been smoke-free for ${d.days} days with SMOXIT! 🎉 ${cigsAvoided(user)} cigarettes avoided. ${currency.format(moneySaved(user))} saved.`,
+    });
   };
 
   const togglePush = async () => {
@@ -194,12 +193,17 @@ export const ProgressScreen = () => {
 
       {/* Compact stats grid */}
       <section className="grid grid-cols-3 gap-2">
-        <Tile icon={Coins}     label="Saved"   value={currency.format(moneySaved(user))} />
-        <Tile icon={Cigarette} label="Avoided" value={String(cigsAvoided(user))} />
-        <Tile icon={Heart}     label="Life+"   value={formatLifeGained(lifeGainedMinutes(user))} />
-        <Tile icon={Flame}     label="Streak"  value={`${d.days}d`} />
-        <Tile icon={Zap}       label="XP"      value={String(user.xp)} accent />
-        <Tile icon={Trophy}    label="Badges"  value={`${badges.filter((b) => b.unlock(ctx)).length}`} />
+        <Tile icon={Coins} label="Saved" value={currency.format(moneySaved(user))}
+          share={{ kind: "money_saved", title: "Money saved", text: `I've saved ${currency.format(moneySaved(user))} since quitting smoking with SMOXIT 💸` }} />
+        <Tile icon={Cigarette} label="Avoided" value={String(cigsAvoided(user))}
+          share={{ kind: "cigs_avoided", title: "Cigs avoided", text: `${cigsAvoided(user)} cigarettes I never smoked thanks to SMOXIT 🚭` }} />
+        <Tile icon={Heart} label="Life+" value={formatLifeGained(lifeGainedMinutes(user))}
+          share={{ kind: "life_gained", title: "Life gained", text: `Just gained ${formatLifeGained(lifeGainedMinutes(user))} of life back ❤️ #SMOXIT` }} />
+        <Tile icon={Flame} label="Streak" value={`${d.days}d`}
+          share={{ kind: "streak", title: "Smoke-free streak", text: `${d.days} days smoke-free 🔥 #SMOXIT` }} />
+        <Tile icon={Zap} label="XP" value={String(user.xp)} accent />
+        <Tile icon={Trophy} label="Badges" value={`${badges.filter((b) => b.unlock(ctx)).length}`}
+          share={{ kind: "badge", title: "Badges earned", text: `I've unlocked ${badges.filter((b) => b.unlock(ctx)).length} badges on SMOXIT 🏆` }} />
       </section>
 
       {/* Daily challenges - compact list */}
@@ -365,8 +369,21 @@ export const ProgressScreen = () => {
   );
 };
 
-const Tile = ({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent?: boolean }) => (
-  <div className={`rounded-xl border p-2.5 ${accent ? "border-accent/40 bg-accent/10" : "border-border/40 bg-card"} shadow-[var(--shadow-card)]`}>
+const Tile = ({
+  icon: Icon,
+  label,
+  value,
+  accent,
+  share,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  accent?: boolean;
+  share?: import("@/lib/share").ShareIntent;
+}) => (
+  <div className={`relative rounded-xl border p-2.5 ${accent ? "border-accent/40 bg-accent/10" : "border-border/40 bg-card"} shadow-[var(--shadow-card)]`}>
+    {share && <ShareButton intent={share} className="absolute right-1.5 top-1.5 h-6 w-6" />}
     <Icon className={`mb-1 h-4 w-4 ${accent ? "text-accent" : "text-muted-foreground"}`} />
     <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
     <p className="stat-number text-base text-foreground leading-tight">{value}</p>
