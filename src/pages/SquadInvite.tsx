@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
-import { Users, Target, Sparkles, ArrowRight } from "lucide-react";
+import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
 import { SQUAD_INVITE_KEY, applyPendingSquadInvite } from "@/lib/squadInvite";
 import { AuthScreen } from "@/components/AuthScreen";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ const SquadInvite = () => {
   const [notFound, setNotFound] = useState(false);
   const [joining, setJoining] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
+  const [joined, setJoined] = useState(false);
 
   // Persist invite code so it survives sign-up flow
   useEffect(() => {
@@ -49,16 +50,17 @@ const SquadInvite = () => {
     })();
   }, [code]);
 
-  // If already signed in, auto-join and bounce to community
+  // If already signed in, auto-join and show success screen
   useEffect(() => {
-    if (authLoading || !session?.user || !preview) return;
+    if (authLoading || !session?.user || !preview || joined) return;
     (async () => {
       setJoining(true);
       const name = await applyPendingSquadInvite(session.user.id);
       if (name) toast.success(`Joined squad ${name} 🎉`);
-      navigate("/", { replace: true });
+      setJoining(false);
+      setJoined(true);
     })();
-  }, [authLoading, session?.user?.id, preview, navigate]);
+  }, [authLoading, session?.user?.id, preview, joined]);
 
   const handleJoin = () => {
     try { localStorage.setItem(SQUAD_INVITE_KEY, code); } catch {}
@@ -92,6 +94,39 @@ const SquadInvite = () => {
         <Button className="mt-8" onClick={() => navigate("/", { replace: true })}>
           Go to SMOXIT
         </Button>
+      </div>
+    );
+  }
+
+  if (joined && preview) {
+    const openChat = () => {
+      try { sessionStorage.setItem("smoxit:open_tab", "community"); } catch {}
+      navigate("/", { replace: true });
+    };
+    return (
+      <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col items-center justify-center px-6 text-center">
+        <div className="animate-fade-in flex flex-col items-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/20 backdrop-blur">
+            <CheckCircle2 className="h-12 w-12 text-accent" strokeWidth={2.5} />
+          </div>
+          <h1 className="mt-6 text-3xl font-bold">You're in! 🎉</h1>
+          <p className="mt-3 max-w-xs text-primary-foreground/80">
+            Welcome to <span className="font-semibold text-accent">{preview.name}</span>. Your squad is ready to cheer you on.
+          </p>
+          <div className="mt-6 rounded-2xl bg-white/10 px-5 py-3 backdrop-blur">
+            <div className="text-xs uppercase tracking-wider text-primary-foreground/60">Members</div>
+            <div className="text-2xl font-bold">{(preview.member_count ?? 0) + 1}</div>
+          </div>
+          <Button size="lg" className="mt-8 h-14 w-full max-w-xs text-base font-semibold" onClick={openChat}>
+            <MessageCircle className="mr-1 h-5 w-5" /> Open Squad chat
+          </Button>
+          <button
+            className="mt-3 text-sm text-primary-foreground/70 underline-offset-4 hover:underline"
+            onClick={() => navigate("/", { replace: true })}
+          >
+            Go to dashboard
+          </button>
+        </div>
       </div>
     );
   }
