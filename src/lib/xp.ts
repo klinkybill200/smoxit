@@ -29,7 +29,12 @@ export type XpEventType =
   // Daily / weekly challenges
   | "daily_challenge"       // 15 XP, free (key holds challenge id+date)
   | "weekly_quest"          // 50 XP, free
-  | "monthly_quest";        // 200 XP, free
+  | "monthly_quest"         // 200 XP, free
+  // Community
+  | "post_shared"           // 10 XP, free
+  | "comment_posted"        // 5 XP, free
+  | "challenge_joined"      // 10 XP, free
+  | "challenge_day";        // 20 XP, free
 
 interface XpDef { amount: number; dedupe: "once" | "daily" | "free"; label: string }
 
@@ -51,6 +56,10 @@ export const XP_DEFS: Record<XpEventType, XpDef> = {
   daily_challenge:     { amount: 15, dedupe: "free",  label: "Daily challenge" },
   weekly_quest:        { amount: 50, dedupe: "free",  label: "Weekly quest" },
   monthly_quest:       { amount: 200,dedupe: "free",  label: "Monthly quest" },
+  post_shared:         { amount: 10, dedupe: "free",  label: "Post shared" },
+  comment_posted:      { amount: 5,  dedupe: "free",  label: "Comment posted" },
+  challenge_joined:    { amount: 10, dedupe: "free",  label: "Challenge joined" },
+  challenge_day:       { amount: 20, dedupe: "free",  label: "Challenge day" },
 };
 
 function dedupeKey(type: XpEventType, extra?: string): string | null {
