@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
-import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Mail, Share2, Copy } from "lucide-react";
+import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Share2, Copy } from "lucide-react";
 import { SQUAD_INVITE_KEY, applyPendingSquadInvite, buildSquadShareMessage, buildSquadShareUrl } from "@/lib/squadInvite";
 import { QRCodeSVG } from "qrcode.react";
 import { AuthScreen } from "@/components/AuthScreen";
+import { useShare } from "@/components/ShareSheet";
 import { toast } from "sonner";
 
 interface Preview {
