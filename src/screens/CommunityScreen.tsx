@@ -583,6 +583,7 @@ const JoinSquadSheet = ({ userId, onClose, onJoined }: { userId: string; onClose
 const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   squad: Squad; userId: string; onLeave: () => void; onSwitchAway: () => void;
 }) => {
+  const [shareOpen, setShareOpen] = useState(false);
   const { user } = useUser();
   const [members, setMembers] = useState<SquadMember[]>([]);
   const [messages, setMessages] = useState<SquadMessage[]>([]);
