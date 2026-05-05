@@ -364,8 +364,21 @@ export const ProgressScreen = () => {
   );
 };
 
-const Tile = ({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent?: boolean }) => (
-  <div className={`rounded-xl border p-2.5 ${accent ? "border-accent/40 bg-accent/10" : "border-border/40 bg-card"} shadow-[var(--shadow-card)]`}>
+const Tile = ({
+  icon: Icon,
+  label,
+  value,
+  accent,
+  share,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  accent?: boolean;
+  share?: import("@/lib/share").ShareIntent;
+}) => (
+  <div className={`relative rounded-xl border p-2.5 ${accent ? "border-accent/40 bg-accent/10" : "border-border/40 bg-card"} shadow-[var(--shadow-card)]`}>
+    {share && <ShareButton intent={share} className="absolute right-1.5 top-1.5 h-6 w-6" />}
     <Icon className={`mb-1 h-4 w-4 ${accent ? "text-accent" : "text-muted-foreground"}`} />
     <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
     <p className="stat-number text-base text-foreground leading-tight">{value}</p>
