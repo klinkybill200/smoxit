@@ -59,11 +59,8 @@ export const HomeScreen = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <header className="flex items-center justify-between pt-2">
+      <header className="flex items-center pt-2">
         <SmoxitLogo size={28} />
-        <button className="rounded-full bg-card p-2.5 shadow-[var(--shadow-card)] border border-border/40" aria-label="Settings">
-          <Settings className="h-5 w-5 text-muted-foreground" />
-        </button>
       </header>
 
       {/* Timer card */}
