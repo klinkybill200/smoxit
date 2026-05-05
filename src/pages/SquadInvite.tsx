@@ -145,15 +145,12 @@ const SquadInvite = () => {
             <div className="mt-2 text-[11px] text-primary-foreground/60">Scan to join the squad</div>
             <div className="mt-2 font-mono text-lg tracking-[0.3em] text-accent">{code}</div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="h-11" onClick={shareWhatsApp}>
-                <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
-              </Button>
-              <Button variant="secondary" className="h-11" onClick={shareEmail}>
-                <Mail className="mr-1 h-4 w-4" /> Email
+              <Button variant="secondary" className="h-11" onClick={openShare}>
+                <Share2 className="mr-1 h-4 w-4" /> Share invite
               </Button>
               <Button
                 variant="secondary"
-                className="col-span-2 h-11"
+                className="h-11"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(code);
