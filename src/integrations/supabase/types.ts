@@ -14,6 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          days_completed: number
+          joined_at: string
+          last_completed_date: string | null
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          challenge_id: string
+          days_completed?: number
+          joined_at?: string
+          last_completed_date?: string | null
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          challenge_id?: string
+          days_completed?: number
+          joined_at?: string
+          last_completed_date?: string | null
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          daily_tasks: Json | null
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          target_participants: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          daily_tasks?: Json | null
+          description?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          target_participants?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          daily_tasks?: Json | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          target_participants?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          reactions: number
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          reactions?: number
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          reactions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -98,6 +201,68 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      post_reactions: {
+        Row: {
+          created_at: string
+          post_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          me_too: number
+          reactions: number
+          show_stats: boolean
+          user_id: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          me_too?: number
+          reactions?: number
+          show_stats?: boolean
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          me_too?: number
+          reactions?: number
+          show_stats?: boolean
+          user_id?: string
         }
         Relationships: []
       }
@@ -224,6 +389,100 @@ export type Database = {
         }
         Relationships: []
       }
+      squad_members: {
+        Row: {
+          joined_at: string
+          squad_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          squad_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          squad_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_members_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          is_system: boolean
+          squad_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          is_system?: boolean
+          squad_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          is_system?: boolean
+          squad_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_messages_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squads: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          goal: string | null
+          id: string
+          is_public: boolean
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          goal?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          goal?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -267,6 +526,27 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_xp: {
+        Row: {
+          level: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          level?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          level?: number
+          total_xp?: number
           updated_at?: string
           user_id?: string
         }
@@ -316,6 +596,10 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
+      is_squad_member: {
+        Args: { _squad_id: string; _user_id: string }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
