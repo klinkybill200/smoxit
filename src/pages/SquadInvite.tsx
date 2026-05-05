@@ -30,6 +30,7 @@ const SquadInvite = () => {
   const [joining, setJoining] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [joined, setJoined] = useState(false);
+  const { share } = useShare();
 
   // Persist invite code so it survives sign-up flow
   useEffect(() => {
