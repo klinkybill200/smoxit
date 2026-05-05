@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Users, Target, Sparkles, ArrowRight } from "lucide-react";
 import { SQUAD_INVITE_KEY, applyPendingSquadInvite } from "@/lib/squadInvite";
+import { AuthScreen } from "@/components/AuthScreen";
 import { toast } from "sonner";
 
 interface Preview {
@@ -25,6 +26,7 @@ const SquadInvite = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [signingUp, setSigningUp] = useState(false);
 
   // Persist invite code so it survives sign-up flow
   useEffect(() => {
@@ -59,10 +61,16 @@ const SquadInvite = () => {
   }, [authLoading, session?.user?.id, preview, navigate]);
 
   const handleJoin = () => {
-    // Ensure code is captured, then redirect to auth
     try { localStorage.setItem(SQUAD_INVITE_KEY, code); } catch {}
-    navigate(`/?squad=${code}`, { replace: true });
+    if (session) return; // effect above auto-joins
+    setSigningUp(true);
   };
+
+  if (signingUp && !session) {
+    // Inline sign-up keeps user on /invite/:code so the auth listener
+    // can auto-join the squad immediately after sign-in.
+    return <AuthScreen />;
+  }
 
   if (loading || authLoading) {
     return (
