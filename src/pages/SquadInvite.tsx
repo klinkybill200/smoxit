@@ -61,10 +61,16 @@ const SquadInvite = () => {
   }, [authLoading, session?.user?.id, preview, navigate]);
 
   const handleJoin = () => {
-    // Ensure code is captured, then redirect to auth
     try { localStorage.setItem(SQUAD_INVITE_KEY, code); } catch {}
-    navigate(`/?squad=${code}`, { replace: true });
+    if (session) return; // effect above auto-joins
+    setSigningUp(true);
   };
+
+  if (signingUp && !session) {
+    // Inline sign-up keeps user on /invite/:code so the auth listener
+    // can auto-join the squad immediately after sign-in.
+    return <AuthScreen />;
+  }
 
   if (loading || authLoading) {
     return (
