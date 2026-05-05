@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
-import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Mail, Share2 } from "lucide-react";
+import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Mail, Share2, Copy } from "lucide-react";
 import { SQUAD_INVITE_KEY, applyPendingSquadInvite, buildSquadShareMessage } from "@/lib/squadInvite";
 import { AuthScreen } from "@/components/AuthScreen";
 import { toast } from "sonner";
@@ -140,6 +140,20 @@ const SquadInvite = () => {
               </Button>
               <Button variant="secondary" className="h-11" onClick={shareEmail}>
                 <Mail className="mr-1 h-4 w-4" /> Email
+              </Button>
+              <Button
+                variant="secondary"
+                className="col-span-2 h-11"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(code);
+                    toast.success("Squad code copied to clipboard");
+                  } catch {
+                    toast.error("Couldn't copy code");
+                  }
+                }}
+              >
+                <Copy className="mr-1 h-4 w-4" /> Copy code
               </Button>
             </div>
           </div>
