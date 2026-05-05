@@ -103,25 +103,49 @@ const SquadInvite = () => {
       try { sessionStorage.setItem("smoxit:open_tab", "community"); } catch {}
       navigate("/", { replace: true });
     };
+    const message = buildSquadShareMessage(code, preview.name);
+    const shareWhatsApp = () => {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    };
+    const shareEmail = () => {
+      const subject = `Join my SMOXIT Quit-Squad ${preview.name}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    };
     return (
       <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col items-center justify-center px-6 text-center">
-        <div className="animate-fade-in flex flex-col items-center">
+        <div className="animate-fade-in flex w-full max-w-xs flex-col items-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/20 backdrop-blur">
             <CheckCircle2 className="h-12 w-12 text-accent" strokeWidth={2.5} />
           </div>
           <h1 className="mt-6 text-3xl font-bold">You're in! 🎉</h1>
-          <p className="mt-3 max-w-xs text-primary-foreground/80">
+          <p className="mt-3 text-primary-foreground/80">
             Welcome to <span className="font-semibold text-accent">{preview.name}</span>. Your squad is ready to cheer you on.
           </p>
           <div className="mt-6 rounded-2xl bg-white/10 px-5 py-3 backdrop-blur">
             <div className="text-xs uppercase tracking-wider text-primary-foreground/60">Members</div>
             <div className="text-2xl font-bold">{(preview.member_count ?? 0) + 1}</div>
           </div>
-          <Button size="lg" className="mt-8 h-14 w-full max-w-xs text-base font-semibold" onClick={openChat}>
+          <Button size="lg" className="mt-8 h-14 w-full text-base font-semibold" onClick={openChat}>
             <MessageCircle className="mr-1 h-5 w-5" /> Open Squad chat
           </Button>
+
+          <div className="mt-6 w-full rounded-2xl border border-white/15 bg-white/5 p-4">
+            <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary-foreground/90">
+              <Share2 className="h-4 w-4 text-accent" /> Invite another friend
+            </div>
+            <div className="mt-1 font-mono text-lg tracking-[0.3em] text-accent">{code}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button variant="secondary" className="h-11" onClick={shareWhatsApp}>
+                <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
+              </Button>
+              <Button variant="secondary" className="h-11" onClick={shareEmail}>
+                <Mail className="mr-1 h-4 w-4" /> Email
+              </Button>
+            </div>
+          </div>
+
           <button
-            className="mt-3 text-sm text-primary-foreground/70 underline-offset-4 hover:underline"
+            className="mt-4 text-sm text-primary-foreground/70 underline-offset-4 hover:underline"
             onClick={() => navigate("/", { replace: true })}
           >
             Go to dashboard
