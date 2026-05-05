@@ -711,12 +711,82 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1" onClick={() => { navigator.clipboard?.writeText(squad.code); toast.success("Code copied"); }}>
-          <Copy className="mr-1 h-3 w-3" /> Share code
+        <Button size="sm" className="flex-1 bg-accent font-bold text-accent-foreground hover:bg-accent-glow" onClick={() => setShareOpen(true)}>
+          <Share2 className="mr-1 h-3 w-3" /> Invite friends
         </Button>
         <Button variant="outline" size="sm" className="flex-1 text-destructive" onClick={onLeave}>
           <LogOut className="mr-1 h-3 w-3" /> Leave
         </Button>
+      </div>
+
+      {shareOpen && <ShareSquadSheet squad={squad} onClose={() => setShareOpen(false)} />}
+    </div>
+  );
+};
+
+const ShareSquadSheet = ({ squad, onClose }: { squad: Squad; onClose: () => void }) => {
+  const url = buildSquadShareUrl(squad.code);
+  const message = buildSquadShareMessage(squad.code, squad.name);
+  const encoded = encodeURIComponent(message);
+  const subject = encodeURIComponent(`Join my SMOXIT Quit-Squad`);
+
+  const copy = (text: string, label: string) => {
+    navigator.clipboard?.writeText(text);
+    toast.success(`${label} copied`);
+  };
+
+  const nativeShare = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: "SMOXIT Quit-Squad", text: message, url }); } catch {}
+    } else {
+      copy(message, "Invite");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}>
+      <div className="w-full rounded-t-3xl bg-card p-5 pb-[calc(env(safe-area-inset-bottom)+5rem)] space-y-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-black">Invite to {squad.name}</h2>
+          <button onClick={onClose}><X className="h-5 w-5" /></button>
+        </div>
+
+        <div className="rounded-2xl bg-gradient-hero p-5 text-center text-primary-foreground">
+          <p className="text-[10px] uppercase tracking-widest opacity-70">Squad Code</p>
+          <p className="font-mono text-3xl font-black tracking-[0.4em] mt-1">{squad.code}</p>
+          <button onClick={() => copy(squad.code, "Code")} className="mt-2 text-[11px] font-bold text-accent inline-flex items-center gap-1">
+            <Copy className="h-3 w-3" /> Tap to copy
+          </button>
+        </div>
+
+        <div className="rounded-xl bg-secondary px-3 py-2 text-[11px] text-muted-foreground break-all">
+          {url}
+          <button onClick={() => copy(url, "Link")} className="ml-2 font-bold text-accent">Copy</button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <a
+            href={`https://wa.me/?text=${encoded}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-3 text-sm font-bold text-white transition-bounce active:scale-95"
+          >
+            <MessageSquare className="h-4 w-4" /> WhatsApp
+          </a>
+          <a
+            href={`mailto:?subject=${subject}&body=${encoded}`}
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-3 text-sm font-bold text-primary-foreground transition-bounce active:scale-95"
+          >
+            <Mail className="h-4 w-4" /> Email
+          </a>
+        </div>
+
+        <Button onClick={nativeShare} variant="outline" className="w-full">
+          <Share2 className="mr-2 h-4 w-4" /> More share options
+        </Button>
+
+        <p className="text-[10px] text-center text-muted-foreground">
+          New friends? They'll be sent straight into your squad after sign-up.
+        </p>
       </div>
     </div>
   );
