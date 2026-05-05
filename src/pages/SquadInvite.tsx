@@ -134,7 +134,13 @@ const SquadInvite = () => {
             <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary-foreground/90">
               <Share2 className="h-4 w-4 text-accent" /> Invite another friend
             </div>
-            <div className="mt-1 font-mono text-lg tracking-[0.3em] text-accent">{code}</div>
+            <div className="mt-3 flex justify-center">
+              <div className="rounded-xl bg-white p-3">
+                <QRCodeSVG value={buildSquadShareUrl(code)} size={140} level="M" />
+              </div>
+            </div>
+            <div className="mt-2 text-[11px] text-primary-foreground/60">Scan to join the squad</div>
+            <div className="mt-2 font-mono text-lg tracking-[0.3em] text-accent">{code}</div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Button variant="secondary" className="h-11" onClick={shareWhatsApp}>
                 <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
