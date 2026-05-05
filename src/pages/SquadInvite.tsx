@@ -50,16 +50,17 @@ const SquadInvite = () => {
     })();
   }, [code]);
 
-  // If already signed in, auto-join and bounce to community
+  // If already signed in, auto-join and show success screen
   useEffect(() => {
-    if (authLoading || !session?.user || !preview) return;
+    if (authLoading || !session?.user || !preview || joined) return;
     (async () => {
       setJoining(true);
       const name = await applyPendingSquadInvite(session.user.id);
       if (name) toast.success(`Joined squad ${name} 🎉`);
-      navigate("/", { replace: true });
+      setJoining(false);
+      setJoined(true);
     })();
-  }, [authLoading, session?.user?.id, preview, navigate]);
+  }, [authLoading, session?.user?.id, preview, joined]);
 
   const handleJoin = () => {
     try { localStorage.setItem(SQUAD_INVITE_KEY, code); } catch {}
