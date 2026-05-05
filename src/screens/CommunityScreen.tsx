@@ -342,7 +342,7 @@ const Composer = ({ userId, stats, onClose, onPosted }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}>
-      <div className="w-full rounded-t-3xl bg-card p-5 space-y-4 animate-in slide-in-from-bottom" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full rounded-t-3xl bg-card p-5 pb-[calc(env(safe-area-inset-bottom)+5rem)] space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-black">Share with community</h2>
           <button onClick={onClose}><X className="h-5 w-5" /></button>
