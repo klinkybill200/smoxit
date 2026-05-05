@@ -26,7 +26,16 @@ const Index = () => {
   const [tab, setTab] = useState<Tab>("home");
 
   // Capture squad invite from URL early so it survives sign-up
-  useEffect(() => { captureSquadInviteFromUrl(); }, []);
+  useEffect(() => {
+    captureSquadInviteFromUrl();
+    try {
+      const t = sessionStorage.getItem("smoxit:open_tab");
+      if (t === "community") {
+        setTab("community");
+        sessionStorage.removeItem("smoxit:open_tab");
+      }
+    } catch {}
+  }, []);
 
   // After sign-in, auto-join pending squad and switch to community tab
   useEffect(() => {
