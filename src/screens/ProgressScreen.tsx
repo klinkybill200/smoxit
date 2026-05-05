@@ -193,12 +193,17 @@ export const ProgressScreen = () => {
 
       {/* Compact stats grid */}
       <section className="grid grid-cols-3 gap-2">
-        <Tile icon={Coins}     label="Saved"   value={currency.format(moneySaved(user))} />
-        <Tile icon={Cigarette} label="Avoided" value={String(cigsAvoided(user))} />
-        <Tile icon={Heart}     label="Life+"   value={formatLifeGained(lifeGainedMinutes(user))} />
-        <Tile icon={Flame}     label="Streak"  value={`${d.days}d`} />
-        <Tile icon={Zap}       label="XP"      value={String(user.xp)} accent />
-        <Tile icon={Trophy}    label="Badges"  value={`${badges.filter((b) => b.unlock(ctx)).length}`} />
+        <Tile icon={Coins} label="Saved" value={currency.format(moneySaved(user))}
+          share={{ kind: "money_saved", title: "Money saved", text: `I've saved ${currency.format(moneySaved(user))} since quitting smoking with SMOXIT 💸` }} />
+        <Tile icon={Cigarette} label="Avoided" value={String(cigsAvoided(user))}
+          share={{ kind: "cigs_avoided", title: "Cigs avoided", text: `${cigsAvoided(user)} cigarettes I never smoked thanks to SMOXIT 🚭` }} />
+        <Tile icon={Heart} label="Life+" value={formatLifeGained(lifeGainedMinutes(user))}
+          share={{ kind: "life_gained", title: "Life gained", text: `Just gained ${formatLifeGained(lifeGainedMinutes(user))} of life back ❤️ #SMOXIT` }} />
+        <Tile icon={Flame} label="Streak" value={`${d.days}d`}
+          share={{ kind: "streak", title: "Smoke-free streak", text: `${d.days} days smoke-free 🔥 #SMOXIT` }} />
+        <Tile icon={Zap} label="XP" value={String(user.xp)} accent />
+        <Tile icon={Trophy} label="Badges" value={`${badges.filter((b) => b.unlock(ctx)).length}`}
+          share={{ kind: "badge", title: "Badges earned", text: `I've unlocked ${badges.filter((b) => b.unlock(ctx)).length} badges on SMOXIT 🏆` }} />
       </section>
 
       {/* Daily challenges - compact list */}
