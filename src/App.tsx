@@ -8,6 +8,7 @@ import { UserProvider } from "@/lib/store";
 import Index from "./pages/Index.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
 import Demo from "./pages/Demo.tsx";
+import SquadInvite from "./pages/SquadInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { InstallPrompt } from "./components/InstallPrompt";
 
@@ -24,6 +25,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/demo" element={<Demo />} />
+              <Route path="/invite/:code" element={<SquadInvite />} />
+              <Route path="/invite" element={<SquadInvite />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

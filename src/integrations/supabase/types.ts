@@ -596,6 +596,15 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_squad_preview: {
+        Args: { _code: string }
+        Returns: {
+          goal: string
+          id: string
+          member_count: number
+          name: string
+        }[]
+      }
       is_squad_member: {
         Args: { _squad_id: string; _user_id: string }
         Returns: boolean

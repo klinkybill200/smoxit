@@ -44,7 +44,7 @@ export const applyPendingSquadInvite = async (userId: string): Promise<string | 
 
 export const buildSquadShareUrl = (code: string) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://smoxit.app";
-  return `${origin}/?squad=${code}`;
+  return `${origin}/invite/${code}`;
 };
 
 export const buildSquadShareMessage = (code: string, squadName?: string) => {
