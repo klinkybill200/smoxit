@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { anonName, anonColor, levelFromXp, timeAgo, generateSquadCode, CATEGORY_META, type Category } from "@/lib/community";
+import { useProfiles, displayName, displayInitial, displayColor } from "@/lib/profiles";
 import { getDuration, moneySaved, todayKey } from "@/lib/calc";
 import { awardXp } from "@/lib/xp";
 import { ReferralCard } from "@/components/ReferralCard";
