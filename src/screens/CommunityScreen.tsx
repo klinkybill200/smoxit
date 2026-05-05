@@ -530,7 +530,7 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}>
-      <div className="w-full rounded-t-3xl bg-card p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full rounded-t-3xl bg-card p-5 pb-[calc(env(safe-area-inset-bottom)+5rem)] space-y-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-black">Create a Squad</h2>
           <button onClick={onClose}><X className="h-5 w-5" /></button>
