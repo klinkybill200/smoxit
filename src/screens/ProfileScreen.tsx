@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut, Camera, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUser } from "@/lib/store";
 import { getDuration, levelInfo, moneySaved, cigsAvoided } from "@/lib/calc";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { SubscriptionSection } from "@/components/SubscriptionSection";
+import { supabase } from "@/integrations/supabase/client";
+import { invalidateProfile } from "@/lib/profiles";
 import { toast } from "sonner";
 
 export const ProfileScreen = () => {
@@ -17,6 +19,67 @@ export const ProfileScreen = () => {
   const currency = useCurrency();
   const [editing, setEditing] = useState(false);
   const [editGoal, setEditGoal] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!authUser) return;
+    supabase
+      .from("profiles")
+      .select("avatar_url,display_name")
+      .eq("user_id", authUser.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setAvatarUrl(data?.avatar_url ?? null);
+        setDisplayName(data?.display_name ?? "");
+      });
+  }, [authUser]);
+
+  const handleAvatarPick = () => fileRef.current?.click();
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !authUser) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${authUser.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", authUser.id);
+      if (profErr) throw profErr;
+      setAvatarUrl(url);
+      invalidateProfile(authUser.id);
+      toast.success("Profile picture updated");
+    } catch (err: any) {
+      toast.error(err.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const saveDisplayName = async () => {
+    if (!authUser) return;
+    const name = displayName.trim().slice(0, 40);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: name || null })
+      .eq("user_id", authUser.id);
+    if (error) { toast.error("Could not save name"); return; }
+    invalidateProfile(authUser.id);
+    toast.success("Name updated");
+  };
 
   if (!user) return null;
   const d = getDuration(user.quitDate);
