@@ -50,5 +50,5 @@ export const buildSquadShareUrl = (code: string) => {
 export const buildSquadShareMessage = (code: string, squadName?: string) => {
   const url = buildSquadShareUrl(code);
   const name = squadName ? ` "${squadName}"` : "";
-  return `Hey! Ich quitte gerade das Rauchen mit SMOXIT 🚭. Join meinen Quit-Squad${name} mit Code ${code} → ${url}`;
+  return `Hey! I'm quitting smoking with SMOXIT 🚭. Join my Quit-Squad${name} with code ${code} → ${url}`;
 };
