@@ -21,17 +21,19 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <UserProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/demo" element={<Demo />} />
-              <Route path="/invite/:code" element={<SquadInvite />} />
-              <Route path="/invite" element={<SquadInvite />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <InstallPrompt />
+            <ShareProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/demo" element={<Demo />} />
+                <Route path="/invite/:code" element={<SquadInvite />} />
+                <Route path="/invite" element={<SquadInvite />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <InstallPrompt />
+            </ShareProvider>
           </UserProvider>
         </AuthProvider>
       </BrowserRouter>
