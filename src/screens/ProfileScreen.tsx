@@ -122,14 +122,49 @@ export const ProfileScreen = () => {
       {/* User card */}
       <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent font-display text-2xl font-black text-primary">
-            {user.name[0]?.toUpperCase()}
-          </div>
-          <div>
-            <p className="font-display text-2xl font-black">{user.name}</p>
+          <button
+            type="button"
+            onClick={handleAvatarPick}
+            disabled={uploading}
+            className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-display text-2xl font-black text-primary ring-2 ring-white/20 transition active:scale-95"
+            aria-label="Change profile picture"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <span>{(displayName || user.name)[0]?.toUpperCase()}</span>
+            )}
+            <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
+              {uploading ? <Loader2 className="h-5 w-5 animate-spin text-white" /> : <Camera className="h-5 w-5 text-white" />}
+            </span>
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-2xl font-black truncate">{displayName || user.name}</p>
             <p className="text-xs text-white/70">Quit since {new Date(user.quitDate).toLocaleDateString()}</p>
             <p className="mt-1 text-xs font-bold text-accent">{lvl.name} · {user.xp} XP</p>
           </div>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <Input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value.slice(0, 40))}
+            placeholder="Display name (shown in community)"
+            className="h-9 bg-white/10 text-sm text-white placeholder:text-white/50 border-white/20"
+          />
+          <Button
+            onClick={saveDisplayName}
+            size="sm"
+            className="h-9 bg-accent font-bold text-primary hover:bg-accent-glow"
+          >
+            Save
+          </Button>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div><p className="stat-number text-xl">{d.days}</p><p className="text-[10px] uppercase tracking-wider text-white/60">Days</p></div>
