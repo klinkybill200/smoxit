@@ -26,6 +26,7 @@ const SquadInvite = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [signingUp, setSigningUp] = useState(false);
 
   // Persist invite code so it survives sign-up flow
   useEffect(() => {
