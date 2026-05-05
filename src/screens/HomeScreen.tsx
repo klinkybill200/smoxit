@@ -6,6 +6,7 @@ import { useCurrency } from "@/lib/currency";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Button } from "@/components/ui/button";
 import { awardXp } from "@/lib/xp";
+import { ShareButton } from "@/components/ShareSheet";
 
 const moods = ["😩", "😕", "😐", "🙂", "🤩"] as const;
 
