@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
-import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Mail, Share2, Copy } from "lucide-react";
+import { Users, Target, Sparkles, ArrowRight, CheckCircle2, MessageCircle, Share2, Copy } from "lucide-react";
 import { SQUAD_INVITE_KEY, applyPendingSquadInvite, buildSquadShareMessage, buildSquadShareUrl } from "@/lib/squadInvite";
 import { QRCodeSVG } from "qrcode.react";
 import { AuthScreen } from "@/components/AuthScreen";
+import { useShare } from "@/components/ShareSheet";
 import { toast } from "sonner";
 
 interface Preview {
@@ -29,6 +30,7 @@ const SquadInvite = () => {
   const [joining, setJoining] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [joined, setJoined] = useState(false);
+  const { share } = useShare();
 
   // Persist invite code so it survives sign-up flow
   useEffect(() => {
@@ -105,12 +107,13 @@ const SquadInvite = () => {
       navigate("/", { replace: true });
     };
     const message = buildSquadShareMessage(code, preview.name);
-    const shareWhatsApp = () => {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    };
-    const shareEmail = () => {
-      const subject = `Join my SMOXIT Quit-Squad ${preview.name}`;
-      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    const openShare = () => {
+      share({
+        kind: "generic",
+        title: `Join my SMOXIT Quit-Squad ${preview.name}`,
+        text: message,
+        url: buildSquadShareUrl(code),
+      });
     };
     return (
       <div className="min-h-screen bg-gradient-hero text-primary-foreground flex flex-col items-center justify-center px-6 text-center">
@@ -142,15 +145,12 @@ const SquadInvite = () => {
             <div className="mt-2 text-[11px] text-primary-foreground/60">Scan to join the squad</div>
             <div className="mt-2 font-mono text-lg tracking-[0.3em] text-accent">{code}</div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="h-11" onClick={shareWhatsApp}>
-                <MessageCircle className="mr-1 h-4 w-4" /> WhatsApp
-              </Button>
-              <Button variant="secondary" className="h-11" onClick={shareEmail}>
-                <Mail className="mr-1 h-4 w-4" /> Email
+              <Button variant="secondary" className="h-11" onClick={openShare}>
+                <Share2 className="mr-1 h-4 w-4" /> Share invite
               </Button>
               <Button
                 variant="secondary"
-                className="col-span-2 h-11"
+                className="h-11"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(code);
