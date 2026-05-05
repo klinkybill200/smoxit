@@ -141,6 +141,20 @@ const SquadInvite = () => {
               <Button variant="secondary" className="h-11" onClick={shareEmail}>
                 <Mail className="mr-1 h-4 w-4" /> Email
               </Button>
+              <Button
+                variant="secondary"
+                className="col-span-2 h-11"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(code);
+                    toast.success("Squad code copied to clipboard");
+                  } catch {
+                    toast.error("Couldn't copy code");
+                  }
+                }}
+              >
+                <Copy className="mr-1 h-4 w-4" /> Copy code
+              </Button>
             </div>
           </div>
 
