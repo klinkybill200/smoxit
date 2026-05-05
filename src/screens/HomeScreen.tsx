@@ -197,8 +197,19 @@ export const HomeScreen = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
-  <div className="smoxit-card">
+const StatCard = ({
+  icon: Icon,
+  label,
+  value,
+  share,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  share?: import("@/lib/share").ShareIntent;
+}) => (
+  <div className="smoxit-card relative">
+    {share && <ShareButton intent={share} className="absolute right-2 top-2" />}
     <Icon className="mb-2 h-5 w-5 text-accent" />
     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
     <p className="stat-number mt-1 text-2xl text-foreground">{value}</p>
