@@ -15,13 +15,30 @@ const NOUNS = [
   "Comet", "Storm", "Ember", "Drifter", "Voyager", "Ranger", "Knight", "Nomad",
 ];
 
+const REAL_NAMES = [
+  "Alex", "Sam", "Jamie", "Chris", "Jordan", "Taylor", "Morgan", "Casey",
+  "Robin", "Charlie", "Sasha", "Noah", "Mia", "Liam", "Emma", "Lukas",
+  "Lena", "Finn", "Hannah", "Leon", "Sophie", "Max", "Lara", "Tom",
+  "Anna", "Ben", "Clara", "David", "Ella", "Felix", "Greta", "Henry",
+  "Ida", "Jonas", "Kim", "Laura", "Marco", "Nina", "Oliver", "Paula",
+  "Quinn", "Rafa", "Stella", "Theo", "Uma", "Vince", "Wendy", "Yara",
+  "Maya", "Julia", "Kevin", "Mark", "Nico", "Pia", "Tim", "Eva",
+];
+
 export function anonName(userId?: string | null): string {
   const id = userId ?? localStorage.getItem(NAME_SEED_KEY) ?? "guest";
-  let h1 = 0, h2 = 0, h3 = 0;
+  let h1 = 0, h2 = 0, h3 = 0, h4 = 0;
   for (let i = 0; i < id.length; i++) {
     h1 = (h1 * 31 + id.charCodeAt(i)) | 0;
     h2 = (h2 * 17 + id.charCodeAt(i) * 7) | 0;
     h3 = (h3 * 13 + id.charCodeAt(i) * 3) | 0;
+    h4 = (h4 * 23 + id.charCodeAt(i) * 5) | 0;
+  }
+  // ~40% real first names, ~60% creative adjective+noun combos
+  if (Math.abs(h4) % 5 < 2) {
+    const name = REAL_NAMES[Math.abs(h1) % REAL_NAMES.length];
+    const num = Math.abs(h3) % 90 + 10;
+    return `${name}_${num}`;
   }
   const adj = ADJECTIVES[Math.abs(h1) % ADJECTIVES.length];
   const noun = NOUNS[Math.abs(h2) % NOUNS.length];
