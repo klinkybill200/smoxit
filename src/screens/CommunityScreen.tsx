@@ -395,7 +395,7 @@ const Composer = ({ userId, stats, onClose, onPosted }: {
 /* ------------------------------- SQUADS TAB ------------------------------- */
 
 interface Squad {
-  id: string; name: string; code: string; is_public: boolean; goal: string | null; created_by: string; created_at: string;
+  id: string; name: string; code: string; is_public: boolean; goal: string | null; created_by: string; created_at: string; max_members: number;
 }
 interface SquadMember { squad_id: string; user_id: string; joined_at: string; }
 interface SquadMessage { id: string; squad_id: string; user_id: string; content: string; is_system: boolean; is_pinned: boolean; created_at: string; }
