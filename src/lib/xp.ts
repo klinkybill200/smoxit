@@ -34,7 +34,8 @@ export type XpEventType =
   | "post_shared"           // 10 XP, free
   | "comment_posted"        // 5 XP, free
   | "challenge_joined"      // 10 XP, free
-  | "challenge_day";        // 20 XP, free
+  | "challenge_day"         // 20 XP, free
+  | "squad_challenge";      // varies, free (squad collective challenge)
 
 interface XpDef { amount: number; dedupe: "once" | "daily" | "free"; label: string }
 
