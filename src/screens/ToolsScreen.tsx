@@ -87,12 +87,13 @@ export const ToolsScreen = () => {
           className="relative overflow-hidden rounded-3xl bg-primary p-5 text-left text-primary-foreground shadow-elevated transition-bounce hover:scale-[1.02] active:scale-100"
         >
           <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent/20" />
+          <span className="absolute right-3 top-3 rounded-full bg-accent px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-accent-foreground">AI</span>
           <div className="relative">
             <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sparkles className="h-4 w-4 text-accent-foreground" />
             </div>
-            <p className="font-display text-lg font-black leading-tight">CHAT<br />COACH</p>
-            <p className="mt-1 text-[11px] text-white/70">Talk to an expert.</p>
+            <p className="font-display text-lg font-black leading-tight">AI<br />COACH</p>
+            <p className="mt-1 text-[11px] text-white/70">Personal quit-coach 24/7.</p>
           </div>
         </button>
       </div>
