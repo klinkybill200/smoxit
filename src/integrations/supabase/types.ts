@@ -461,6 +461,8 @@ export type Database = {
       }
       squads: {
         Row: {
+          avatar_color: string
+          avatar_emoji: string
           code: string
           created_at: string
           created_by: string
@@ -471,6 +473,8 @@ export type Database = {
           name: string
         }
         Insert: {
+          avatar_color?: string
+          avatar_emoji?: string
           code: string
           created_at?: string
           created_by: string
@@ -481,6 +485,8 @@ export type Database = {
           name: string
         }
         Update: {
+          avatar_color?: string
+          avatar_emoji?: string
           code?: string
           created_at?: string
           created_by?: string

@@ -18,6 +18,21 @@ import { buildSquadShareUrl, buildSquadShareMessage } from "@/lib/squadInvite";
 
 type SubTab = "feed" | "squads" | "challenges";
 
+const SQUAD_EMOJIS = ["🔥","⚡","🚀","💪","🌟","🦁","🐺","🦅","🐉","🌊","🌈","💎","🏆","🎯","🧠","🌶️","🦄","👑","🎸","🥊"];
+const SQUAD_COLORS = [
+  "hsl(20 80% 55%)","hsl(280 60% 55%)","hsl(180 60% 45%)","hsl(140 50% 45%)",
+  "hsl(340 70% 55%)","hsl(40 90% 55%)","hsl(220 70% 55%)","hsl(0 75% 55%)",
+];
+
+const SquadAvatar = ({ emoji, color, size = 44 }: { emoji?: string | null; color?: string | null; size?: number }) => (
+  <div
+    className="flex shrink-0 items-center justify-center rounded-2xl shadow-button ring-2 ring-white/20"
+    style={{ width: size, height: size, background: `linear-gradient(135deg, ${color || "hsl(20 80% 55%)"}, hsl(var(--accent)))`, fontSize: size * 0.55 }}
+  >
+    <span className="drop-shadow">{emoji || "🔥"}</span>
+  </div>
+);
+
 export const CommunityScreen = () => {
   const { user: authUser } = useAuth();
   const [tab, setTab] = useState<SubTab>("feed");
@@ -143,8 +158,30 @@ const FeedTab = ({ userId }: { userId: string }) => {
     }
   };
 
+  const [inviteHidden, setInviteHidden] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("smoxit:invite-hidden") === "1";
+  });
+  const dismissInvite = () => {
+    setInviteHidden(true);
+    localStorage.setItem("smoxit:invite-hidden", "1");
+  };
+
   return (
     <div className="space-y-3">
+      {!inviteHidden && (
+        <div className="relative">
+          <button
+            onClick={dismissInvite}
+            aria-label="Hide invite"
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 backdrop-blur text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          <ReferralCard />
+        </div>
+      )}
+
       {/* Filter chips */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {FILTERS.map((f) => (
@@ -179,11 +216,6 @@ const FeedTab = ({ userId }: { userId: string }) => {
         />
       ))}
 
-      <div className="pt-4">
-        <ReferralCard />
-      </div>
-
-      {/* FAB */}
       <button
         onClick={() => setComposerOpen(true)}
         className="fixed bottom-24 right-5 z-30 flex items-center gap-2 rounded-full bg-accent px-5 py-3 font-bold text-accent-foreground shadow-button transition-bounce active:scale-95"
@@ -395,7 +427,7 @@ const Composer = ({ userId, stats, onClose, onPosted }: {
 /* ------------------------------- SQUADS TAB ------------------------------- */
 
 interface Squad {
-  id: string; name: string; code: string; is_public: boolean; goal: string | null; created_by: string; created_at: string; max_members: number;
+  id: string; name: string; code: string; is_public: boolean; goal: string | null; created_by: string; created_at: string; max_members: number; avatar_emoji?: string | null; avatar_color?: string | null;
 }
 interface SquadMember { squad_id: string; user_id: string; joined_at: string; }
 interface SquadMessage { id: string; squad_id: string; user_id: string; content: string; is_system: boolean; is_pinned: boolean; created_at: string; }
@@ -453,32 +485,69 @@ const SquadsTab = ({ userId }: { userId: string }) => {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
+        <div className="absolute -right-6 -top-6 text-7xl opacity-20">🤝</div>
+        <div className="absolute -left-4 -bottom-6 text-6xl opacity-10">🔥</div>
         <p className="text-xs font-bold uppercase tracking-widest text-accent">Squads</p>
         <p className="mt-1 font-display text-xl font-black leading-snug">Quit together. It's 2× easier.</p>
+        <p className="mt-1 text-[11px] opacity-80">Find your tribe · cheer each other on · hit goals as a team</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => setCreateOpen(true)} className="rounded-2xl bg-primary p-4 text-left text-primary-foreground transition-bounce active:scale-95">
+        <button onClick={() => setCreateOpen(true)} className="group relative overflow-hidden rounded-2xl bg-primary p-4 text-left text-primary-foreground transition-bounce active:scale-95">
+          <div className="absolute -right-4 -top-4 text-5xl opacity-20 transition-transform group-hover:scale-110">⚡</div>
           <Users className="h-5 w-5 text-accent" />
           <p className="mt-2 font-bold">Create</p>
           <p className="text-[10px] opacity-80">Start a squad</p>
         </button>
-        <button onClick={() => setJoinOpen(true)} className="rounded-2xl bg-accent p-4 text-left text-accent-foreground transition-bounce active:scale-95">
+        <button onClick={() => setJoinOpen(true)} className="group relative overflow-hidden rounded-2xl bg-accent p-4 text-left text-accent-foreground transition-bounce active:scale-95">
+          <div className="absolute -right-4 -top-4 text-5xl opacity-25 transition-transform group-hover:scale-110">🚪</div>
           <Plus className="h-5 w-5" />
           <p className="mt-2 font-bold">Join</p>
           <p className="text-[10px] opacity-80">With a code</p>
         </button>
       </div>
 
+      {/* Squad goals — collective challenges */}
+      <section className="rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5 p-4">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-4 w-4 text-accent" />
+          <p className="text-xs font-bold uppercase tracking-widest text-accent">Squad Goals · grow together</p>
+        </div>
+        <div className="mt-3 space-y-2">
+          {[
+            { label: "Reach 5 members", target: 5, emoji: "👥", reward: "Unlock squad badge" },
+            { label: "Reach 10 members", target: 10, emoji: "🔥", reward: "Group XP boost +20%" },
+            { label: "Fill the squad", target: 0, emoji: "👑", reward: "Legendary squad status" },
+          ].map((g) => {
+            const total = mySquads.length > 0
+              ? Math.max(...publicSquads.map((p) => p.member_count), 1)
+              : 1;
+            const target = g.target || (mySquads[0]?.max_members ?? 20);
+            const pct = Math.min(100, (total / target) * 100);
+            return (
+              <div key={g.label} className="rounded-xl bg-card/60 p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold">{g.emoji} {g.label}</span>
+                  <span className="text-muted-foreground">{Math.min(total, target)}/{target}</span>
+                </div>
+                <Progress value={pct} className="mt-1.5 h-1.5" />
+                <p className="mt-1 text-[10px] text-muted-foreground">🎁 {g.reward}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {mySquads.length > 0 && (
         <section className="space-y-2">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your squads</p>
           {mySquads.map((s) => (
-            <button key={s.id} onClick={() => setActiveSquad(s)} className="smoxit-card flex w-full items-center justify-between text-left">
-              <div>
-                <p className="text-sm font-bold">{s.name}</p>
-                <p className="text-[11px] text-muted-foreground">Code {s.code}</p>
+            <button key={s.id} onClick={() => setActiveSquad(s)} className="smoxit-card flex w-full items-center gap-3 text-left transition-bounce active:scale-[0.98]">
+              <SquadAvatar emoji={s.avatar_emoji} color={s.avatar_color} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate">{s.name}</p>
+                <p className="text-[11px] text-muted-foreground">Code {s.code} · cap {s.max_members}</p>
               </div>
               <span className="text-xs font-bold text-accent">Open →</span>
             </button>
@@ -487,29 +556,43 @@ const SquadsTab = ({ userId }: { userId: string }) => {
       )}
 
       <section className="space-y-2">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Active squads looking for members</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">🌍 Active squads looking for members</p>
         {publicSquads.length === 0 && <p className="text-xs text-muted-foreground">No public squads yet — be the first to start one!</p>}
-        {publicSquads.map((s) => (
-          <div key={s.id} className="smoxit-card flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-bold truncate">{s.name}</p>
-              <p className="text-[11px] text-muted-foreground">{s.member_count}/{s.max_members} members · code {s.code}</p>
+        {publicSquads.map((s) => {
+          const fillPct = Math.min(100, (s.member_count / s.max_members) * 100);
+          const almostFull = s.member_count >= s.max_members - 2;
+          return (
+            <div key={s.id} className="smoxit-card flex items-center gap-3">
+              <SquadAvatar emoji={s.avatar_emoji} color={s.avatar_color} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-bold truncate">{s.name}</p>
+                  {almostFull && <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[9px] font-bold text-warning">🔥 Hot</span>}
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full bg-gradient-accent" style={{ width: `${fillPct}%` }} />
+                  </div>
+                  <span className="text-[10px] font-bold text-muted-foreground shrink-0">{s.member_count}/{s.max_members}</span>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                disabled={s.member_count >= s.max_members}
+                className="bg-accent font-bold text-accent-foreground hover:bg-accent-glow"
+                onClick={async () => {
+                  if (s.member_count >= s.max_members) { toast.error("Squad full"); return; }
+                  const { error } = await supabase.from("squad_members").insert({ squad_id: s.id, user_id: userId });
+                  if (error) { toast.error("Could not join"); return; }
+                  toast.success(`Joined ${s.name}`);
+                  loadMine();
+                }}
+              >
+                {s.member_count >= s.max_members ? "Full" : "Join"}
+              </Button>
             </div>
-            <Button
-              size="sm"
-              className="bg-accent font-bold text-accent-foreground hover:bg-accent-glow"
-              onClick={async () => {
-                if (s.member_count >= s.max_members) { toast.error("Squad full"); return; }
-                const { error } = await supabase.from("squad_members").insert({ squad_id: s.id, user_id: userId });
-                if (error) { toast.error("Could not join"); return; }
-                toast.success(`Joined ${s.name}`);
-                loadMine();
-              }}
-            >
-              Join
-            </Button>
-          </div>
-        ))}
+          );
+        })}
       </section>
 
       {createOpen && (
@@ -526,6 +609,8 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [maxMembers, setMaxMembers] = useState(20);
+  const [emoji, setEmoji] = useState(SQUAD_EMOJIS[Math.floor(Math.random() * SQUAD_EMOJIS.length)]);
+  const [color, setColor] = useState(SQUAD_COLORS[Math.floor(Math.random() * SQUAD_COLORS.length)]);
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
@@ -535,6 +620,7 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
     const cap = Math.min(100, Math.max(2, Math.floor(maxMembers) || 20));
     const { data, error } = await supabase.from("squads").insert({
       name: name.trim().slice(0, 40), code, is_public: isPublic, created_by: userId, max_members: cap,
+      avatar_emoji: emoji, avatar_color: color,
     }).select().single();
     if (error || !data) { setBusy(false); toast.error("Could not create"); return; }
     await supabase.from("squad_members").insert({ squad_id: data.id, user_id: userId });
@@ -550,7 +636,48 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
           <h2 className="font-display text-lg font-black">Create a Squad</h2>
           <button onClick={onClose}><X className="h-5 w-5" /></button>
         </div>
+
+        {/* Live preview */}
+        <div className="flex items-center gap-3 rounded-xl bg-secondary/60 p-3">
+          <SquadAvatar emoji={emoji} color={color} size={56} />
+          <div className="min-w-0">
+            <p className="text-sm font-bold truncate">{name || "Your Squad"}</p>
+            <p className="text-[11px] text-muted-foreground">Live preview</p>
+          </div>
+        </div>
+
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Squad name" />
+
+        <div>
+          <p className="text-xs font-bold mb-2">Pick an avatar</p>
+          <div className="grid grid-cols-8 gap-1.5">
+            {SQUAD_EMOJIS.map((e) => (
+              <button
+                key={e}
+                onClick={() => setEmoji(e)}
+                className={`flex h-9 items-center justify-center rounded-lg text-xl transition-bounce ${emoji === e ? "bg-accent ring-2 ring-accent scale-110" : "bg-secondary hover:scale-105"}`}
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold mb-2">Pick a color</p>
+          <div className="flex flex-wrap gap-2">
+            {SQUAD_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className={`h-8 w-8 rounded-full transition-bounce ${color === c ? "ring-2 ring-foreground ring-offset-2 ring-offset-card scale-110" : ""}`}
+                style={{ background: c }}
+                aria-label="color"
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
           <div>
             <p className="text-xs font-bold">{isPublic ? "Public" : "Private"}</p>
@@ -668,11 +795,16 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
       <button onClick={onSwitchAway} className="text-xs font-bold text-accent">← All squads</button>
 
       <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
-        <div className="flex items-center justify-between">
-          <p className="font-display text-lg font-black">{squad.name}</p>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{members.length}/{squad.max_members}</span>
+        <div className="flex items-center gap-3">
+          <SquadAvatar emoji={squad.avatar_emoji} color={squad.avatar_color} size={52} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-display text-lg font-black truncate">{squad.name}</p>
+              <span className="shrink-0 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{members.length}/{squad.max_members}</span>
+            </div>
+            <p className="text-[10px] uppercase tracking-widest opacity-70">Code {squad.code}</p>
+          </div>
         </div>
-        <p className="text-[10px] uppercase tracking-widest opacity-70">Code {squad.code}</p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg bg-white/10 px-3 py-2">
             <p className="text-[10px] uppercase opacity-70">Squad streak</p>
