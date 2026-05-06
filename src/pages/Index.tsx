@@ -35,6 +35,12 @@ const Index = () => {
         sessionStorage.removeItem("smoxit:open_tab");
       }
     } catch {}
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { tab?: Tab } | undefined;
+      if (detail?.tab) setTab(detail.tab);
+    };
+    window.addEventListener("smoxit:navigate", onNav);
+    return () => window.removeEventListener("smoxit:navigate", onNav);
   }, []);
 
   // After sign-in, auto-join pending squad and switch to community tab
