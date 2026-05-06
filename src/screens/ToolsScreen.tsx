@@ -354,7 +354,7 @@ const TipsModal = ({ onClose }: { onClose: () => void }) => (
     <div className="space-y-2">
       {tips.map((t, i) => (
         <div key={i} className="flex items-start gap-3 rounded-xl bg-secondary/50 p-3">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-black text-primary">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-black text-accent-foreground">
             {i + 1}
           </div>
           <p className="text-sm font-medium">{t}</p>
