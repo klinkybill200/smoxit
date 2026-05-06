@@ -195,7 +195,7 @@ export const HomeScreen = () => {
       </section>
 
       {/* Quote */}
-      <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
+      <section className="rounded-2xl bg-gradient-hero p-5 text-white">
         <p className="text-xs font-bold uppercase tracking-widest text-accent">Quote of the Day</p>
         <p className="mt-2 font-display text-lg font-bold leading-snug text-balance">"{quoteOfDay()}"</p>
       </section>

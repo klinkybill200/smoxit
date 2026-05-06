@@ -120,7 +120,7 @@ export const ProfileScreen = () => {
       <h1 className="font-display text-3xl font-black">Profile</h1>
 
       {/* User card */}
-      <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
+      <section className="rounded-2xl bg-gradient-hero p-5 text-white">
         <div className="flex items-center gap-4">
           <button
             type="button"
