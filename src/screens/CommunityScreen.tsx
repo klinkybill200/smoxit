@@ -609,6 +609,8 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [maxMembers, setMaxMembers] = useState(20);
+  const [emoji, setEmoji] = useState(SQUAD_EMOJIS[Math.floor(Math.random() * SQUAD_EMOJIS.length)]);
+  const [color, setColor] = useState(SQUAD_COLORS[Math.floor(Math.random() * SQUAD_COLORS.length)]);
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
@@ -618,6 +620,7 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
     const cap = Math.min(100, Math.max(2, Math.floor(maxMembers) || 20));
     const { data, error } = await supabase.from("squads").insert({
       name: name.trim().slice(0, 40), code, is_public: isPublic, created_by: userId, max_members: cap,
+      avatar_emoji: emoji, avatar_color: color,
     }).select().single();
     if (error || !data) { setBusy(false); toast.error("Could not create"); return; }
     await supabase.from("squad_members").insert({ squad_id: data.id, user_id: userId });
@@ -633,7 +636,48 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
           <h2 className="font-display text-lg font-black">Create a Squad</h2>
           <button onClick={onClose}><X className="h-5 w-5" /></button>
         </div>
+
+        {/* Live preview */}
+        <div className="flex items-center gap-3 rounded-xl bg-secondary/60 p-3">
+          <SquadAvatar emoji={emoji} color={color} size={56} />
+          <div className="min-w-0">
+            <p className="text-sm font-bold truncate">{name || "Your Squad"}</p>
+            <p className="text-[11px] text-muted-foreground">Live preview</p>
+          </div>
+        </div>
+
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Squad name" />
+
+        <div>
+          <p className="text-xs font-bold mb-2">Pick an avatar</p>
+          <div className="grid grid-cols-8 gap-1.5">
+            {SQUAD_EMOJIS.map((e) => (
+              <button
+                key={e}
+                onClick={() => setEmoji(e)}
+                className={`flex h-9 items-center justify-center rounded-lg text-xl transition-bounce ${emoji === e ? "bg-accent ring-2 ring-accent scale-110" : "bg-secondary hover:scale-105"}`}
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold mb-2">Pick a color</p>
+          <div className="flex flex-wrap gap-2">
+            {SQUAD_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className={`h-8 w-8 rounded-full transition-bounce ${color === c ? "ring-2 ring-foreground ring-offset-2 ring-offset-card scale-110" : ""}`}
+                style={{ background: c }}
+                aria-label="color"
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
           <div>
             <p className="text-xs font-bold">{isPublic ? "Public" : "Private"}</p>
