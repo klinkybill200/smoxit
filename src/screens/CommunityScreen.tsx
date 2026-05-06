@@ -738,6 +738,16 @@ const JoinSquadSheet = ({ userId, onClose, onJoined }: { userId: string; onClose
   );
 };
 
+const SQUAD_CHALLENGES = [
+  { id: "members-5",   emoji: "👥", title: "Crew of 5",        desc: "Squad reaches 5 members",         xp: 50,  metric: "members",   target: 5 },
+  { id: "members-10",  emoji: "🔥", title: "Power of 10",      desc: "Squad reaches 10 members",        xp: 100, metric: "members",   target: 10 },
+  { id: "messages-25", emoji: "💬", title: "Chatty crew",      desc: "25 squad messages sent",          xp: 60,  metric: "messages",  target: 25 },
+  { id: "messages-100",emoji: "🗣️", title: "Squad bonding",    desc: "100 squad messages sent",         xp: 120, metric: "messages",  target: 100 },
+  { id: "age-7",       emoji: "📅", title: "One week strong",  desc: "Squad active for 7 days",         xp: 80,  metric: "ageDays",   target: 7 },
+  { id: "age-30",      emoji: "🏆", title: "One month legacy", desc: "Squad active for 30 days",        xp: 200, metric: "ageDays",   target: 30 },
+  { id: "fill",        emoji: "👑", title: "Fill the squad",   desc: "Reach max member capacity",       xp: 250, metric: "fill",      target: 100 },
+] as const;
+
 const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   squad: Squad; userId: string; onLeave: () => void; onSwitchAway: () => void;
 }) => {
@@ -746,12 +756,20 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   const [members, setMembers] = useState<SquadMember[]>([]);
   const [messages, setMessages] = useState<SquadMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [claimedSquadChallenges, setClaimedSquadChallenges] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.from("squad_members").select("*").eq("squad_id", squad.id).then(({ data }) => setMembers((data ?? []) as SquadMember[]));
     supabase.from("squad_messages").select("*").eq("squad_id", squad.id).order("created_at").limit(100)
       .then(({ data }) => setMessages((data ?? []) as SquadMessage[]));
+
+    // Hydrate already-claimed squad challenges for this user
+    supabase.from("xp_events").select("dedupe_key").eq("user_id", userId)
+      .like("dedupe_key", `squad_challenge:sq-${squad.id}-%`)
+      .then(({ data }) => {
+        setClaimedSquadChallenges(new Set((data ?? []).map((e: any) => e.dedupe_key.replace("squad_challenge:", ""))));
+      });
 
     const ch = supabase
       .channel(`squad-${squad.id}`)
@@ -763,7 +781,7 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [squad.id]);
+  }, [squad.id, userId]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -777,7 +795,6 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   };
 
   const myDays = user ? getDuration(user.quitDate).days : 0;
-  // Real members + seeded ghost members so the leaderboard feels alive
   const realEntries = members.map((m) => ({
     user_id: m.user_id,
     days: m.user_id === userId ? myDays : Math.max(1, Math.floor((Date.now() - new Date(m.joined_at).getTime()) / 86400000)),
@@ -788,6 +805,29 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   const totalCigsAvoided = user ? Math.floor((user.cigsPerDay / 24) * getDuration(user.quitDate).totalHours) * members.length : 0;
   const milestoneTarget = 30;
   const progress = Math.min(100, (squadStreak / milestoneTarget) * 100);
+
+  // Squad challenge metrics
+  const ageDays = Math.floor((Date.now() - new Date(squad.created_at).getTime()) / 86400000);
+  const userMessages = messages.filter((m) => !m.is_system).length;
+  const metricValue = (metric: string) => {
+    if (metric === "members") return members.length;
+    if (metric === "messages") return userMessages;
+    if (metric === "ageDays") return ageDays;
+    if (metric === "fill") return Math.round((members.length / Math.max(1, squad.max_members)) * 100);
+    return 0;
+  };
+
+  const claimSquadChallenge = async (c: typeof SQUAD_CHALLENGES[number]) => {
+    const key = `sq-${squad.id}-${c.id}`;
+    const granted = await awardXp("squad_challenge", { extra: key });
+    if (granted > 0) {
+      toast.success(`🎉 Squad win! +${granted} XP — ${c.title}`);
+      setClaimedSquadChallenges((s) => new Set(s).add(key));
+    } else {
+      toast.info("Already claimed");
+      setClaimedSquadChallenges((s) => new Set(s).add(key));
+    }
+  };
 
   const pinned = messages.find((m) => m.is_pinned);
 
