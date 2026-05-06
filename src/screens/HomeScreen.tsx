@@ -83,6 +83,22 @@ export const HomeScreen = () => {
         <p className="mt-3 text-sm font-semibold text-accent">{milestoneTagline(d.days)}</p>
       </section>
 
+      {/* AI Coach promo */}
+      <section className="relative overflow-hidden rounded-2xl border-2 border-accent/40 bg-gradient-to-br from-accent/15 to-accent/5 p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent shadow-button">
+            <Sparkles className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="rounded-full bg-accent px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-accent-foreground">AI</span>
+              <p className="font-display text-sm font-black">Your AI Quit-Coach is on standby</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Personalized rescue tips · 24/7 chat · adapts to YOU</p>
+          </div>
+        </div>
+      </section>
+
       {/* Stats grid */}
       <section className="grid grid-cols-2 gap-3">
         <StatCard
