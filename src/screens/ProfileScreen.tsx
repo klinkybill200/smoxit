@@ -120,13 +120,13 @@ export const ProfileScreen = () => {
       <h1 className="font-display text-3xl font-black">Profile</h1>
 
       {/* User card */}
-      <section className="rounded-2xl bg-gradient-hero p-5 text-primary-foreground">
+      <section className="rounded-2xl bg-gradient-hero p-5 text-white">
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={handleAvatarPick}
             disabled={uploading}
-            className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-display text-2xl font-black text-primary ring-2 ring-white/20 transition active:scale-95"
+            className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-display text-2xl font-black text-accent-foreground ring-2 ring-white/20 transition active:scale-95"
             aria-label="Change profile picture"
           >
             {avatarUrl ? (
@@ -161,7 +161,7 @@ export const ProfileScreen = () => {
           <Button
             onClick={saveDisplayName}
             size="sm"
-            className="h-9 bg-accent font-bold text-primary hover:bg-accent-glow"
+            className="h-9 bg-accent font-bold text-accent-foreground hover:bg-accent-glow"
           >
             Save
           </Button>

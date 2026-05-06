@@ -22,7 +22,11 @@ export const Onboarding = () => {
   const currency = useCurrency();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [quitDate, setQuitDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [quitDate, setQuitDate] = useState(() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  });
   const [cigsPerDay, setCigsPerDay] = useState("15");
   const [pricePerPack, setPricePerPack] = useState("8");
   const [yearsSmoking, setYearsSmoking] = useState("5");
@@ -90,15 +94,28 @@ export const Onboarding = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="qd" className="text-white/80">Quit date</Label>
+                <Label htmlFor="qd" className="text-white/80">Quit date & time</Label>
                 <Input
                   id="qd"
-                  type="date"
+                  type="datetime-local"
                   value={quitDate}
                   onChange={(e) => setQuitDate(e.target.value)}
                   className="h-12 border-white/20 bg-white/5 text-white [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
-                <p className="text-xs text-white/50">Can be today, or anytime in the past 30 days.</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-white/50">Defaults to right now — your counter starts here.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                      setQuitDate(d.toISOString().slice(0, 16));
+                    }}
+                    className="shrink-0 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold text-accent"
+                  >
+                    Now
+                  </button>
+                </div>
               </div>
             </div>
           )}
