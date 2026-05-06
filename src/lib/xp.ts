@@ -61,6 +61,7 @@ export const XP_DEFS: Record<XpEventType, XpDef> = {
   comment_posted:      { amount: 5,  dedupe: "free",  label: "Comment posted" },
   challenge_joined:    { amount: 10, dedupe: "free",  label: "Challenge joined" },
   challenge_day:       { amount: 20, dedupe: "free",  label: "Challenge day" },
+  squad_challenge:     { amount: 75, dedupe: "free",  label: "Squad challenge" },
 };
 
 function dedupeKey(type: XpEventType, extra?: string): string | null {
