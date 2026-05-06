@@ -467,6 +467,7 @@ export type Database = {
           goal: string | null
           id: string
           is_public: boolean
+          max_members: number
           name: string
         }
         Insert: {
@@ -476,6 +477,7 @@ export type Database = {
           goal?: string | null
           id?: string
           is_public?: boolean
+          max_members?: number
           name: string
         }
         Update: {
@@ -485,6 +487,7 @@ export type Database = {
           goal?: string | null
           id?: string
           is_public?: boolean
+          max_members?: number
           name?: string
         }
         Relationships: []
