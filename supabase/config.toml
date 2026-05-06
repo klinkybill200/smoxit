@@ -17,3 +17,5 @@ project_id = "lbtkcmrpdosvsyvtogkn"
     verify_jwt = true
   [functions.send-push]
     verify_jwt = false
+  [functions.ai-craving-tip]
+    verify_jwt = false
