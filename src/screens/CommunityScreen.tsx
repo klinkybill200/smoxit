@@ -18,6 +18,21 @@ import { buildSquadShareUrl, buildSquadShareMessage } from "@/lib/squadInvite";
 
 type SubTab = "feed" | "squads" | "challenges";
 
+const SQUAD_EMOJIS = ["🔥","⚡","🚀","💪","🌟","🦁","🐺","🦅","🐉","🌊","🌈","💎","🏆","🎯","🧠","🌶️","🦄","👑","🎸","🥊"];
+const SQUAD_COLORS = [
+  "hsl(20 80% 55%)","hsl(280 60% 55%)","hsl(180 60% 45%)","hsl(140 50% 45%)",
+  "hsl(340 70% 55%)","hsl(40 90% 55%)","hsl(220 70% 55%)","hsl(0 75% 55%)",
+];
+
+const SquadAvatar = ({ emoji, color, size = 44 }: { emoji?: string | null; color?: string | null; size?: number }) => (
+  <div
+    className="flex shrink-0 items-center justify-center rounded-2xl shadow-button ring-2 ring-white/20"
+    style={{ width: size, height: size, background: `linear-gradient(135deg, ${color || "hsl(20 80% 55%)"}, hsl(var(--accent)))`, fontSize: size * 0.55 }}
+  >
+    <span className="drop-shadow">{emoji || "🔥"}</span>
+  </div>
+);
+
 export const CommunityScreen = () => {
   const { user: authUser } = useAuth();
   const [tab, setTab] = useState<SubTab>("feed");
