@@ -2,13 +2,31 @@
 
 const NAME_SEED_KEY = "smoxit:anon-seed";
 
+const ADJECTIVES = [
+  "Brave", "Mighty", "Fierce", "Calm", "Bold", "Swift", "Steady", "Lucky",
+  "Wild", "Quiet", "Sunny", "Stormy", "Iron", "Golden", "Silent", "Rapid",
+  "Cosmic", "Electric", "Noble", "Rebel", "Zen", "Phoenix", "Frosty", "Blazing",
+  "Lone", "Smoky", "Velvet", "Royal", "Mystic", "Turbo", "Neon", "Quantum",
+];
+const NOUNS = [
+  "Wolf", "Tiger", "Falcon", "Bear", "Dragon", "Lion", "Otter", "Hawk",
+  "Panda", "Fox", "Eagle", "Shark", "Phoenix", "Raven", "Cobra", "Stag",
+  "Whale", "Lynx", "Rhino", "Puma", "Orca", "Bison", "Mantis", "Owl",
+  "Comet", "Storm", "Ember", "Drifter", "Voyager", "Ranger", "Knight", "Nomad",
+];
+
 export function anonName(userId?: string | null): string {
   const id = userId ?? localStorage.getItem(NAME_SEED_KEY) ?? "guest";
-  // simple deterministic 4-digit hash
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  const num = Math.abs(hash) % 9000 + 1000;
-  return `Quitter_${num}`;
+  let h1 = 0, h2 = 0, h3 = 0;
+  for (let i = 0; i < id.length; i++) {
+    h1 = (h1 * 31 + id.charCodeAt(i)) | 0;
+    h2 = (h2 * 17 + id.charCodeAt(i) * 7) | 0;
+    h3 = (h3 * 13 + id.charCodeAt(i) * 3) | 0;
+  }
+  const adj = ADJECTIVES[Math.abs(h1) % ADJECTIVES.length];
+  const noun = NOUNS[Math.abs(h2) % NOUNS.length];
+  const num = Math.abs(h3) % 90 + 10;
+  return `${adj}${noun}${num}`;
 }
 
 const palette = [
