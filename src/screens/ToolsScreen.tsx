@@ -162,8 +162,13 @@ const ModalShell = ({ children, onClose, title }: { children: React.ReactNode; o
 );
 
 const CravingModal = ({ onClose, whyQuit, onLog }: { onClose: () => void; whyQuit: string; onLog: (t: Trigger, r: boolean) => void }) => {
+  const { user } = useUser();
   const [seconds, setSeconds] = useState(300);
   const [trigger, setTrigger] = useState<Trigger>("stress");
+  const [aiTip, setAiTip] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
   useEffect(() => {
     const i = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(i);
@@ -171,6 +176,25 @@ const CravingModal = ({ onClose, whyQuit, onLog }: { onClose: () => void; whyQui
   const pct = ((300 - seconds) / 300) * 100;
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
+
+  const fetchAiTip = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    setAiTip(null);
+    try {
+      const days = user ? getDuration(user.quitDate).days : 0;
+      const { data, error } = await supabase.functions.invoke("ai-craving-tip", {
+        body: { trigger, whyQuit, daysSmokeFree: days },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setAiTip((data as any)?.tip ?? null);
+    } catch (e: any) {
+      setAiError(e?.message?.includes("429") ? "Rate limit — try again in a moment" : "Couldn't reach the AI coach");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   return (
     <ModalShell onClose={onClose} title="Ride the Wave">
@@ -209,6 +233,34 @@ const CravingModal = ({ onClose, whyQuit, onLog }: { onClose: () => void; whyQui
               {t.emoji} {t.label}
             </button>
           ))}
+        </div>
+
+        {/* AI Rescue */}
+        <div className="mt-5 rounded-2xl border-2 border-accent/40 bg-gradient-to-br from-accent/15 to-accent/5 p-4 text-left">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent">
+                <Sparkles className="h-4 w-4 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-accent">AI Rescue</p>
+                <p className="text-xs font-bold">Personalized 60-sec action</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={fetchAiTip}
+              disabled={aiLoading}
+              className="h-8 bg-accent text-xs font-bold text-accent-foreground hover:bg-accent-glow"
+            >
+              {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : aiTip ? "Again" : "Get tip"}
+            </Button>
+          </div>
+          {aiTip && <p className="mt-3 text-sm leading-snug">{aiTip}</p>}
+          {aiError && <p className="mt-3 text-xs text-destructive">{aiError}</p>}
+          {!aiTip && !aiError && !aiLoading && (
+            <p className="mt-3 text-xs text-muted-foreground">Tap "Get tip" for an AI-crafted move based on your trigger.</p>
+          )}
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-2">
