@@ -493,13 +493,13 @@ const SquadsTab = ({ userId }: { userId: string }) => {
           <div key={s.id} className="smoxit-card flex items-center justify-between">
             <div className="min-w-0">
               <p className="text-sm font-bold truncate">{s.name}</p>
-              <p className="text-[11px] text-muted-foreground">{s.member_count}/8 members · code {s.code}</p>
+              <p className="text-[11px] text-muted-foreground">{s.member_count}/{s.max_members} members · code {s.code}</p>
             </div>
             <Button
               size="sm"
               className="bg-accent font-bold text-accent-foreground hover:bg-accent-glow"
               onClick={async () => {
-                if (s.member_count >= 8) { toast.error("Squad full"); return; }
+                if (s.member_count >= s.max_members) { toast.error("Squad full"); return; }
                 const { error } = await supabase.from("squad_members").insert({ squad_id: s.id, user_id: userId });
                 if (error) { toast.error("Could not join"); return; }
                 toast.success(`Joined ${s.name}`);
