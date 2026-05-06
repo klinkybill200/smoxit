@@ -158,8 +158,30 @@ const FeedTab = ({ userId }: { userId: string }) => {
     }
   };
 
+  const [inviteHidden, setInviteHidden] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("smoxit:invite-hidden") === "1";
+  });
+  const dismissInvite = () => {
+    setInviteHidden(true);
+    localStorage.setItem("smoxit:invite-hidden", "1");
+  };
+
   return (
     <div className="space-y-3">
+      {!inviteHidden && (
+        <div className="relative">
+          <button
+            onClick={dismissInvite}
+            aria-label="Hide invite"
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 backdrop-blur text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          <ReferralCard />
+        </div>
+      )}
+
       {/* Filter chips */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {FILTERS.map((f) => (
@@ -194,11 +216,6 @@ const FeedTab = ({ userId }: { userId: string }) => {
         />
       ))}
 
-      <div className="pt-4">
-        <ReferralCard />
-      </div>
-
-      {/* FAB */}
       <button
         onClick={() => setComposerOpen(true)}
         className="fixed bottom-24 right-5 z-30 flex items-center gap-2 rounded-full bg-accent px-5 py-3 font-bold text-accent-foreground shadow-button transition-bounce active:scale-95"
