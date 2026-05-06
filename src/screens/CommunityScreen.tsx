@@ -888,6 +888,47 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
         </div>
       </details>
 
+      {/* Squad challenges — every member can claim XP when squad hits the goal */}
+      <section className="rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5 p-4">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-4 w-4 text-accent" />
+          <p className="text-xs font-bold uppercase tracking-widest text-accent">Squad Challenges</p>
+        </div>
+        <p className="mt-1 text-[10px] text-muted-foreground">When the squad hits a goal, every member can claim the XP reward.</p>
+        <div className="mt-3 space-y-2">
+          {SQUAD_CHALLENGES.map((c) => {
+            const value = metricValue(c.metric);
+            const pct = Math.min(100, (value / c.target) * 100);
+            const reached = value >= c.target;
+            const key = `sq-${squad.id}-${c.id}`;
+            const claimed = claimedSquadChallenges.has(key);
+            return (
+              <div key={c.id} className={`rounded-xl p-3 ${reached ? "bg-accent/15 border border-accent/40" : "bg-card/60"}`}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold">{c.emoji} {c.title}</span>
+                  <span className="text-[10px] font-bold text-accent">+{c.xp} XP</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">{c.desc}</p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <Progress value={pct} className="h-1.5 flex-1" />
+                  <span className="text-[10px] font-bold w-10 text-right">{Math.min(value, c.target)}/{c.target}</span>
+                </div>
+                {reached && (
+                  <Button
+                    size="sm"
+                    disabled={claimed}
+                    onClick={() => claimSquadChallenge(c)}
+                    className="mt-2 h-7 w-full bg-accent text-[11px] font-bold text-accent-foreground hover:bg-accent-glow disabled:opacity-60"
+                  >
+                    {claimed ? "✓ Claimed" : `Claim +${c.xp} XP`}
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="smoxit-card flex flex-col">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Squad chat</p>
         <div ref={scrollRef} className="mt-2 max-h-72 space-y-2 overflow-y-auto">
