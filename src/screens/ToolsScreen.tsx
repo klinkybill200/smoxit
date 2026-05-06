@@ -36,6 +36,16 @@ export const ToolsScreen = () => {
   const [showCravingFlow, setShowCravingFlow] = useState(false);
   const [confetti, setConfetti] = useState(0);
 
+  useEffect(() => {
+    try {
+      const t = sessionStorage.getItem("smoxit:open_tool");
+      if (t === "coach") {
+        setActive("coach");
+        sessionStorage.removeItem("smoxit:open_tool");
+      }
+    } catch {}
+  }, []);
+
   if (!user) return null;
 
   const logCraving = (trigger: Trigger, resisted: boolean) => {
