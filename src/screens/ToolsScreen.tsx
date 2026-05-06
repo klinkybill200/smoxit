@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Flame, Wind, Gamepad2, Headphones, Lightbulb, ChevronRight, X, Play, Pause, CheckCircle2, MessageCircle, Sparkles } from "lucide-react";
+import { Flame, Wind, Gamepad2, Headphones, Lightbulb, ChevronRight, X, Play, Pause, CheckCircle2, MessageCircle, Sparkles, Loader2 } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Confetti } from "@/components/Confetti";
@@ -7,7 +7,8 @@ import { CoachChat } from "@/components/CoachChat";
 import { toast } from "sonner";
 import type { Trigger } from "@/lib/types";
 import { awardXp, type XpEventType } from "@/lib/xp";
-import { todayKey } from "@/lib/calc";
+import { todayKey, getDuration } from "@/lib/calc";
+import { supabase } from "@/integrations/supabase/client";
 
 type Tool = "menu" | "breathing" | "game" | "audio" | "tips" | "coach";
 
