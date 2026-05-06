@@ -525,14 +525,16 @@ const SquadsTab = ({ userId }: { userId: string }) => {
 const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onClose: () => void; onCreated: (s: Squad) => void }) => {
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(true);
+  const [maxMembers, setMaxMembers] = useState(20);
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
     if (!name.trim()) return;
     setBusy(true);
     const code = generateSquadCode();
+    const cap = Math.min(100, Math.max(2, Math.floor(maxMembers) || 20));
     const { data, error } = await supabase.from("squads").insert({
-      name: name.trim().slice(0, 40), code, is_public: isPublic, created_by: userId,
+      name: name.trim().slice(0, 40), code, is_public: isPublic, created_by: userId, max_members: cap,
     }).select().single();
     if (error || !data) { setBusy(false); toast.error("Could not create"); return; }
     await supabase.from("squad_members").insert({ squad_id: data.id, user_id: userId });
@@ -555,6 +557,22 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
             <p className="text-[10px] text-muted-foreground">{isPublic ? "Anyone can join" : "Code only"}</p>
           </div>
           <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+        </div>
+        <div className="rounded-lg bg-secondary px-3 py-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold">Squad size limit</p>
+            <span className="text-xs font-bold text-accent">{maxMembers} members</span>
+          </div>
+          <input
+            type="range"
+            min={2}
+            max={100}
+            step={1}
+            value={maxMembers}
+            onChange={(e) => setMaxMembers(Number(e.target.value))}
+            className="mt-2 w-full accent-[hsl(var(--accent))]"
+          />
+          <p className="mt-1 text-[10px] text-muted-foreground">Smaller squads feel tighter · larger squads bring more energy</p>
         </div>
         <Button onClick={create} disabled={!name.trim() || busy} className="w-full bg-accent font-bold text-accent-foreground hover:bg-accent-glow">
           Create Squad
