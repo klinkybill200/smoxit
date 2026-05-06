@@ -84,7 +84,14 @@ export const HomeScreen = () => {
       </section>
 
       {/* AI Coach promo */}
-      <section className="relative overflow-hidden rounded-2xl border-2 border-accent/40 bg-gradient-to-br from-accent/15 to-accent/5 p-4">
+      <button
+        type="button"
+        onClick={() => {
+          try { sessionStorage.setItem("smoxit:open_tool", "coach"); } catch {}
+          window.dispatchEvent(new CustomEvent("smoxit:navigate", { detail: { tab: "tools" } }));
+        }}
+        className="w-full text-left relative overflow-hidden rounded-2xl border-2 border-accent/40 bg-gradient-to-br from-accent/15 to-accent/5 p-4 transition-bounce hover:scale-[1.01] active:scale-100"
+      >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent shadow-button">
             <Sparkles className="h-5 w-5 text-accent-foreground" />
@@ -95,9 +102,10 @@ export const HomeScreen = () => {
               <p className="font-display text-sm font-black">Your AI Quit-Coach is on standby</p>
             </div>
             <p className="text-xs text-muted-foreground">Personalized rescue tips · 24/7 chat · adapts to YOU</p>
+            <p className="mt-1 text-[11px] font-bold text-accent">Tap to chat now →</p>
           </div>
         </div>
-      </section>
+      </button>
 
       {/* Stats grid */}
       <section className="grid grid-cols-2 gap-3">
