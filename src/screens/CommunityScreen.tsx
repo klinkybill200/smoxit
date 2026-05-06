@@ -395,7 +395,7 @@ const Composer = ({ userId, stats, onClose, onPosted }: {
 /* ------------------------------- SQUADS TAB ------------------------------- */
 
 interface Squad {
-  id: string; name: string; code: string; is_public: boolean; goal: string | null; created_by: string; created_at: string;
+  id: string; name: string; code: string; is_public: boolean; goal: string | null; created_by: string; created_at: string; max_members: number;
 }
 interface SquadMember { squad_id: string; user_id: string; joined_at: string; }
 interface SquadMessage { id: string; squad_id: string; user_id: string; content: string; is_system: boolean; is_pinned: boolean; created_at: string; }
@@ -493,13 +493,13 @@ const SquadsTab = ({ userId }: { userId: string }) => {
           <div key={s.id} className="smoxit-card flex items-center justify-between">
             <div className="min-w-0">
               <p className="text-sm font-bold truncate">{s.name}</p>
-              <p className="text-[11px] text-muted-foreground">{s.member_count}/8 members · code {s.code}</p>
+              <p className="text-[11px] text-muted-foreground">{s.member_count}/{s.max_members} members · code {s.code}</p>
             </div>
             <Button
               size="sm"
               className="bg-accent font-bold text-accent-foreground hover:bg-accent-glow"
               onClick={async () => {
-                if (s.member_count >= 8) { toast.error("Squad full"); return; }
+                if (s.member_count >= s.max_members) { toast.error("Squad full"); return; }
                 const { error } = await supabase.from("squad_members").insert({ squad_id: s.id, user_id: userId });
                 if (error) { toast.error("Could not join"); return; }
                 toast.success(`Joined ${s.name}`);
@@ -525,14 +525,16 @@ const SquadsTab = ({ userId }: { userId: string }) => {
 const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onClose: () => void; onCreated: (s: Squad) => void }) => {
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(true);
+  const [maxMembers, setMaxMembers] = useState(20);
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
     if (!name.trim()) return;
     setBusy(true);
     const code = generateSquadCode();
+    const cap = Math.min(100, Math.max(2, Math.floor(maxMembers) || 20));
     const { data, error } = await supabase.from("squads").insert({
-      name: name.trim().slice(0, 40), code, is_public: isPublic, created_by: userId,
+      name: name.trim().slice(0, 40), code, is_public: isPublic, created_by: userId, max_members: cap,
     }).select().single();
     if (error || !data) { setBusy(false); toast.error("Could not create"); return; }
     await supabase.from("squad_members").insert({ squad_id: data.id, user_id: userId });
@@ -555,6 +557,22 @@ const CreateSquadSheet = ({ userId, onClose, onCreated }: { userId: string; onCl
             <p className="text-[10px] text-muted-foreground">{isPublic ? "Anyone can join" : "Code only"}</p>
           </div>
           <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+        </div>
+        <div className="rounded-lg bg-secondary px-3 py-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold">Squad size limit</p>
+            <span className="text-xs font-bold text-accent">{maxMembers} members</span>
+          </div>
+          <input
+            type="range"
+            min={2}
+            max={100}
+            step={1}
+            value={maxMembers}
+            onChange={(e) => setMaxMembers(Number(e.target.value))}
+            className="mt-2 w-full accent-[hsl(var(--accent))]"
+          />
+          <p className="mt-1 text-[10px] text-muted-foreground">Smaller squads feel tighter · larger squads bring more energy</p>
         </div>
         <Button onClick={create} disabled={!name.trim() || busy} className="w-full bg-accent font-bold text-accent-foreground hover:bg-accent-glow">
           Create Squad
@@ -652,7 +670,7 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
       <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
         <div className="flex items-center justify-between">
           <p className="font-display text-lg font-black">{squad.name}</p>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{members.length}/8</span>
+          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{members.length}/{squad.max_members}</span>
         </div>
         <p className="text-[10px] uppercase tracking-widest opacity-70">Code {squad.code}</p>
         <div className="mt-3 grid grid-cols-2 gap-2">
