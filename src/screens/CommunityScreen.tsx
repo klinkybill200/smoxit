@@ -652,7 +652,7 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
       <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
         <div className="flex items-center justify-between">
           <p className="font-display text-lg font-black">{squad.name}</p>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{members.length}/8</span>
+          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">{members.length}/{squad.max_members}</span>
         </div>
         <p className="text-[10px] uppercase tracking-widest opacity-70">Code {squad.code}</p>
         <div className="mt-3 grid grid-cols-2 gap-2">
