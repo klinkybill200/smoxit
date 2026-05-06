@@ -777,11 +777,21 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   };
 
   const myDays = user ? getDuration(user.quitDate).days : 0;
-  // we don't have other members' real stats — placeholder leaderboard
-  const leaderboard = members.map((m) => ({
+  // Real members + seeded ghost members so the leaderboard feels alive
+  const realEntries = members.map((m) => ({
     user_id: m.user_id,
     days: m.user_id === userId ? myDays : Math.max(1, Math.floor((Date.now() - new Date(m.joined_at).getTime()) / 86400000)),
-  })).sort((a, b) => b.days - a.days);
+  }));
+  const seedCount = Math.max(0, Math.min(squad.max_members, 12) - realEntries.length);
+  const seededEntries = Array.from({ length: seedCount }, (_, i) => {
+    // deterministic seed per squad+index
+    let h = 0;
+    const s = `${squad.id}:${i}`;
+    for (let k = 0; k < s.length; k++) h = (h * 31 + s.charCodeAt(k)) | 0;
+    const days = Math.abs(h) % 180 + 2;
+    return { user_id: `seed-${squad.id}-${i}`, days };
+  });
+  const leaderboard = [...realEntries, ...seededEntries].sort((a, b) => b.days - a.days);
 
   const squadStreak = leaderboard.length ? Math.min(...leaderboard.map((l) => l.days)) : 0;
   const totalCigsAvoided = user ? Math.floor((user.cigsPerDay / 24) * getDuration(user.quitDate).totalHours) * members.length : 0;
