@@ -19,7 +19,7 @@ async function getServerVapidKey(): Promise<string> {
 }
 
 export const VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY_FALLBACK;
-
+const SW_PATH = "/sw-push.js";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
