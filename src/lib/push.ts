@@ -53,6 +53,17 @@ export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }
     await navigator.serviceWorker.ready;
 
     let sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      // If existing sub was created with a different VAPID key, it will be rejected (BadJwtToken).
+      // Compare keys and re-subscribe if mismatched.
+      const existingKey = arrBufToBase64(sub.options.applicationServerKey as ArrayBuffer | null);
+      const desiredKey = arrBufToBase64(urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer);
+      if (!existingKey || existingKey !== desiredKey) {
+        try { await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint); } catch {}
+        try { await sub.unsubscribe(); } catch {}
+        sub = null;
+      }
+    }
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
