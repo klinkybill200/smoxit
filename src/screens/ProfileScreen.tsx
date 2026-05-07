@@ -370,11 +370,25 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
     if (!authUserId) return;
     setTesting(true);
     try {
-      const { error } = await supabase.functions.invoke("send-push", {
+      const { data, error } = await supabase.functions.invoke("send-push", {
         body: { mode: "test", user_id: authUserId, title: "SMOXIT test 🔔", body: "Push works! Tap to open." },
       });
       if (error) throw error;
-      toast.success("Test sent — check your notifications.");
+      const sent = (data as any)?.sent ?? 0;
+      const cleaned = (data as any)?.cleaned ?? 0;
+      if (sent === 0 && cleaned > 0) {
+        // Stale subscription was removed — re-subscribe with current VAPID key
+        toast("Refreshing push registration…");
+        await unsubscribeFromPush();
+        const r = await subscribeToPush();
+        setPerm(getPushPermission());
+        if (r.ok) toast.success("Re-registered. Tap test again.");
+        else toast.error("Please toggle Push off and on again.");
+      } else if (sent === 0) {
+        toast.error("No active subscription. Toggle Push off & on.");
+      } else {
+        toast.success(`Test sent (${sent}) — check your notifications.`);
+      }
     } catch (e: any) {
       toast.error(e?.message || "Could not send test");
     } finally { setTesting(false); }
