@@ -7,6 +7,7 @@ import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Button } from "@/components/ui/button";
 import { awardXp } from "@/lib/xp";
 import { ShareButton } from "@/components/ShareSheet";
+import { PushPromptCard } from "@/components/PushPromptCard";
 
 const moods = ["😩", "😕", "😐", "🙂", "🤩"] as const;
 
@@ -82,6 +83,7 @@ export const HomeScreen = () => {
         </div>
         <p className="mt-3 text-sm font-semibold text-accent">{milestoneTagline(d.days)}</p>
       </section>
+      <PushPromptCard />
 
       {/* AI Coach promo */}
       <button

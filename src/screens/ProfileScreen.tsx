@@ -12,6 +12,7 @@ import { SubscriptionSection } from "@/components/SubscriptionSection";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateProfile } from "@/lib/profiles";
 import { toast } from "sonner";
+import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
 
 export const ProfileScreen = () => {
   const { user, dispatch } = useUser();
@@ -254,6 +255,9 @@ export const ProfileScreen = () => {
         </div>
       </section>
 
+      {/* Notifications */}
+      <NotificationsSection authUserId={authUser?.id} />
+
       {/* Subscription */}
       <SubscriptionSection />
 
@@ -331,5 +335,74 @@ const Toggle = ({ icon: Icon, label }: { icon: any; label: string }) => {
       </div>
       <Switch checked={on} onCheckedChange={setOn} />
     </div>
+  );
+};
+
+const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
+  const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+  const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => { setPerm(getPushPermission()); }, []);
+
+  const supported = isPushSupported();
+  const enabled = perm === "granted";
+
+  const toggle = async () => {
+    if (!supported) { toast.error("Push not supported in this browser/preview."); return; }
+    setBusy(true);
+    try {
+      if (enabled) {
+        await unsubscribeFromPush();
+        setPerm(getPushPermission());
+        toast("Push notifications off.");
+      } else {
+        const r = await subscribeToPush();
+        setPerm(getPushPermission());
+        if (r.ok) toast.success("Push notifications on. 🔔");
+        else if (r.error === "denied") toast.error("Permission denied. Enable in browser settings.");
+        else toast.error("Could not enable push.");
+      }
+    } finally { setBusy(false); }
+  };
+
+  const sendTest = async () => {
+    if (!authUserId) return;
+    setTesting(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-push", {
+        body: { mode: "test", user_id: authUserId, title: "SMOXIT test 🔔", body: "Push works! Tap to open." },
+      });
+      if (error) throw error;
+      toast.success("Test sent — check your notifications.");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not send test");
+    } finally { setTesting(false); }
+  };
+
+  return (
+    <section className="smoxit-card">
+      <div className="flex items-center gap-2">
+        <Bell className="h-5 w-5 text-accent" />
+        <p className="font-display font-black">Notifications</p>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Daily check-ins, craving tips, squad pings, streak rescue.
+      </p>
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
+        <span className="text-sm font-semibold">Push notifications</span>
+        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported} />
+      </div>
+      {enabled && (
+        <Button onClick={sendTest} disabled={testing} variant="outline" size="sm" className="mt-3 w-full">
+          {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send test notification"}
+        </Button>
+      )}
+      {!supported && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Tip: install SMOXIT to your home screen to enable push on iOS.
+        </p>
+      )}
+    </section>
   );
 };

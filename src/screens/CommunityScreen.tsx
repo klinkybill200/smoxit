@@ -792,6 +792,10 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
     if (!text) return;
     setDraft("");
     await supabase.from("squad_messages").insert({ squad_id: squad.id, user_id: userId, content: text.slice(0, 280) });
+    // Fire-and-forget: notify other squad members via push
+    void supabase.functions.invoke("send-push", {
+      body: { mode: "squad_message", squad_id: squad.id, sender_user_id: userId, preview: text.slice(0, 80) },
+    }).catch(() => {});
   };
 
   const myDays = user ? getDuration(user.quitDate).days : 0;

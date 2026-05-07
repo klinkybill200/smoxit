@@ -33,15 +33,18 @@ const POOL = {
     { title: "Good morning, fighter", body: "Log your mood and keep the streak alive." },
     { title: "Today's challenge awaits", body: "Tap to claim your daily mission." },
     { title: "Your future-self says hi 👋", body: "5 sec to log your check-in." },
+    { title: "Rise. Breathe. Win.", body: "Day one of the rest of your life — again." },
   ],
   daily_evening: [
     { title: "Don't break the streak 🔥", body: "Quick mood check before bed?" },
     { title: "One more habit win", body: "Log your day and earn XP." },
     { title: "End the day strong", body: "Tap for tonight's reflection." },
+    { title: "Sleep proud tonight 😴", body: "You stayed smoke-free. Log it." },
   ],
   craving_window: [
     { title: "Craving incoming?", body: "Open the breathing tool. 60 sec, you've got this." },
     { title: "Beat the urge", body: "Tap for a 4-4-4 reset." },
+    { title: "Talk to your AI Coach", body: "One message can ride the wave out." },
   ],
   daily_mood: [
     { title: "How do you feel today? 💚", body: "Log your mood in 5 seconds and earn XP." },
@@ -54,7 +57,21 @@ const POOL = {
     { title: "How strong are your lungs?", body: "Log this week's breath hold and watch the curve grow." },
     { title: "Weekly lung test 💨", body: "30 seconds: hold your breath, track the win." },
   ],
+  streak_risk: [
+    { title: "Your streak is in danger ⚠️", body: "Open SMOXIT now — one tap saves it." },
+    { title: "Don't lose what you built 🔥", body: "A check-in keeps your streak alive." },
+    { title: "We miss you 💚", body: "It's been a while. Your future-self is watching." },
+  ],
+  money_milestone: [
+    { title: "Cha-ching! 💰", body: "You've saved enough for something real. Open SMOXIT." },
+    { title: "Money milestone unlocked", body: "See how much you've kept in your pocket." },
+  ],
+  squad_nudge: [
+    { title: "Your squad is active 👥", body: "New messages waiting. Drop by and say hi." },
+    { title: "Squad activity 💬", body: "Don't leave your crew hanging — tap in." },
+  ],
 };
+
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -178,6 +195,68 @@ Deno.serve(async (req) => {
         }
       }
       return new Response(JSON.stringify({ ok: true, mode, candidates: profiles?.length ?? 0, eligible: eligible.length, sent: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Streak risk: users opted in but inactive (no push in 36h)
+    if (mode === "streak_risk") {
+      const cutoff = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, last_push_sent_at")
+        .eq("push_opt_in", true)
+        .or(`last_push_sent_at.is.null,last_push_sent_at.lt.${cutoff}`)
+        .limit(2000);
+
+      let total = 0;
+      for (const p of (profiles ?? [])) {
+        const msg = pick(POOL.streak_risk);
+        const r = await sendToUser(p.user_id, { ...msg, url: "/", tag: "streak_risk" });
+        if (r.sent > 0) {
+          total += r.sent;
+          await supabase.from("profiles").update({ last_push_sent_at: new Date().toISOString() }).eq("user_id", p.user_id);
+        }
+      }
+      return new Response(JSON.stringify({ ok: true, mode, candidates: profiles?.length ?? 0, sent: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Event: squad message — notify other squad members
+    if (mode === "squad_message") {
+      const squadId: string | undefined = body.squad_id;
+      const sender: string | undefined = body.sender_user_id;
+      const preview: string = (body.preview || "").slice(0, 80);
+      if (!squadId || !sender) {
+        return new Response(JSON.stringify({ error: "squad_id and sender_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: members } = await supabase
+        .from("squad_members")
+        .select("user_id")
+        .eq("squad_id", squadId);
+
+      const { data: squad } = await supabase.from("squads").select("name").eq("id", squadId).maybeSingle();
+      const squadName = squad?.name || "Your squad";
+
+      const { data: senderProfile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", sender)
+        .maybeSingle();
+      const senderName = (senderProfile as any)?.display_name || "Someone";
+
+      let total = 0;
+      const targets = (members ?? []).map((m) => m.user_id).filter((id) => id !== sender);
+      for (const uid of targets) {
+        const { data: prof } = await supabase.from("profiles").select("push_opt_in").eq("user_id", uid).maybeSingle();
+        if (!prof?.push_opt_in) continue;
+        const r = await sendToUser(uid, {
+          title: `${senderName} in ${squadName} 💬`,
+          body: preview || "New message in your squad",
+          url: "/",
+          tag: `squad-${squadId}`,
+        });
+        if (r.sent > 0) total += r.sent;
+      }
+      return new Response(JSON.stringify({ ok: true, sent: total }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Milestone push: { mode: "milestone", user_id, title, body }
