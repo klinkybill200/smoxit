@@ -83,6 +83,7 @@ export const HomeScreen = () => {
         </div>
         <p className="mt-3 text-sm font-semibold text-accent">{milestoneTagline(d.days)}</p>
       </section>
+      <PushPromptCard />
 
       {/* AI Coach promo */}
       <button
