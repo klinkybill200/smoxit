@@ -255,6 +255,9 @@ export const ProfileScreen = () => {
         </div>
       </section>
 
+      {/* Notifications */}
+      <NotificationsSection authUserId={authUser?.id} />
+
       {/* Subscription */}
       <SubscriptionSection />
 
