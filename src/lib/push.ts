@@ -1,9 +1,24 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// VAPID public key (safe to expose). Matches VAPID_PUBLIC_KEY secret.
-export const VAPID_PUBLIC_KEY =
+// Fallback VAPID public key. The authoritative key is fetched from the
+// send-push edge function at runtime so client and server can never drift.
+const VAPID_PUBLIC_KEY_FALLBACK =
   "BJV2AFTTZYZ88-XMtxCJCAKcxTfV0wfZqO1woI_GrWEM_TgbcCImO1SbKKe4nTiqG224AgAUUBCeM6qPjPnxKfI";
 
+let cachedVapidKey: string | null = null;
+async function getServerVapidKey(): Promise<string> {
+  if (cachedVapidKey) return cachedVapidKey;
+  try {
+    const { data, error } = await supabase.functions.invoke("send-push", { body: { mode: "vapid_key" } });
+    if (!error && (data as any)?.key) {
+      cachedVapidKey = (data as any).key as string;
+      return cachedVapidKey;
+    }
+  } catch {}
+  return VAPID_PUBLIC_KEY_FALLBACK;
+}
+
+export const VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY_FALLBACK;
 const SW_PATH = "/sw-push.js";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -52,13 +67,15 @@ export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }
     const reg = await navigator.serviceWorker.register(SW_PATH);
     await navigator.serviceWorker.ready;
 
+    // Always fetch the authoritative key from the server.
+    const serverKey = await getServerVapidKey();
+    const desiredKeyBytes = urlBase64ToUint8Array(serverKey);
+
     let sub = await reg.pushManager.getSubscription();
     if (sub) {
-      // If existing sub was created with a different VAPID key, it will be rejected (BadJwtToken).
-      // Compare keys and re-subscribe if mismatched.
       const existingKey = arrBufToBase64(sub.options.applicationServerKey as ArrayBuffer | null);
-      const desiredKey = arrBufToBase64(urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer);
-      if (!existingKey || existingKey !== desiredKey) {
+      const desiredKeyB64 = arrBufToBase64(desiredKeyBytes.buffer as ArrayBuffer);
+      if (!existingKey || existingKey !== desiredKeyB64) {
         try { await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint); } catch {}
         try { await sub.unsubscribe(); } catch {}
         sub = null;
@@ -67,9 +84,10 @@ export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+        applicationServerKey: desiredKeyBytes.buffer as ArrayBuffer,
       });
     }
+
 
     const json = sub.toJSON() as any;
     const endpoint = sub.endpoint;

@@ -113,6 +113,14 @@ async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent:
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Public: return current VAPID public key so client always matches server.
+  const _url = new URL(req.url);
+  const _bodyPreview = req.method === "POST" ? await req.clone().json().catch(() => ({})) : {};
+  const _mode = (_bodyPreview as any)?.mode || _url.searchParams.get("mode");
+  if (_mode === "vapid_key") {
+    return new Response(JSON.stringify({ key: VAPID_PUBLIC_KEY }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   try {
     const url = new URL(req.url);
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
