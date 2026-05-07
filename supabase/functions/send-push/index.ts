@@ -96,11 +96,14 @@ async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent:
       sent++;
     } catch (e: any) {
       const code = e?.statusCode;
-      if (code === 404 || code === 410) {
+      const bodyStr = typeof e?.body === "string" ? e.body : JSON.stringify(e?.body || {});
+      const isBadJwt = code === 403 && bodyStr.includes("BadJwtToken");
+      if (code === 404 || code === 410 || isBadJwt) {
         await supabase.from("push_subscriptions").delete().eq("id", s.id);
         cleaned++;
+        console.log("cleaned stale sub", s.id, code, isBadJwt ? "BadJwtToken" : "");
       } else {
-        console.error("push error", code, e?.body || e?.message);
+        console.error("push error", code, bodyStr);
       }
     }
   }
