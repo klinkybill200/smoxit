@@ -1,10 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// VAPID public key (safe to expose). Matches VAPID_PUBLIC_KEY secret.
-export const VAPID_PUBLIC_KEY =
+// Fallback VAPID public key. The authoritative key is fetched from the
+// send-push edge function at runtime so client and server can never drift.
+const VAPID_PUBLIC_KEY_FALLBACK =
   "BJV2AFTTZYZ88-XMtxCJCAKcxTfV0wfZqO1woI_GrWEM_TgbcCImO1SbKKe4nTiqG224AgAUUBCeM6qPjPnxKfI";
 
-const SW_PATH = "/sw-push.js";
+let cachedVapidKey: string | null = null;
+async function getServerVapidKey(): Promise<string> {
+  if (cachedVapidKey) return cachedVapidKey;
+  try {
+    const { data, error } = await supabase.functions.invoke("send-push", { body: { mode: "vapid_key" } });
+    if (!error && (data as any)?.key) {
+      cachedVapidKey = (data as any).key as string;
+      return cachedVapidKey;
+    }
+  } catch {}
+  return VAPID_PUBLIC_KEY_FALLBACK;
+}
+
+export const VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY_FALLBACK;
+
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
