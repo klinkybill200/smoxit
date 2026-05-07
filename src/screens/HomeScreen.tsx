@@ -7,6 +7,7 @@ import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { Button } from "@/components/ui/button";
 import { awardXp } from "@/lib/xp";
 import { ShareButton } from "@/components/ShareSheet";
+import { PushPromptCard } from "@/components/PushPromptCard";
 
 const moods = ["😩", "😕", "😐", "🙂", "🤩"] as const;
 
