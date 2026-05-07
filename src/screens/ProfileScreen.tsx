@@ -340,29 +340,43 @@ const Toggle = ({ icon: Icon, label }: { icon: any; label: string }) => {
 
 const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+  const [hasSub, setHasSub] = useState(false);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
 
-  useEffect(() => { setPerm(getPushPermission()); }, []);
+  const refreshState = async () => {
+    setPerm(getPushPermission());
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration("/sw-push.js");
+      const sub = await reg?.pushManager.getSubscription();
+      setHasSub(!!sub);
+    } catch { setHasSub(false); }
+  };
+
+  useEffect(() => { refreshState(); }, []);
 
   const supported = isPushSupported();
-  const enabled = perm === "granted";
+  const denied = perm === "denied";
+  const enabled = perm === "granted" && hasSub;
 
   const toggle = async () => {
     if (!supported) { toast.error("Push not supported in this browser/preview."); return; }
+    if (denied) {
+      toast.error("Browser hat Push blockiert. Bitte in den Browser-Einstellungen für diese Seite Benachrichtigungen erlauben und Seite neu laden.");
+      return;
+    }
     setBusy(true);
     try {
       if (enabled) {
         await unsubscribeFromPush();
-        setPerm(getPushPermission());
         toast("Push notifications off.");
       } else {
         const r = await subscribeToPush();
-        setPerm(getPushPermission());
         if (r.ok) toast.success("Push notifications on. 🔔");
         else if (r.error === "denied") toast.error("Permission denied. Enable in browser settings.");
-        else toast.error("Could not enable push.");
+        else toast.error(r.error || "Could not enable push.");
       }
+      await refreshState();
     } finally { setBusy(false); }
   };
 
@@ -377,11 +391,10 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       const sent = (data as any)?.sent ?? 0;
       const cleaned = (data as any)?.cleaned ?? 0;
       if (sent === 0 && cleaned > 0) {
-        // Stale subscription was removed — re-subscribe with current VAPID key
         toast("Refreshing push registration…");
         await unsubscribeFromPush();
         const r = await subscribeToPush();
-        setPerm(getPushPermission());
+        await refreshState();
         if (r.ok) toast.success("Re-registered. Tap test again.");
         else toast.error("Please toggle Push off and on again.");
       } else if (sent === 0) {
@@ -405,8 +418,13 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       </p>
       <div className="mt-3 flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
         <span className="text-sm font-semibold">Push notifications</span>
-        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported} />
+        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported || denied} />
       </div>
+      {denied && (
+        <p className="mt-2 text-xs text-destructive">
+          Push ist im Browser blockiert. Klick auf das 🔒-Symbol in der Adressleiste → Benachrichtigungen → "Zulassen", dann Seite neu laden.
+        </p>
+      )}
       {enabled && (
         <Button onClick={sendTest} disabled={testing} variant="outline" size="sm" className="mt-3 w-full">
           {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send test notification"}
