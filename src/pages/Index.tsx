@@ -61,8 +61,14 @@ const Index = () => {
     const status = params.get("checkout");
     if (status === "success") {
       toast.success("Welcome to SMOXIT Premium! 🎉");
-      // Webhook may take a moment; refresh after short delay
-      setTimeout(() => { void sub.refresh(); }, 1500);
+      // Webhook may take a moment; poll for up to ~30s until status flips to active
+      let tries = 0;
+      const poll = async () => {
+        tries++;
+        await sub.refresh();
+        if (tries < 15) setTimeout(() => { void poll(); }, 2000);
+      };
+      setTimeout(() => { void poll(); }, 1500);
       window.history.replaceState({}, "", window.location.pathname);
     } else if (status === "cancel") {
       window.history.replaceState({}, "", window.location.pathname);
