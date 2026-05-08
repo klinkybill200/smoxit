@@ -292,22 +292,24 @@ Deno.serve(async (req) => {
       mode === "daily_morning" ||
       mode === "daily_evening" ||
       mode === "daily_mood" ||
-      mode === "weekly_lung"
+      mode === "weekly_lung" ||
+      mode === "craving_window"
     ) {
       const pool = POOL[mode as keyof typeof POOL];
 
-      // Local-time targeting per mode
-      const TARGET: Record<string, { hour: number; weekday?: number }> = {
-        // weekday: 0=Sun .. 6=Sat (matches Date#getDay equivalent below)
-        daily_morning: { hour: 8 },
-        daily_evening: { hour: 20 },
-        daily_mood: { hour: 17 },
-        weekly_lung: { hour: 16, weekday: 0 },
+      // Local-time targeting per mode (hours: array of local hours when this fires)
+      const TARGET: Record<string, { hours: number[]; weekday?: number }> = {
+        daily_morning: { hours: [8] },
+        daily_evening: { hours: [20] },
+        daily_mood: { hours: [17] },
+        weekly_lung: { hours: [16], weekday: 0 },
+        // Common craving peaks: late morning, after lunch, evening wind-down
+        craving_window: { hours: [11, 15, 21] },
       };
       const target = TARGET[mode];
 
-      // Weekly pushes need a longer rate-limit window so they don't get suppressed by daily ones
-      const minHours = mode === "weekly_lung" ? 20 : 6;
+      // Rate-limit window per mode
+      const minHours = mode === "weekly_lung" ? 20 : mode === "craving_window" ? 3 : 6;
       const cutoff = new Date(Date.now() - minHours * 3600 * 1000).toISOString();
 
       const { data: profiles } = await supabase
