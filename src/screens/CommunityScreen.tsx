@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Heart, MessageCircle, Repeat2, Send, Plus, X, Crown, Trophy, Users, Copy, LogOut, Share2, Mail, MessageSquare, Sparkles, CheckCircle2 } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Send, Plus, X, Crown, Trophy, Users, Copy, LogOut, Share2, Mail, MessageSquare, Sparkles, CheckCircle2, Bell, BellOff } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
