@@ -120,6 +120,40 @@ Deno.serve(async (req) => {
   if (_mode === "vapid_key") {
     return new Response(JSON.stringify({ key: VAPID_PUBLIC_KEY }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
+  if (_mode === "vapid_check") {
+    // Derive public key from private key and compare to stored public key.
+    try {
+      const b64urlToBytes = (s: string) => {
+        const pad = "=".repeat((4 - (s.length % 4)) % 4);
+        const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+        const bin = atob(b64);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+      };
+      const bytesToB64Url = (buf: ArrayBuffer) => {
+        const bytes = new Uint8Array(buf);
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      };
+      const d = b64urlToBytes(VAPID_PRIVATE_KEY);
+      const pubBytes = b64urlToBytes(VAPID_PUBLIC_KEY); // 65 bytes: 0x04 || X(32) || Y(32)
+      if (pubBytes.length !== 65 || pubBytes[0] !== 0x04) {
+        return new Response(JSON.stringify({ ok: false, reason: "public_key_format", publicLen: pubBytes.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const x = bytesToB64Url(pubBytes.slice(1, 33).buffer);
+      const y = bytesToB64Url(pubBytes.slice(33, 65).buffer);
+      const dB64 = bytesToB64Url(d.buffer);
+      const jwk = { kty: "EC", crv: "P-256", x, y, d: dB64, ext: true } as JsonWebKey;
+      const key = await crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]);
+      const exported = await crypto.subtle.exportKey("jwk", key) as JsonWebKey;
+      const ok = exported.x === x && exported.y === y;
+      return new Response(JSON.stringify({ ok, derivedX: exported.x, storedX: x, derivedY: exported.y, storedY: y }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ ok: false, error: e?.message }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+  }
 
   try {
     const url = new URL(req.url);
