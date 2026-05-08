@@ -757,6 +757,7 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
   const [messages, setMessages] = useState<SquadMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [claimedSquadChallenges, setClaimedSquadChallenges] = useState<Set<string>>(new Set());
+  const [muted, setMuted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
