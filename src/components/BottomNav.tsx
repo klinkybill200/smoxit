@@ -25,7 +25,7 @@ const TabButton = ({
     <button
       onClick={() => onChange(id)}
       className={cn(
-        "relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition-smooth",
+        "relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold transition-smooth",
         isActive ? "text-accent" : "text-muted-foreground hover:text-foreground",
       )}
       aria-label={label}
@@ -48,21 +48,21 @@ export const BottomNav = ({ active, onChange }: Props) => (
           onClick={() => onChange("tools")}
           aria-label="Notfall – Tools"
           className={cn(
-            "animate-sos-breathe -mt-7 flex h-16 w-16 items-center justify-center rounded-full border-4 border-card bg-destructive text-destructive-foreground transition-bounce hover:scale-110 active:scale-95",
+            "animate-sos-breathe relative -mt-6 flex h-14 w-14 items-center justify-center rounded-full border-4 border-card bg-destructive text-destructive-foreground transition-bounce hover:scale-110 active:scale-95",
             active === "tools" && "ring-4 ring-destructive/30",
           )}
         >
-          <AlertTriangle className="animate-sos-icon-breathe h-7 w-7" strokeWidth={2.75} />
+          <AlertTriangle className="animate-sos-icon-breathe h-6 w-6" strokeWidth={2.75} />
+          <span className={cn(
+            "pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest",
+            active === "tools" ? "text-destructive" : "text-destructive/80",
+          )}>
+            SOS
+          </span>
         </button>
       </div>
 
       {rightTabs.map((t) => <TabButton key={t.id} {...t} active={active} onChange={onChange} />)}
     </div>
-    <p className={cn(
-      "pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest",
-      active === "tools" ? "text-destructive" : "text-destructive/80",
-    )}>
-      SOS
-    </p>
   </nav>
 );
