@@ -94,6 +94,35 @@ function jsonToBase64Url(value: Record<string, unknown>): string {
   return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(value)));
 }
 
+function derEcdsaToRaw(signature: Uint8Array): Uint8Array {
+  if (signature.length === 64) return signature;
+  let offset = 0;
+  if (signature[offset++] !== 0x30) throw new Error("Invalid ECDSA signature");
+  const seqLen = signature[offset++];
+  if (seqLen + offset !== signature.length) throw new Error("Invalid ECDSA signature length");
+  if (signature[offset++] !== 0x02) throw new Error("Invalid ECDSA r marker");
+  const rLen = signature[offset++];
+  const r = signature.slice(offset, offset + rLen);
+  offset += rLen;
+  if (signature[offset++] !== 0x02) throw new Error("Invalid ECDSA s marker");
+  const sLen = signature[offset++];
+  const s = signature.slice(offset, offset + sLen);
+
+  const normalize = (part: Uint8Array) => {
+    let p = part;
+    while (p.length > 32 && p[0] === 0) p = p.slice(1);
+    if (p.length > 32) throw new Error("Invalid ECDSA signature part");
+    const out = new Uint8Array(32);
+    out.set(p, 32 - p.length);
+    return out;
+  };
+
+  const out = new Uint8Array(64);
+  out.set(normalize(r), 0);
+  out.set(normalize(s), 32);
+  return out;
+}
+
 async function createVapidAuthorization(endpoint: string): Promise<string> {
   const aud = new URL(endpoint).origin;
   const publicBytes = base64UrlToBytes(VAPID_PUBLIC_KEY);
@@ -121,11 +150,11 @@ async function createVapidAuthorization(endpoint: string): Promise<string> {
   const header = jsonToBase64Url({ typ: "JWT", alg: "ES256" });
   const payload = jsonToBase64Url({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, sub: VAPID_SUBJECT });
   const signingInput = `${header}.${payload}`;
-  const signature = new Uint8Array(await crypto.subtle.sign(
+  const signature = derEcdsaToRaw(new Uint8Array(await crypto.subtle.sign(
     { name: "ECDSA", hash: "SHA-256" },
     key,
     new TextEncoder().encode(signingInput),
-  ));
+  )));
 
   return `vapid t=${signingInput}.${bytesToBase64Url(signature)}, k=${VAPID_PUBLIC_KEY}`;
 }
@@ -222,8 +251,18 @@ Deno.serve(async (req) => {
       const jwk = { kty: "EC", crv: "P-256", x, y, d: dB64, ext: true } as JsonWebKey;
       const key = await crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]);
       const exported = await crypto.subtle.exportKey("jwk", key) as JsonWebKey;
-      const ok = exported.x === x && exported.y === y;
-      return new Response(JSON.stringify({ ok, derivedX: exported.x, storedX: x, derivedY: exported.y, storedY: y }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const publicKey = await crypto.subtle.importKey(
+        "jwk",
+        { kty: "EC", crv: "P-256", x, y, ext: true } as JsonWebKey,
+        { name: "ECDSA", namedCurve: "P-256" },
+        false,
+        ["verify"],
+      );
+      const probe = new TextEncoder().encode("vapid-key-pair-check");
+      const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, probe);
+      const keyPairMatches = await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, publicKey, sig, probe);
+      const ok = exported.x === x && exported.y === y && keyPairMatches;
+      return new Response(JSON.stringify({ ok, keyPairMatches, derivedX: exported.x, storedX: x, derivedY: exported.y, storedY: y }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     } catch (e: any) {
       return new Response(JSON.stringify({ ok: false, error: e?.message }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
