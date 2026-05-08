@@ -839,9 +839,31 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
 
   const pinned = messages.find((m) => m.is_pinned);
 
+  const toggleMute = async () => {
+    if (muted) {
+      await supabase.from("squad_mutes").delete().eq("squad_id", squad.id).eq("user_id", userId);
+      setMuted(false);
+      toast.success("Notifications on for this squad 🔔");
+    } else {
+      await supabase.from("squad_mutes").insert({ squad_id: squad.id, user_id: userId });
+      setMuted(true);
+      toast.success("Squad muted 🔕");
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <button onClick={onSwitchAway} className="text-xs font-bold text-accent">← All squads</button>
+      <div className="flex items-center justify-between">
+        <button onClick={onSwitchAway} className="text-xs font-bold text-accent">← All squads</button>
+        <button
+          onClick={toggleMute}
+          className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-[11px] font-bold text-foreground/80 hover:bg-secondary/80"
+          aria-label={muted ? "Unmute squad" : "Mute squad"}
+        >
+          {muted ? <BellOff className="h-3 w-3" /> : <Bell className="h-3 w-3" />}
+          {muted ? "Muted" : "Notifications on"}
+        </button>
+      </div>
 
       <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
         <div className="flex items-center gap-3">
