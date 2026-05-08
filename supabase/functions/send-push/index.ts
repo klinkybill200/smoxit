@@ -12,8 +12,6 @@ const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:support@smoxit.app";
 
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -77,6 +75,82 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function base64UrlToBytes(s: string): Uint8Array {
+  const pad = "=".repeat((4 - (s.length % 4)) % 4);
+  const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function jsonToBase64Url(value: Record<string, unknown>): string {
+  return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(value)));
+}
+
+async function createVapidAuthorization(endpoint: string): Promise<string> {
+  const aud = new URL(endpoint).origin;
+  const publicBytes = base64UrlToBytes(VAPID_PUBLIC_KEY);
+  const privateBytes = base64UrlToBytes(VAPID_PRIVATE_KEY);
+  if (publicBytes.length !== 65 || publicBytes[0] !== 0x04 || privateBytes.length !== 32) {
+    throw new Error("Invalid VAPID key format");
+  }
+
+  const b64 = (bytes: Uint8Array) => bytesToBase64Url(bytes);
+  const key = await crypto.subtle.importKey(
+    "jwk",
+    {
+      kty: "EC",
+      crv: "P-256",
+      x: b64(publicBytes.slice(1, 33)),
+      y: b64(publicBytes.slice(33, 65)),
+      d: b64(privateBytes),
+      ext: false,
+    },
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"],
+  );
+
+  const header = jsonToBase64Url({ typ: "JWT", alg: "ES256" });
+  const payload = jsonToBase64Url({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, sub: VAPID_SUBJECT });
+  const signingInput = `${header}.${payload}`;
+  const signature = new Uint8Array(await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    key,
+    new TextEncoder().encode(signingInput),
+  ));
+
+  return `vapid t=${signingInput}.${bytesToBase64Url(signature)}, k=${VAPID_PUBLIC_KEY}`;
+}
+
+async function sendWebPush(subscription: { endpoint: string; keys: { p256dh: string; auth: string } }, payload: string) {
+  const details = (webpush as any).generateRequestDetails(subscription, payload, { vapidDetails: null, TTL: 2419200 });
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(details.headers ?? {})) {
+    if (key.toLowerCase() !== "content-length") headers.set(key, String(value));
+  }
+  headers.set("Authorization", await createVapidAuthorization(subscription.endpoint));
+
+  const res = await fetch(details.endpoint, {
+    method: details.method || "POST",
+    headers,
+    body: details.body ?? undefined,
+  });
+  if (!res.ok) {
+    const err: any = new Error(`Push service responded ${res.status}`);
+    err.statusCode = res.status;
+    err.body = await res.text().catch(() => "");
+    throw err;
+  }
+}
+
 async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent: number; cleaned: number }> {
   const { data: subs, error } = await supabase
     .from("push_subscriptions")
@@ -89,7 +163,7 @@ async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent:
   let cleaned = 0;
   for (const s of subs) {
     try {
-      await webpush.sendNotification(
+      await sendWebPush(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
         JSON.stringify(payload),
       );
