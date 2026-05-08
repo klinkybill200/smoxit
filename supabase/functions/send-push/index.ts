@@ -251,8 +251,18 @@ Deno.serve(async (req) => {
       const jwk = { kty: "EC", crv: "P-256", x, y, d: dB64, ext: true } as JsonWebKey;
       const key = await crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]);
       const exported = await crypto.subtle.exportKey("jwk", key) as JsonWebKey;
-      const ok = exported.x === x && exported.y === y;
-      return new Response(JSON.stringify({ ok, derivedX: exported.x, storedX: x, derivedY: exported.y, storedY: y }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const publicKey = await crypto.subtle.importKey(
+        "jwk",
+        { kty: "EC", crv: "P-256", x, y, ext: true } as JsonWebKey,
+        { name: "ECDSA", namedCurve: "P-256" },
+        false,
+        ["verify"],
+      );
+      const probe = new TextEncoder().encode("vapid-key-pair-check");
+      const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, probe);
+      const keyPairMatches = await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, publicKey, sig, probe);
+      const ok = exported.x === x && exported.y === y && keyPairMatches;
+      return new Response(JSON.stringify({ ok, keyPairMatches, derivedX: exported.x, storedX: x, derivedY: exported.y, storedY: y }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     } catch (e: any) {
       return new Response(JSON.stringify({ ok: false, error: e?.message }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
