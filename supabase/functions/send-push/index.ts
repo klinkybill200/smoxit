@@ -404,7 +404,16 @@ Deno.serve(async (req) => {
       const senderName = (senderProfile as any)?.display_name || "Someone";
 
       let total = 0;
-      const targets = (members ?? []).map((m) => m.user_id).filter((id) => id !== sender);
+      let targets = (members ?? []).map((m) => m.user_id).filter((id) => id !== sender);
+
+      // Exclude users who muted this squad
+      const { data: mutes } = await supabase
+        .from("squad_mutes")
+        .select("user_id")
+        .eq("squad_id", squadId);
+      const mutedSet = new Set((mutes ?? []).map((m: any) => m.user_id));
+      targets = targets.filter((id) => !mutedSet.has(id));
+
       for (const uid of targets) {
         const { data: prof } = await supabase.from("profiles").select("push_opt_in").eq("user_id", uid).maybeSingle();
         if (!prof?.push_opt_in) continue;
