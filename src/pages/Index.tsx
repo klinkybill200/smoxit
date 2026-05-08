@@ -99,7 +99,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col pt-[env(safe-area-inset-top)]">
         <TrialBanner />
 
         {/* Settings gear top right */}
@@ -107,14 +107,14 @@ const Index = () => {
           onClick={() => setTab("profile")}
           aria-label="Settings"
           className={cn(
-            "absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 text-foreground/80 backdrop-blur-md transition-smooth hover:text-foreground hover:bg-foreground/15 hover:scale-105",
+            "absolute right-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 text-foreground/80 backdrop-blur-md transition-smooth hover:text-foreground hover:bg-foreground/15 hover:scale-105",
             tab === "profile" && "text-accent ring-2 ring-accent/40 bg-foreground/15",
           )}
         >
           <Settings className="h-5 w-5" strokeWidth={2.25} />
         </button>
 
-        <main key={tab} className="animate-fade-in flex-1 px-4 pb-6">
+        <main key={tab} className="animate-fade-in flex-1 px-4 pt-3 pb-6">
           {tab === "home" && <HomeScreen />}
           {tab === "progress" && <ProgressScreen />}
           {tab === "tools" && <ToolsScreen />}
