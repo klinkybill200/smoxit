@@ -154,18 +154,7 @@ export const ProgressScreen = () => {
     <div className="space-y-3 pt-2">
       <Confetti trigger={confetti} />
 
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-black">Progress</h1>
-        <button
-          onClick={togglePush}
-          disabled={pushBusy || pushPerm === "unsupported"}
-          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold disabled:opacity-50"
-          aria-label="Toggle push notifications"
-        >
-          {pushPerm === "granted" ? <Bell className="h-3.5 w-3.5 text-accent" /> : <BellOff className="h-3.5 w-3.5 text-muted-foreground" />}
-          {pushPerm === "granted" ? "On" : "Off"}
-        </button>
-      </div>
+      <h1 className="font-display text-3xl font-black">Progress</h1>
 
       {/* Hero level card — XP focus */}
       <section className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
