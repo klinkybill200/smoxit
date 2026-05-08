@@ -109,14 +109,14 @@ export const HealthScreen = () => {
 
   return (
     <div className="space-y-3 pt-2">
-      <div className="flex items-end justify-between">
-        <div>
+      <div>
+        <div className="flex items-center gap-2">
           <h1 className="font-display text-3xl font-black leading-tight">Health</h1>
-          <p className="text-xs text-muted-foreground">Your body is rebuilding. Track it.</p>
+          <div className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
+            {unlockedCount}/{milestones.length} unlocked
+          </div>
         </div>
-        <div className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
-          {unlockedCount}/{milestones.length} unlocked
-        </div>
+        <p className="text-xs text-muted-foreground">Your body is rebuilding. Track it.</p>
       </div>
 
       {/* Hero row: Lung capacity + Mood (SOS-style emphasis) */}
