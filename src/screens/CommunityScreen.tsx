@@ -772,7 +772,10 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
         setClaimedSquadChallenges(new Set((data ?? []).map((e: any) => e.dedupe_key.replace("squad_challenge:", ""))));
       });
 
-    const ch = supabase
+    supabase.from("squad_mutes").select("squad_id").eq("squad_id", squad.id).eq("user_id", userId).maybeSingle()
+      .then(({ data }) => setMuted(!!data));
+
+
       .channel(`squad-${squad.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "squad_messages", filter: `squad_id=eq.${squad.id}` }, (payload) => {
         setMessages((m) => [...m, payload.new as SquadMessage]);
