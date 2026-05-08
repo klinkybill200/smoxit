@@ -335,7 +335,7 @@ Deno.serve(async (req) => {
           const hourStr = parts.find((p) => p.type === "hour")?.value ?? "";
           const wdStr = parts.find((p) => p.type === "weekday")?.value ?? "";
           const hour = parseInt(hourStr, 10) % 24;
-          if (hour !== target.hour) return false;
+          if (!target.hours.includes(hour)) return false;
           if (target.weekday !== undefined && WD[target.weekday] !== wdStr) return false;
           return true;
         } catch {
