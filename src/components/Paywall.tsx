@@ -10,6 +10,7 @@ import { getDuration, moneySaved } from "@/lib/calc";
 import { useCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isNative, openSubscribePage } from "@/lib/platform";
 
 interface PaywallProps {
   open: boolean;
@@ -88,34 +89,66 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
         </div>
 
         <div className="px-6 py-6 space-y-5">
-          {/* Pricing */}
-          <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="font-display text-4xl font-black text-foreground">{currency.priceLabel}</span>
-              <span className="text-sm text-muted-foreground">/ month</span>
+          {isNative() ? (
+            <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)] text-center">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
+              <h3 className="mt-2 font-display text-2xl font-black text-foreground">Get Full Access</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Subscribe on smoxit.app to unlock all features.
+              </p>
+              <ul className="mt-4 space-y-2.5 text-left">
+                {FEATURES.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                    <span className="text-foreground">{f}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="mt-4 space-y-2.5">
-              {FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                  <span className="text-foreground">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          ) : (
+            <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="font-display text-4xl font-black text-foreground">{currency.priceLabel}</span>
+                <span className="text-sm text-muted-foreground">/ month</span>
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                {FEATURES.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                    <span className="text-foreground">{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-          <Button
-            onClick={startCheckout}
-            disabled={loading}
-            className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90"
-          >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : `Subscribe for ${currency.priceLabel}/month`}
-          </Button>
-
-          <p className="text-center text-xs text-muted-foreground">
-            Cancel anytime · Secure payment via Stripe
-          </p>
+          {isNative() ? (
+            <>
+              <Button
+                onClick={() => { void openSubscribePage(); }}
+                className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                Subscribe Now
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                You'll return here automatically after subscribing.
+              </p>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={startCheckout}
+                disabled={loading}
+                className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : `Subscribe for ${currency.priceLabel}/month`}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Cancel anytime · Secure payment via Stripe
+              </p>
+            </>
+          )}
 
           {!dismissible && (
             <button
