@@ -74,6 +74,29 @@ export const useSubscription = (): SubscriptionInfo => {
     return () => clearInterval(i);
   }, []);
 
+  // Re-check subscription when app returns to foreground (native) or tab becomes visible (web)
+  useEffect(() => {
+    if (!user) return;
+    let cleanup: (() => void) | undefined;
+    (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform()) {
+          const { App } = await import("@capacitor/app");
+          const handle = await App.addListener("appStateChange", ({ isActive }) => {
+            if (isActive) void load();
+          });
+          cleanup = () => { void handle.remove(); };
+          return;
+        }
+      } catch {}
+      const onVis = () => { if (document.visibilityState === "visible") void load(); };
+      document.addEventListener("visibilitychange", onVis);
+      cleanup = () => document.removeEventListener("visibilitychange", onVis);
+    })();
+    return () => { cleanup?.(); };
+  }, [user, load]);
+
   const now = Date.now();
   const msUntilTrialEnd = info.trialEndsAt ? info.trialEndsAt.getTime() - now : 0;
   const trialActive = info.status === "trialing" && msUntilTrialEnd > 0;
