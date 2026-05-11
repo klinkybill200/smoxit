@@ -81,7 +81,7 @@ export const HomeScreen = () => {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-sm font-semibold text-accent">{milestoneTagline(d.days)}</p>
+        <p className="mt-3 text-sm font-semibold text-accent">{milestoneTagline(d.days, user.pace)}</p>
       </section>
       <PushPromptCard />
 

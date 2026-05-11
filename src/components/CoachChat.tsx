@@ -18,9 +18,10 @@ const STARTER: Msg = {
 interface Props {
   onClose: () => void;
   whyQuit?: string;
+  pace?: "gentle" | "normal" | "fast";
 }
 
-export const CoachChat = ({ onClose, whyQuit }: Props) => {
+export const CoachChat = ({ onClose, whyQuit, pace }: Props) => {
   const [messages, setMessages] = useState<Msg[]>([STARTER]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,10 +40,30 @@ export const CoachChat = ({ onClose, whyQuit }: Props) => {
     setMessages(next);
     setLoading(true);
 
-    // Inject "why quit" context into first user turn
-    const payload = whyQuit
-      ? [{ role: "system" as const, content: `User's reason to quit: "${whyQuit}"` }, ...next]
-      : next;
+    // Inject "why quit" + chosen pace context
+    const ctx: Msg[] = [];
+    if (pace) {
+      const paceNote =
+        pace === "gentle"
+          ? "User chose a GENTLE pace: be extra patient, never push, frame everything as optional, fully normalize slips."
+          : pace === "fast"
+          ? "User chose a FAST pace: still no pressure, but you may give slightly more direct nudges and momentum-building suggestions."
+          : "User chose a STEADY pace: balanced, warm encouragement without pressure.";
+      ctx.push({ role: "assistant" as any, content: paceNote } as any);
+      // Use system role through a wrapper below
+    }
+    const systemCtx: Array<{ role: "system"; content: string }> = [];
+    if (whyQuit) systemCtx.push({ role: "system", content: `User's reason to quit: "${whyQuit}"` });
+    if (pace) {
+      const paceNote =
+        pace === "gentle"
+          ? "User chose a GENTLE pace: be extra patient, never push, frame everything as optional, fully normalize slips."
+          : pace === "fast"
+          ? "User chose a FAST pace: still no pressure, but you may give slightly more direct nudges and momentum-building suggestions."
+          : "User chose a STEADY pace: balanced, warm encouragement without pressure.";
+      systemCtx.push({ role: "system", content: paceNote });
+    }
+    const payload = systemCtx.length ? [...systemCtx, ...next] : next;
 
     let acc = "";
     const upsert = (chunk: string) => {
