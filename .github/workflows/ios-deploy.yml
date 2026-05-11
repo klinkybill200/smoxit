@@ -1,4 +1,4 @@
-name: iOS Deploy to TestFlight 
+name: iOS Deploy to TestFlight
 
 on:
   push:
@@ -43,7 +43,19 @@ jobs:
 
       - name: Install CocoaPods
         run: |
-          cd ios/App
+          echo "=== iOS folder structure ==="
+          find ios -type f -name "Podfile" 2>/dev/null || echo "No Podfile found anywhere"
+          ls -la ios/ 2>/dev/null || echo "No ios/ folder"
+          ls -la ios/App/ 2>/dev/null || echo "No ios/App/ folder"
+          
+          PODFILE=$(find ios -name "Podfile" 2>/dev/null | head -1)
+          if [ -z "$PODFILE" ]; then
+            echo "ERROR: No Podfile found!"
+            exit 1
+          fi
+          PODFILE_DIR=$(dirname "$PODFILE")
+          echo "Found Podfile in: $PODFILE_DIR"
+          cd "$PODFILE_DIR"
           pod install --repo-update
 
       - name: Import Certificate
