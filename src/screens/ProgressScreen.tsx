@@ -20,20 +20,22 @@ interface Badge {
   id: string;
   label: string;
   desc: string;
-  unlock: (u: { days: number; cigsAvoided: number; xp: number }) => boolean;
+  unlock: (u: { days: number; cigsAvoided: number; xp: number; paceMult: number }) => boolean;
 }
 
+// Day-based thresholds are scaled by the user's pace multiplier:
+// gentle = 0.5x (sooner unlocks, more encouragement), fast = 1.5x (more stretch).
 const badges: Badge[] = [
-  { id: "1d",   label: "Day 1",     desc: "The hardest one. You did it.",          unlock: (u) => u.days >= 1 },
-  { id: "3d",   label: "3 Days",    desc: "Nicotine is gone from your body.",      unlock: (u) => u.days >= 3 },
-  { id: "1w",   label: "1 Week",    desc: "One full week of freedom.",             unlock: (u) => u.days >= 7 },
-  { id: "2w",   label: "2 Weeks",   desc: "Cravings are losing power.",            unlock: (u) => u.days >= 14 },
+  { id: "1d",   label: "Day 1",     desc: "The hardest one. You did it.",          unlock: (u) => u.days >= Math.max(1, Math.round(1 * u.paceMult)) },
+  { id: "3d",   label: "3 Days",    desc: "Nicotine is gone from your body.",      unlock: (u) => u.days >= Math.max(1, Math.round(3 * u.paceMult)) },
+  { id: "1w",   label: "1 Week",    desc: "One full week of freedom.",             unlock: (u) => u.days >= Math.max(1, Math.round(7 * u.paceMult)) },
+  { id: "2w",   label: "2 Weeks",   desc: "Cravings are losing power.",            unlock: (u) => u.days >= Math.max(1, Math.round(14 * u.paceMult)) },
   { id: "100",  label: "100 Cigs",  desc: "100 cigarettes never smoked.",          unlock: (u) => u.cigsAvoided >= 100 },
-  { id: "1m",   label: "1 Month",   desc: "A whole month. Champion.",              unlock: (u) => u.days >= 30 },
+  { id: "1m",   label: "1 Month",   desc: "A whole month. Champion.",              unlock: (u) => u.days >= Math.max(1, Math.round(30 * u.paceMult)) },
   { id: "500x", label: "500 XP",    desc: "Five hundred experience points.",       unlock: (u) => u.xp >= 500 },
-  { id: "3m",   label: "3 Months",  desc: "Your lungs are reborn.",                unlock: (u) => u.days >= 90 },
-  { id: "6m",   label: "6 Months",  desc: "Half a year unstoppable.",              unlock: (u) => u.days >= 180 },
-  { id: "1y",   label: "1 Year",    desc: "Legend status achieved.",               unlock: (u) => u.days >= 365 },
+  { id: "3m",   label: "3 Months",  desc: "Your lungs are reborn.",                unlock: (u) => u.days >= Math.max(1, Math.round(90 * u.paceMult)) },
+  { id: "6m",   label: "6 Months",  desc: "Half a year unstoppable.",              unlock: (u) => u.days >= Math.max(1, Math.round(180 * u.paceMult)) },
+  { id: "1y",   label: "1 Year",    desc: "Legend status achieved.",               unlock: (u) => u.days >= Math.max(1, Math.round(365 * u.paceMult)) },
   { id: "1500x",label: "1500 XP",   desc: "Serious commitment.",                   unlock: (u) => u.xp >= 1500 },
   { id: "1000c",label: "1000 Cigs", desc: "1000 cigarettes never smoked.",         unlock: (u) => u.cigsAvoided >= 1000 },
 ];
