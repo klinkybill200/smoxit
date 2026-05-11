@@ -115,3 +115,10 @@ export const paceDescription = (pace?: Pace) => {
   if (pace === "fast") return "More momentum — you want regular nudges and quicker milestones.";
   return "A steady, balanced rhythm — encouragement without pressure.";
 };
+
+// Multiplier applied to day/hour thresholds for milestone & badge unlocks.
+// Gentle pace lowers the bar (more wins, more encouragement),
+// Fast pace stretches it (more challenge, bigger reward).
+export const paceUnlockMultiplier = (pace?: Pace) =>
+  pace === "gentle" ? 0.5 : pace === "fast" ? 1.5 : 1;
+
