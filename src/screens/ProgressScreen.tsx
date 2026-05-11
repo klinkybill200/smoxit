@@ -80,7 +80,7 @@ export const ProgressScreen = () => {
   const d = getDuration(user.quitDate);
   const lvl = levelInfo(user.xp);
   const today = todayKey();
-  const ctx = { days: d.days, cigsAvoided: cigsAvoided(user), xp: user.xp };
+  const ctx = { days: d.days, cigsAvoided: cigsAvoided(user), xp: user.xp, paceMult: paceUnlockMultiplier(user.pace) };
 
   const heatmap = useMemo(() => {
     return Array.from({ length: 49 }, (_, i) => {
