@@ -57,9 +57,9 @@ export const ToolsScreen = () => {
       dispatch({ type: "ADD_XP", payload: 25 });
       void awardXp("craving_resisted", { extra: crypto.randomUUID(), silent: true });
       setConfetti((c) => c + 1);
-      toast.success("+25 XP — You crushed that craving! 💪");
+      toast.success("+25 XP — Nice. You sat with it. 💙");
     } else {
-      toast("Logged. Tomorrow is a new chance. 💙");
+      toast("That's ok. One cigarette doesn't undo your progress. 🌱");
     }
     setShowCravingFlow(false);
     setActive("menu");
