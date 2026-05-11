@@ -15,6 +15,7 @@ import { dailyChallenges, weeklyQuests, monthlyQuests, isQuestComplete } from "@
 import { awardXp } from "@/lib/xp";
 import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
 import { useShare, ShareButton } from "@/components/ShareSheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Badge {
   id: string;
