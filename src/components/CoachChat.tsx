@@ -18,9 +18,10 @@ const STARTER: Msg = {
 interface Props {
   onClose: () => void;
   whyQuit?: string;
+  pace?: "gentle" | "normal" | "fast";
 }
 
-export const CoachChat = ({ onClose, whyQuit }: Props) => {
+export const CoachChat = ({ onClose, whyQuit, pace }: Props) => {
   const [messages, setMessages] = useState<Msg[]>([STARTER]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,10 +40,18 @@ export const CoachChat = ({ onClose, whyQuit }: Props) => {
     setMessages(next);
     setLoading(true);
 
-    // Inject "why quit" context into first user turn
-    const payload = whyQuit
-      ? [{ role: "system" as const, content: `User's reason to quit: "${whyQuit}"` }, ...next]
-      : next;
+    const systemCtx: Array<{ role: "system"; content: string }> = [];
+    if (whyQuit) systemCtx.push({ role: "system", content: `User's reason to quit: "${whyQuit}"` });
+    if (pace) {
+      const paceNote =
+        pace === "gentle"
+          ? "User chose a GENTLE pace: be extra patient, never push, frame everything as optional, fully normalize slips."
+          : pace === "fast"
+          ? "User chose a FAST pace: still no pressure, but slightly more direct nudges and momentum-building suggestions are welcome."
+          : "User chose a STEADY pace: balanced, warm encouragement without pressure.";
+      systemCtx.push({ role: "system", content: paceNote });
+    }
+    const payload = systemCtx.length ? [...systemCtx, ...next] : next;
 
     let acc = "";
     const upsert = (chunk: string) => {

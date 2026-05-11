@@ -66,16 +66,27 @@ export const levelInfo = (xp: number) => {
   return { name: levels[level], level, xp, current, next, progress: Math.min(100, progress) };
 };
 
-export const milestoneTagline = (days: number) => {
-  if (days < 1) return "You just took the bravest step. 🚀";
-  if (days < 3) return "Look at you go! 🔥";
-  if (days < 7) return "Nicotine is leaving the building. 💨";
-  if (days < 14) return "One week strong! 💪";
-  if (days < 30) return "Two weeks. You're a fighter. ⚡";
-  if (days < 90) return "One month free. Unstoppable. 🏆";
-  if (days < 180) return "Three months. New you. ✨";
-  if (days < 365) return "Halfway to a year. Legend. 👑";
-  return "A year+ smoke-free. Immortal. 🔱";
+import type { Pace } from "./types";
+
+const paceMultiplier = (pace?: Pace) => (pace === "gentle" ? 2 : pace === "fast" ? 0.5 : 1);
+
+export const milestoneTagline = (days: number, pace?: Pace) => {
+  // Adjust thresholds based on user's chosen pace.
+  // Gentle users see milestones twice as far apart (less pressure),
+  // fast users see them faster (more momentum).
+  const m = paceMultiplier(pace);
+  const t = (n: number) => n * m;
+  if (days < t(1)) return pace === "gentle"
+    ? "You showed up. That alone is huge. 💙"
+    : "You just took the bravest step. 🚀";
+  if (days < t(3)) return "Look at you go. One gentle step at a time. 🌱";
+  if (days < t(7)) return "Nicotine is quietly leaving the building. 💨";
+  if (days < t(14)) return "One week-ish in. Be proud. 💙";
+  if (days < t(30)) return "Two weeks-ish. You're finding your rhythm. ✨";
+  if (days < t(90)) return "A month-ish smoke-free. Beautifully done. 🏆";
+  if (days < t(180)) return "Three months-ish. New chapter. ✨";
+  if (days < t(365)) return "Halfway-ish to a year. Quietly legendary. 👑";
+  return "A year+ smoke-free. Steady and strong. 🔱";
 };
 
 export const dailyQuotes = [
@@ -94,4 +105,13 @@ export const dailyQuotes = [
 export const quoteOfDay = () => {
   const idx = Math.floor((Date.now() / 86400000)) % dailyQuotes.length;
   return dailyQuotes[idx];
+};
+
+export const paceLabel = (pace?: Pace) =>
+  pace === "gentle" ? "Gentle" : pace === "fast" ? "Fast" : "Steady";
+
+export const paceDescription = (pace?: Pace) => {
+  if (pace === "gentle") return "Slow and forgiving — no rush at all, slips are 100% expected.";
+  if (pace === "fast") return "More momentum — you want regular nudges and quicker milestones.";
+  return "A steady, balanced rhythm — encouragement without pressure.";
 };

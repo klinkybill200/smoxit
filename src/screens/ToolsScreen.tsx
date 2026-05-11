@@ -138,13 +138,13 @@ export const ToolsScreen = () => {
 
       {/* Modals */}
       {showCravingFlow && (
-        <CravingModal onClose={() => setShowCravingFlow(false)} whyQuit={user.whyQuit} onLog={logCraving} />
+        <CravingModal onClose={() => setShowCravingFlow(false)} whyQuit={user.whyQuit} pace={user.pace} onLog={logCraving} />
       )}
       {active === "breathing" && <BreathingModal onClose={() => setActive("menu")} />}
       {active === "game" && <GameModal onClose={() => setActive("menu")} />}
       {active === "audio" && <AudioModal onClose={() => setActive("menu")} />}
       {active === "tips" && <TipsModal onClose={() => setActive("menu")} />}
-      {active === "coach" && <CoachChat onClose={() => setActive("menu")} whyQuit={user.whyQuit} />}
+      {active === "coach" && <CoachChat onClose={() => setActive("menu")} whyQuit={user.whyQuit} pace={user.pace} />}
     </div>
   );
 };
@@ -171,7 +171,7 @@ const ModalShell = ({ children, onClose, title }: { children: React.ReactNode; o
   </div>
 );
 
-const CravingModal = ({ onClose, whyQuit, onLog }: { onClose: () => void; whyQuit: string; onLog: (t: Trigger, r: boolean) => void }) => {
+const CravingModal = ({ onClose, whyQuit, pace, onLog }: { onClose: () => void; whyQuit: string; pace?: "gentle" | "normal" | "fast"; onLog: (t: Trigger, r: boolean) => void }) => {
   const { user } = useUser();
   const [seconds, setSeconds] = useState(300);
   const [trigger, setTrigger] = useState<Trigger>("stress");
@@ -194,7 +194,7 @@ const CravingModal = ({ onClose, whyQuit, onLog }: { onClose: () => void; whyQui
     try {
       const days = user ? getDuration(user.quitDate).days : 0;
       const { data, error } = await supabase.functions.invoke("ai-craving-tip", {
-        body: { trigger, whyQuit, daysSmokeFree: days },
+        body: { trigger, whyQuit, daysSmokeFree: days, pace },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);

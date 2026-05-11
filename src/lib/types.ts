@@ -1,5 +1,6 @@
 export type Mood = 1 | 2 | 3 | 4 | 5;
 export type Trigger = "stress" | "boredom" | "social" | "habit" | "other";
+export type Pace = "gentle" | "normal" | "fast";
 
 export interface CravingEntry {
   id: string;
@@ -47,6 +48,7 @@ export interface UserData {
   yearsSmoking: number;
   motivations: string[];
   whyQuit: string;
+  pace: Pace;
   dreamGoal: DreamGoal;
   cravings: CravingEntry[];
   moods: MoodEntry[];

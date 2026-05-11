@@ -16,11 +16,18 @@ Format: 1–2 short sentences. Reference their trigger and "why" if provided. Al
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { trigger, whyQuit, daysSmokeFree } = await req.json();
+    const { trigger, whyQuit, daysSmokeFree, pace } = await req.json();
     const KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    const userMsg = `Trigger: ${trigger ?? "unknown"}. Days smoke-free: ${daysSmokeFree ?? 0}. My "why": ${whyQuit ?? "n/a"}. Give me ONE rescue action right now.`;
+    const paceNote =
+      pace === "gentle"
+        ? "User chose a GENTLE pace — be extra soft, fully optional, no urgency."
+        : pace === "fast"
+        ? "User chose a FAST pace — still no pressure, but a slightly more direct nudge is welcome."
+        : "User chose a STEADY pace — balanced, warm, no pressure.";
+
+    const userMsg = `Trigger: ${trigger ?? "unknown"}. Days smoke-free: ${daysSmokeFree ?? 0}. My "why": ${whyQuit ?? "n/a"}. ${paceNote} Give me ONE rescue action right now.`;
 
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
