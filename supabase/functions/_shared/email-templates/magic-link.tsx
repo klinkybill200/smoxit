@@ -4,39 +4,48 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
   Html,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
 interface MagicLinkEmailProps {
   siteName: string
-  confirmationUrl: string
+  token?: string
 }
 
-export const MagicLinkEmail = ({
-  siteName,
-  confirmationUrl,
-}: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const MagicLinkEmail = ({ siteName, token }: MagicLinkEmailProps) => (
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
+    <Preview>Dein Anmelde-Code für {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
+        <Heading style={brand}>smoxit</Heading>
+        <Heading style={h1}>Schön, dich zu sehen 💙</Heading>
         <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
+          Hier ist dein Anmelde-Code. Gib ihn einfach in der App ein – kein
+          Passwort nötig.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Log In
-        </Button>
+
+        {token ? (
+          <Section style={codeBox}>
+            <Text style={codeLabel}>Dein Anmelde-Code</Text>
+            <Text style={codeStyle}>{token}</Text>
+            <Text style={codeHint}>Gültig für kurze Zeit.</Text>
+          </Section>
+        ) : null}
+
+        <Text style={text}>
+          Du gehst deinen Weg in deinem Tempo – wir sind froh, dass du wieder da bist. 🌱
+        </Text>
+
         <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
+          Du hast diesen Code nicht angefordert? Dann kannst du diese Mail
+          einfach ignorieren.
         </Text>
       </Container>
     </Body>
@@ -45,26 +54,64 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
+const NAVY = '#0a1f3d'
+const CYAN = '#00b8e0'
+
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+}
+const container = { padding: '32px 24px', maxWidth: '560px' }
+const brand = {
+  fontSize: '20px',
   fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+  color: NAVY,
+  letterSpacing: '-0.5px',
+  margin: '0 0 24px',
+}
+const h1 = {
+  fontSize: '24px',
+  fontWeight: 'bold' as const,
+  color: NAVY,
+  margin: '0 0 16px',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
+  fontSize: '15px',
+  color: '#3d4a5c',
+  lineHeight: '1.6',
+  margin: '0 0 16px',
+}
+const codeBox = {
+  backgroundColor: '#f0fbfd',
+  border: `1px solid ${CYAN}`,
+  borderRadius: '16px',
+  padding: '20px',
+  textAlign: 'center' as const,
+  margin: '24px 0',
+}
+const codeLabel = {
+  fontSize: '12px',
+  color: '#6b7280',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '1px',
+  margin: '0 0 8px',
+}
+const codeStyle = {
+  fontSize: '32px',
+  fontWeight: 'bold' as const,
+  color: NAVY,
+  letterSpacing: '6px',
+  margin: '0 0 8px',
+  fontFamily: 'monospace',
+}
+const codeHint = {
+  fontSize: '12px',
+  color: '#6b7280',
+  margin: '0',
+}
+const footer = {
+  fontSize: '12px',
+  color: '#9ca3af',
+  margin: '32px 0 0',
   lineHeight: '1.5',
-  margin: '0 0 25px',
 }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

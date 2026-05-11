@@ -4,54 +4,77 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
+  Hr,
   Html,
-  Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
 interface SignupEmailProps {
   siteName: string
-  siteUrl: string
   recipient: string
-  confirmationUrl: string
+  token?: string
 }
 
 export const SignupEmail = ({
   siteName,
-  siteUrl,
-  recipient,
-  confirmationUrl,
+  token,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Willkommen bei smoxit – schön, dass du da bist 💙</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Heading style={brand}>smoxit</Heading>
+
+        <Heading style={h1}>Willkommen 💙</Heading>
+
         <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+          Schön, dass du da bist. Wir freuen uns wirklich, dass du den Schritt
+          machst – in deinem eigenen Tempo, ohne Druck und ohne schlechtes
+          Gewissen.
         </Text>
+
+        {token ? (
+          <Section style={codeBox}>
+            <Text style={codeLabel}>Dein Anmelde-Code</Text>
+            <Text style={codeStyle}>{token}</Text>
+            <Text style={codeHint}>Gültig für kurze Zeit. Einfach in der App eingeben.</Text>
+          </Section>
+        ) : null}
+
+        <Hr style={hr} />
+
+        <Heading style={h2}>Worum es bei smoxit geht 🌱</Heading>
         <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
+          smoxit begleitet dich auf dem Weg, mit dem Rauchen aufzuhören – sanft,
+          ehrlich und in deinem Tempo. Egal ob du dir <strong>gentle</strong>,{' '}
+          <strong>normal</strong> oder <strong>fast</strong> als Pace gewählt
+          hast: Jeder Schritt zählt, und Rückschläge sind völlig okay.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
+
+        <Text style={text}>Was dich erwartet:</Text>
+        <Text style={bullet}>✨ Persönliche Meilensteine, angepasst an dein Tempo</Text>
+        <Text style={bullet}>💬 Ein Coach, der zuhört statt zu drängen</Text>
+        <Text style={bullet}>📈 Fortschritt sichtbar machen – Tag für Tag</Text>
+        <Text style={bullet}>💙 Eine Community, die versteht, wie es sich anfühlt</Text>
+
+        <Hr style={hr} />
+
+        <Text style={text}>
+          Es gibt keinen „richtigen" Weg, nur deinen. Wir sind froh, dass du
+          ihn mit uns gehst.
+        </Text>
+
+        <Text style={signoff}>– Dein {siteName}-Team</Text>
+
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          Du hast dich nicht bei {siteName} angemeldet? Dann kannst du diese
+          Mail einfach ignorieren.
         </Text>
       </Container>
     </Body>
@@ -60,27 +83,84 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
+const NAVY = '#0a1f3d' // hsl(215 60% 10%)
+const CYAN = '#00b8e0' // hsl(188 100% 44%)
+
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+}
+const container = { padding: '32px 24px', maxWidth: '560px' }
+const brand = {
+  fontSize: '20px',
   fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+  color: NAVY,
+  letterSpacing: '-0.5px',
+  margin: '0 0 24px',
+}
+const h1 = {
+  fontSize: '28px',
+  fontWeight: 'bold' as const,
+  color: NAVY,
+  margin: '0 0 16px',
+  lineHeight: '1.2',
+}
+const h2 = {
+  fontSize: '18px',
+  fontWeight: 'bold' as const,
+  color: NAVY,
+  margin: '24px 0 12px',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
+  fontSize: '15px',
+  color: '#3d4a5c',
+  lineHeight: '1.6',
+  margin: '0 0 16px',
+}
+const bullet = {
+  fontSize: '15px',
+  color: '#3d4a5c',
+  lineHeight: '1.6',
+  margin: '0 0 8px',
+}
+const codeBox = {
+  backgroundColor: '#f0fbfd',
+  border: `1px solid ${CYAN}`,
+  borderRadius: '16px',
+  padding: '20px',
+  textAlign: 'center' as const,
+  margin: '24px 0',
+}
+const codeLabel = {
+  fontSize: '12px',
+  color: '#6b7280',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '1px',
+  margin: '0 0 8px',
+}
+const codeStyle = {
+  fontSize: '32px',
+  fontWeight: 'bold' as const,
+  color: NAVY,
+  letterSpacing: '6px',
+  margin: '0 0 8px',
+  fontFamily: 'monospace',
+}
+const codeHint = {
+  fontSize: '12px',
+  color: '#6b7280',
+  margin: '0',
+}
+const hr = { borderColor: '#e5e7eb', margin: '24px 0' }
+const signoff = {
+  fontSize: '15px',
+  color: NAVY,
+  fontWeight: '600' as const,
+  margin: '24px 0 0',
+}
+const footer = {
+  fontSize: '12px',
+  color: '#9ca3af',
+  margin: '32px 0 0',
   lineHeight: '1.5',
-  margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
