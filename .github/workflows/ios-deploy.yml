@@ -27,23 +27,32 @@ jobs:
       - name: Install Capacitor CLI
         run: npm install -g @capacitor/cli
 
-      - name: Install iOS platform and fix config
+      - name: Setup iOS project
         run: |
-          npm install @capacitor/ios
-          # Fix App ID in capacitor config (macOS sed syntax)
-          sed -i '' "s/app\.lovable\.[a-zA-Z0-9]*/app.smoxit.ios/g" capacitor.config.ts 2>/dev/null || \
+          # Fix App ID in capacitor config
           sed -i "s/app\.lovable\.[a-zA-Z0-9]*/app.smoxit.ios/g" capacitor.config.ts
+          cat capacitor.config.ts
+          
+          # Install @capacitor/ios
+          npm install @capacitor/ios
+          
+          # Add iOS platform
           npx cap add ios
-
-      - name: Sync Capacitor
-        run: npx cap sync ios
+          
+          # Verify iOS folder was created
+          ls -la ios/ || echo "iOS folder not found!"
+          ls -la ios/App/ || echo "iOS/App folder not found!"
+          
+          # Sync
+          npx cap sync ios
+          
+          # Verify Podfile
+          ls -la ios/App/Podfile || echo "Podfile not found!"
 
       - name: Install CocoaPods
         run: |
-          find . -name "Podfile" -not -path "*/node_modules/*"
-          PODFILE_DIR=$(find . -name "Podfile" -not -path "*/node_modules/*" -exec dirname {} \;)
-          cd "$PODFILE_DIR"
-          pod install
+          cd ios/App
+          pod install --repo-update
 
       - name: Import Certificate
         env:
