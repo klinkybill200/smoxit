@@ -33,8 +33,9 @@ export const Onboarding = () => {
   const [yearsSmoking, setYearsSmoking] = useState("5");
   const [motivations, setMotivations] = useState<string[]>([]);
   const [whyQuit, setWhyQuit] = useState("");
+  const [pace, setPace] = useState<Pace>("normal");
 
-  const next = () => setStep((s) => Math.min(4, s + 1));
+  const next = () => setStep((s) => Math.min(5, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   const finish = () => {
@@ -46,6 +47,7 @@ export const Onboarding = () => {
       yearsSmoking: Number(yearsSmoking) || 0,
       motivations,
       whyQuit: whyQuit.trim() || "Because I deserve a better life.",
+      pace,
     });
     dispatch({ type: "INIT_USER", payload: user });
   };
@@ -66,10 +68,10 @@ export const Onboarding = () => {
             <span className="font-display text-xl font-black tracking-tight">SMOXIT</span>
           </div>
           <div className="flex gap-1.5">
-            {[0, 1, 2, 3, 4].map((i) => (
+            {[0, 1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className={`h-1.5 rounded-full transition-all ${i <= step ? "w-6 bg-accent" : "w-3 bg-white/20"}`}
+                className={`h-1.5 rounded-full transition-all ${i <= step ? "w-5 bg-accent" : "w-2.5 bg-white/20"}`}
               />
             ))}
           </div>
