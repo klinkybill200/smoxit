@@ -56,7 +56,7 @@ export const ProgressScreen = () => {
     if (!user) return;
     try {
       const seen = new Set<string>(JSON.parse(localStorage.getItem("smoxit:badges-seen") || "[]"));
-      const ctxNow = { days: getDuration(user.quitDate).days, cigsAvoided: cigsAvoided(user), xp: user.xp };
+      const ctxNow = { days: getDuration(user.quitDate).days, cigsAvoided: cigsAvoided(user), xp: user.xp, paceMult: paceUnlockMultiplier(user.pace) };
       const fresh = badges.filter((b) => b.unlock(ctxNow) && !seen.has(b.id));
       if (fresh.length === 0) return;
       fresh.forEach((b) => seen.add(b.id));
