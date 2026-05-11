@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut, Camera, Loader2 } from "lucide-react";
+import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut, Camera, Loader2, Leaf, Footprints, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUser } from "@/lib/store";
 import { getDuration, levelInfo, moneySaved, cigsAvoided } from "@/lib/calc";
