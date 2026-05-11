@@ -161,6 +161,7 @@ export const createDefaultUser = (partial: Partial<UserData>): UserData => ({
   yearsSmoking: 5,
   motivations: [],
   whyQuit: "",
+  pace: "normal",
   dreamGoal: { name: "Dream Trip", target: 1000 },
   cravings: [],
   moods: [],
