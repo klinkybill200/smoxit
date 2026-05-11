@@ -81,7 +81,7 @@ export const Onboarding = () => {
               <h1 className="font-display text-4xl font-black leading-tight">
                 Let's get to know <span className="text-accent">you.</span>
               </h1>
-              <p className="text-white/70">No fluff. Just the basics so we can build your win.</p>
+              <p className="text-white/70">No pressure. We move at your pace — and slips are part of the journey.</p>
 
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-white/80">Your name</Label>
