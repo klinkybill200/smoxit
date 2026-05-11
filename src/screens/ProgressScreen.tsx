@@ -6,7 +6,7 @@ import {
 import { useUser } from "@/lib/store";
 import {
   getDuration, levelInfo, todayKey, moneySaved, cigsAvoided,
-  lifeGainedMinutes, formatLifeGained,
+  lifeGainedMinutes, formatLifeGained, paceLabel, paceUnlockMultiplier,
 } from "@/lib/calc";
 import { useCurrency } from "@/lib/currency";
 import { Confetti } from "@/components/Confetti";
