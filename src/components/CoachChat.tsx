@@ -45,10 +45,10 @@ export const CoachChat = ({ onClose, whyQuit, pace }: Props) => {
     if (pace) {
       const paceNote =
         pace === "gentle"
-          ? "User chose a GENTLE pace: be extra patient, never push, frame everything as optional, fully normalize slips."
+          ? "User chose a GENTLE pace. Tone: extra soft, fully patient, never pushy. Frame every suggestion as optional. Fully normalize slips and breaks. When proposing a step-by-step plan, use very small, low-effort steps spread out generously over time (e.g. cut down by 1 cig every few days, weeks between milestones). Always offer the option to slow down further."
           : pace === "fast"
-          ? "User chose a FAST pace: still no pressure, but slightly more direct nudges and momentum-building suggestions are welcome."
-          : "User chose a STEADY pace: balanced, warm encouragement without pressure.";
+          ? "User chose a FAST pace. Tone: still warm and zero shame, but more direct and momentum-focused. When proposing a step-by-step plan, suggest tighter, more ambitious milestones (e.g. quitting fully in days, daily check-ins, stretch goals). Still validate slips without judgement."
+          : "User chose a STEADY pace. Tone: balanced, warm, encouraging without pressure. When proposing a step-by-step plan, use moderate milestones over a normal timeline (e.g. weekly milestones, gradual reduction). Slips are normal and never reset progress.";
       systemCtx.push({ role: "system", content: paceNote });
     }
     const payload = systemCtx.length ? [...systemCtx, ...next] : next;
