@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, Tooltip } from "recharts";
 import { useUser } from "@/lib/store";
-import { getDuration, todayKey } from "@/lib/calc";
+import { getDuration, todayKey, paceUnlockMultiplier, paceLabel } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
