@@ -8,6 +8,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -18,34 +19,38 @@ interface MagicLinkEmailProps {
   token?: string
 }
 
+const LOGO_URL =
+  'https://lbtkcmrpdosvsyvtogkn.supabase.co/storage/v1/object/public/email-assets/smoxit-logo.png'
+
 export const MagicLinkEmail = ({ siteName, token }: MagicLinkEmailProps) => (
-  <Html lang="de" dir="ltr">
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Dein Anmelde-Code für {siteName}</Preview>
+    <Preview>Your sign-in code for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={brand}>smoxit</Heading>
-        <Heading style={h1}>Schön, dich zu sehen 💙</Heading>
+        <Section style={logoWrap}>
+          <Img src={LOGO_URL} width="56" height="56" alt="smoxit" style={logo} />
+        </Section>
+
+        <Heading style={h1}>Good to see you 💙</Heading>
         <Text style={text}>
-          Hier ist dein Anmelde-Code. Gib ihn einfach in der App ein – kein
-          Passwort nötig.
+          Here's your sign-in code. Just enter it in the app — no password needed.
         </Text>
 
         {token ? (
           <Section style={codeBox}>
-            <Text style={codeLabel}>Dein Anmelde-Code</Text>
+            <Text style={codeLabel}>Your sign-in code</Text>
             <Text style={codeStyle}>{token}</Text>
-            <Text style={codeHint}>Gültig für kurze Zeit.</Text>
+            <Text style={codeHint}>Valid for a short time.</Text>
           </Section>
         ) : null}
 
         <Text style={text}>
-          Du gehst deinen Weg in deinem Tempo – wir sind froh, dass du wieder da bist. 🌱
+          You're going at your own pace — glad to have you back. 🌱
         </Text>
 
         <Text style={footer}>
-          Du hast diesen Code nicht angefordert? Dann kannst du diese Mail
-          einfach ignorieren.
+          Didn't request this code? You can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -62,13 +67,8 @@ const main = {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
 const container = { padding: '32px 24px', maxWidth: '560px' }
-const brand = {
-  fontSize: '20px',
-  fontWeight: 'bold' as const,
-  color: NAVY,
-  letterSpacing: '-0.5px',
-  margin: '0 0 24px',
-}
+const logoWrap = { margin: '0 0 24px' }
+const logo = { borderRadius: '12px', display: 'block' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,

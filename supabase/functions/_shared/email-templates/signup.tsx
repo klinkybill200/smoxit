@@ -9,6 +9,7 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -20,61 +21,60 @@ interface SignupEmailProps {
   token?: string
 }
 
-export const SignupEmail = ({
-  siteName,
-  token,
-}: SignupEmailProps) => (
-  <Html lang="de" dir="ltr">
+const LOGO_URL =
+  'https://lbtkcmrpdosvsyvtogkn.supabase.co/storage/v1/object/public/email-assets/smoxit-logo.png'
+
+export const SignupEmail = ({ siteName, token }: SignupEmailProps) => (
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Willkommen bei smoxit – schön, dass du da bist 💙</Preview>
+    <Preview>Welcome to smoxit — glad you're here 💙</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={brand}>smoxit</Heading>
+        <Section style={logoWrap}>
+          <Img src={LOGO_URL} width="56" height="56" alt="smoxit" style={logo} />
+        </Section>
 
-        <Heading style={h1}>Willkommen 💙</Heading>
+        <Heading style={h1}>Welcome 💙</Heading>
 
         <Text style={text}>
-          Schön, dass du da bist. Wir freuen uns wirklich, dass du den Schritt
-          machst – in deinem eigenen Tempo, ohne Druck und ohne schlechtes
-          Gewissen.
+          We're really glad you're here. You're taking a meaningful step — at
+          your own pace, with no pressure and no shame.
         </Text>
 
         {token ? (
           <Section style={codeBox}>
-            <Text style={codeLabel}>Dein Anmelde-Code</Text>
+            <Text style={codeLabel}>Your sign-in code</Text>
             <Text style={codeStyle}>{token}</Text>
-            <Text style={codeHint}>Gültig für kurze Zeit. Einfach in der App eingeben.</Text>
+            <Text style={codeHint}>Valid for a short time. Just enter it in the app.</Text>
           </Section>
         ) : null}
 
         <Hr style={hr} />
 
-        <Heading style={h2}>Worum es bei smoxit geht 🌱</Heading>
+        <Heading style={h2}>What smoxit is about 🌱</Heading>
         <Text style={text}>
-          smoxit begleitet dich auf dem Weg, mit dem Rauchen aufzuhören – sanft,
-          ehrlich und in deinem Tempo. Egal ob du dir <strong>gentle</strong>,{' '}
-          <strong>normal</strong> oder <strong>fast</strong> als Pace gewählt
-          hast: Jeder Schritt zählt, und Rückschläge sind völlig okay.
+          smoxit walks with you on your journey to quit smoking — gently,
+          honestly, and at your tempo. Whether you chose <strong>gentle</strong>,{' '}
+          <strong>normal</strong> or <strong>fast</strong> as your pace: every
+          step counts, and slips are completely ok.
         </Text>
 
-        <Text style={text}>Was dich erwartet:</Text>
-        <Text style={bullet}>✨ Persönliche Meilensteine, angepasst an dein Tempo</Text>
-        <Text style={bullet}>💬 Ein Coach, der zuhört statt zu drängen</Text>
-        <Text style={bullet}>📈 Fortschritt sichtbar machen – Tag für Tag</Text>
-        <Text style={bullet}>💙 Eine Community, die versteht, wie es sich anfühlt</Text>
+        <Text style={text}>What's waiting for you:</Text>
+        <Text style={bullet}>✨ Personal milestones, adapted to your pace</Text>
+        <Text style={bullet}>💬 A coach that listens instead of pushing</Text>
+        <Text style={bullet}>📈 See your progress, day by day</Text>
+        <Text style={bullet}>💙 A community that gets how it feels</Text>
 
         <Hr style={hr} />
 
         <Text style={text}>
-          Es gibt keinen „richtigen" Weg, nur deinen. Wir sind froh, dass du
-          ihn mit uns gehst.
+          There's no "right" way — only yours. We're glad you're walking it with us.
         </Text>
 
-        <Text style={signoff}>– Dein {siteName}-Team</Text>
+        <Text style={signoff}>— The {siteName} team</Text>
 
         <Text style={footer}>
-          Du hast dich nicht bei {siteName} angemeldet? Dann kannst du diese
-          Mail einfach ignorieren.
+          Didn't sign up for {siteName}? You can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -83,21 +83,16 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const NAVY = '#0a1f3d' // hsl(215 60% 10%)
-const CYAN = '#00b8e0' // hsl(188 100% 44%)
+const NAVY = '#0a1f3d'
+const CYAN = '#00b8e0'
 
 const main = {
   backgroundColor: '#ffffff',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
 const container = { padding: '32px 24px', maxWidth: '560px' }
-const brand = {
-  fontSize: '20px',
-  fontWeight: 'bold' as const,
-  color: NAVY,
-  letterSpacing: '-0.5px',
-  margin: '0 0 24px',
-}
+const logoWrap = { margin: '0 0 24px' }
+const logo = { borderRadius: '12px', display: 'block' }
 const h1 = {
   fontSize: '28px',
   fontWeight: 'bold' as const,
