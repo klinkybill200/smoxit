@@ -292,6 +292,7 @@ export const HealthScreen = () => {
         <TimelineModal
           onClose={() => setTimelineOpen(false)}
           totalHours={d.totalHours}
+          milestones={milestones}
         />
       )}
     </div>
