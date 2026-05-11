@@ -304,6 +304,9 @@ export const ProgressScreen = () => {
         </div>
       </section>
 
+      {/* Pace-adjusted milestone windows */}
+      <MilestoneWindows user={user} currency={currency} />
+
       {/* Heatmap - compact */}
       <section className="smoxit-card p-4">
         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -392,6 +395,101 @@ const MiniStat = ({ label, value, accent }: { label: string; value: string; acce
     <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">{label}</p>
   </div>
 );
+
+// Pace-adjusted weekly/monthly milestone window bars.
+// Window length = base days * paceMult (gentle = wider, fast = tighter).
+// Each bar shows progress toward the full-window target for:
+//  - Smoke-free days
+//  - Money saved
+//  - Cigarettes avoided
+const MilestoneWindows = ({
+  user,
+  currency,
+}: {
+  user: import("@/lib/types").UserData;
+  currency: ReturnType<typeof useCurrency>;
+}) => {
+  const mult = paceUnlockMultiplier(user.pace);
+  const d = getDuration(user.quitDate);
+  const elapsedDays = d.totalHours / 24;
+  const pricePerCig = user.pricePerPack / Math.max(1, user.cigsPerPack);
+
+  const windows = [
+    { key: "weekly", label: "Weekly window", icon: Calendar, baseDays: 7 },
+    { key: "monthly", label: "Monthly window", icon: TrendingUp, baseDays: 30 },
+  ] as const;
+
+  return (
+    <section className="smoxit-card p-4">
+      <div className="flex items-center justify-between">
+        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <TrendingUp className="h-3.5 w-3.5" /> Milestone Windows
+        </p>
+        <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
+          {paceLabel(user.pace)} pace
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {windows.map((w) => {
+          const windowDays = Math.max(1, w.baseDays * mult);
+          const cappedDays = Math.min(elapsedDays, windowDays);
+          const cigsTarget = user.cigsPerDay * windowDays;
+          const moneyTarget = cigsTarget * pricePerCig;
+          const cigsActual = Math.min(cigsAvoided(user), cigsTarget);
+          const moneyActual = Math.min(moneySaved(user), moneyTarget);
+
+          const bars = [
+            {
+              label: "Smoke-free",
+              value: `${Math.floor(cappedDays)} / ${Math.round(windowDays)}d`,
+              pct: (cappedDays / windowDays) * 100,
+            },
+            {
+              label: "Saved",
+              value: `${currency.format(moneyActual)} / ${currency.format(moneyTarget)}`,
+              pct: (moneyActual / Math.max(0.01, moneyTarget)) * 100,
+            },
+            {
+              label: "Avoided",
+              value: `${Math.floor(cigsActual)} / ${Math.round(cigsTarget)}`,
+              pct: (cigsActual / Math.max(1, cigsTarget)) * 100,
+            },
+          ];
+
+          return (
+            <div key={w.key} className="rounded-xl bg-secondary/40 p-3">
+              <div className="flex items-center justify-between">
+                <p className="flex items-center gap-1.5 text-[11px] font-bold">
+                  <w.icon className="h-3.5 w-3.5 text-accent" /> {w.label}
+                </p>
+                <span className="text-[10px] text-muted-foreground">
+                  {Math.round(windowDays)}d
+                </span>
+              </div>
+              <div className="mt-2 space-y-2">
+                {bars.map((b) => (
+                  <div key={b.label}>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-muted-foreground">{b.label}</span>
+                      <span className="font-mono text-foreground">{b.value}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card">
+                      <div
+                        className="h-full rounded-full bg-gradient-accent transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, b.pct))}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
 
 // ISO week key for quest claim dedupe
 function weekKey(d = new Date()): string {
