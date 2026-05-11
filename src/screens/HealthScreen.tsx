@@ -16,14 +16,14 @@ import {
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, Tooltip } from "recharts";
 import { useUser } from "@/lib/store";
-import { getDuration, todayKey } from "@/lib/calc";
+import { getDuration, todayKey, paceUnlockMultiplier } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { awardXp } from "@/lib/xp";
 import type { DailyLog } from "@/lib/types";
 
-const milestones = [
+const baseMilestones = [
   { hours: 0.33, title: "Heart rate drops", desc: "Heart rate & blood pressure normalize." },
   { hours: 8, title: "CO levels normalize", desc: "Oxygen rises, carbon monoxide drops." },
   { hours: 24, title: "Heart attack risk drops", desc: "Risk already starts decreasing." },
@@ -47,6 +47,11 @@ export const HealthScreen = () => {
   if (!user) return null;
   const d = getDuration(user.quitDate);
   const today = todayKey();
+  const paceMult = paceUnlockMultiplier(user.pace);
+  const milestones = useMemo(
+    () => baseMilestones.map((m) => ({ ...m, hours: m.hours * paceMult })),
+    [paceMult]
+  );
 
   const todayMood = user.moods.find((m) => m.date === today);
   const todayLog: DailyLog =
@@ -287,6 +292,7 @@ export const HealthScreen = () => {
         <TimelineModal
           onClose={() => setTimelineOpen(false)}
           totalHours={d.totalHours}
+          milestones={milestones}
         />
       )}
     </div>
@@ -588,9 +594,11 @@ const LungModal = ({
 const TimelineModal = ({
   onClose,
   totalHours,
+  milestones,
 }: {
   onClose: () => void;
   totalHours: number;
+  milestones: { hours: number; title: string; desc: string }[];
 }) => (
   <ModalShell onClose={onClose} title="Recovery Timeline">
     <div className="relative">

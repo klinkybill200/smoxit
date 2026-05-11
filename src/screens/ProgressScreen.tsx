@@ -6,7 +6,7 @@ import {
 import { useUser } from "@/lib/store";
 import {
   getDuration, levelInfo, todayKey, moneySaved, cigsAvoided,
-  lifeGainedMinutes, formatLifeGained,
+  lifeGainedMinutes, formatLifeGained, paceLabel, paceUnlockMultiplier,
 } from "@/lib/calc";
 import { useCurrency } from "@/lib/currency";
 import { Confetti } from "@/components/Confetti";
@@ -20,20 +20,22 @@ interface Badge {
   id: string;
   label: string;
   desc: string;
-  unlock: (u: { days: number; cigsAvoided: number; xp: number }) => boolean;
+  unlock: (u: { days: number; cigsAvoided: number; xp: number; paceMult: number }) => boolean;
 }
 
+// Day-based thresholds are scaled by the user's pace multiplier:
+// gentle = 0.5x (sooner unlocks, more encouragement), fast = 1.5x (more stretch).
 const badges: Badge[] = [
-  { id: "1d",   label: "Day 1",     desc: "The hardest one. You did it.",          unlock: (u) => u.days >= 1 },
-  { id: "3d",   label: "3 Days",    desc: "Nicotine is gone from your body.",      unlock: (u) => u.days >= 3 },
-  { id: "1w",   label: "1 Week",    desc: "One full week of freedom.",             unlock: (u) => u.days >= 7 },
-  { id: "2w",   label: "2 Weeks",   desc: "Cravings are losing power.",            unlock: (u) => u.days >= 14 },
+  { id: "1d",   label: "Day 1",     desc: "The hardest one. You did it.",          unlock: (u) => u.days >= Math.max(1, Math.round(1 * u.paceMult)) },
+  { id: "3d",   label: "3 Days",    desc: "Nicotine is gone from your body.",      unlock: (u) => u.days >= Math.max(1, Math.round(3 * u.paceMult)) },
+  { id: "1w",   label: "1 Week",    desc: "One full week of freedom.",             unlock: (u) => u.days >= Math.max(1, Math.round(7 * u.paceMult)) },
+  { id: "2w",   label: "2 Weeks",   desc: "Cravings are losing power.",            unlock: (u) => u.days >= Math.max(1, Math.round(14 * u.paceMult)) },
   { id: "100",  label: "100 Cigs",  desc: "100 cigarettes never smoked.",          unlock: (u) => u.cigsAvoided >= 100 },
-  { id: "1m",   label: "1 Month",   desc: "A whole month. Champion.",              unlock: (u) => u.days >= 30 },
+  { id: "1m",   label: "1 Month",   desc: "A whole month. Champion.",              unlock: (u) => u.days >= Math.max(1, Math.round(30 * u.paceMult)) },
   { id: "500x", label: "500 XP",    desc: "Five hundred experience points.",       unlock: (u) => u.xp >= 500 },
-  { id: "3m",   label: "3 Months",  desc: "Your lungs are reborn.",                unlock: (u) => u.days >= 90 },
-  { id: "6m",   label: "6 Months",  desc: "Half a year unstoppable.",              unlock: (u) => u.days >= 180 },
-  { id: "1y",   label: "1 Year",    desc: "Legend status achieved.",               unlock: (u) => u.days >= 365 },
+  { id: "3m",   label: "3 Months",  desc: "Your lungs are reborn.",                unlock: (u) => u.days >= Math.max(1, Math.round(90 * u.paceMult)) },
+  { id: "6m",   label: "6 Months",  desc: "Half a year unstoppable.",              unlock: (u) => u.days >= Math.max(1, Math.round(180 * u.paceMult)) },
+  { id: "1y",   label: "1 Year",    desc: "Legend status achieved.",               unlock: (u) => u.days >= Math.max(1, Math.round(365 * u.paceMult)) },
   { id: "1500x",label: "1500 XP",   desc: "Serious commitment.",                   unlock: (u) => u.xp >= 1500 },
   { id: "1000c",label: "1000 Cigs", desc: "1000 cigarettes never smoked.",         unlock: (u) => u.cigsAvoided >= 1000 },
 ];
@@ -54,7 +56,7 @@ export const ProgressScreen = () => {
     if (!user) return;
     try {
       const seen = new Set<string>(JSON.parse(localStorage.getItem("smoxit:badges-seen") || "[]"));
-      const ctxNow = { days: getDuration(user.quitDate).days, cigsAvoided: cigsAvoided(user), xp: user.xp };
+      const ctxNow = { days: getDuration(user.quitDate).days, cigsAvoided: cigsAvoided(user), xp: user.xp, paceMult: paceUnlockMultiplier(user.pace) };
       const fresh = badges.filter((b) => b.unlock(ctxNow) && !seen.has(b.id));
       if (fresh.length === 0) return;
       fresh.forEach((b) => seen.add(b.id));
@@ -78,7 +80,7 @@ export const ProgressScreen = () => {
   const d = getDuration(user.quitDate);
   const lvl = levelInfo(user.xp);
   const today = todayKey();
-  const ctx = { days: d.days, cigsAvoided: cigsAvoided(user), xp: user.xp };
+  const ctx = { days: d.days, cigsAvoided: cigsAvoided(user), xp: user.xp, paceMult: paceUnlockMultiplier(user.pace) };
 
   const heatmap = useMemo(() => {
     return Array.from({ length: 49 }, (_, i) => {
@@ -154,7 +156,12 @@ export const ProgressScreen = () => {
     <div className="space-y-3 pt-2">
       <Confetti trigger={confetti} />
 
-      <h1 className="font-display text-3xl font-black">Progress</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="font-display text-3xl font-black">Progress</h1>
+        <div className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
+          {paceLabel(user.pace)} pace
+        </div>
+      </div>
 
       {/* Hero level card — XP focus */}
       <section className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
