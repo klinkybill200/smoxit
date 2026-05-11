@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, DollarSign, Users, Activity, Sparkles, Wind, Rocket, ArrowRight, ArrowLeft } from "lucide-react";
+import { Heart, DollarSign, Users, Activity, Sparkles, Wind, Rocket, ArrowRight, ArrowLeft, Leaf, Zap, Footprints } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SmoxitLogo } from "@/components/SmoxitLogo";
 import { useUser, createDefaultUser } from "@/lib/store";
 import { useCurrency } from "@/lib/currency";
+import type { Pace } from "@/lib/types";
 
 const motivationOptions = [
   { id: "health", label: "Health", icon: Heart },
