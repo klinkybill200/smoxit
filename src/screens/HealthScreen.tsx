@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { awardXp } from "@/lib/xp";
 import type { DailyLog } from "@/lib/types";
 
-const milestones = [
+const baseMilestones = [
   { hours: 0.33, title: "Heart rate drops", desc: "Heart rate & blood pressure normalize." },
   { hours: 8, title: "CO levels normalize", desc: "Oxygen rises, carbon monoxide drops." },
   { hours: 24, title: "Heart attack risk drops", desc: "Risk already starts decreasing." },
