@@ -156,7 +156,12 @@ export const ProgressScreen = () => {
     <div className="space-y-3 pt-2">
       <Confetti trigger={confetti} />
 
-      <h1 className="font-display text-3xl font-black">Progress</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="font-display text-3xl font-black">Progress</h1>
+        <div className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
+          {paceLabel(user.pace)} pace
+        </div>
+      </div>
 
       {/* Hero level card — XP focus */}
       <section className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
