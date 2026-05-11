@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut, Camera, Loader2 } from "lucide-react";
+import { Bell, Moon, ExternalLink, RotateCcw, Pencil, Target, Shield, LogOut, Camera, Loader2, Leaf, Footprints, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUser } from "@/lib/store";
 import { getDuration, levelInfo, moneySaved, cigsAvoided } from "@/lib/calc";
@@ -202,6 +202,44 @@ export const ProfileScreen = () => {
             <Button onClick={saveGoal} className="w-full bg-accent font-bold text-primary hover:bg-accent-glow">Save Goal</Button>
           </div>
         )}
+      </section>
+
+      {/* Pace */}
+      <section className="smoxit-card">
+        <div className="flex items-center gap-2">
+          <Footprints className="h-5 w-5 text-accent" />
+          <p className="font-display font-black">Your Pace</p>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          No pressure. Change this anytime — the app adapts to you.
+        </p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {([
+            { key: "gentle", label: "Gentle", icon: Leaf, desc: "Extra time, soft milestones" },
+            { key: "normal", label: "Normal", icon: Footprints, desc: "Balanced rhythm" },
+            { key: "fast", label: "Fast", icon: Zap, desc: "Closer milestones" },
+          ] as const).map((p) => {
+            const active = user.pace === p.key;
+            return (
+              <button
+                key={p.key}
+                onClick={() => {
+                  dispatch({ type: "UPDATE", payload: { pace: p.key } });
+                  toast.success(`Pace set to ${p.label}. 🌱`);
+                }}
+                className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-3 transition text-center ${
+                  active
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border bg-secondary/40 text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                <p.icon className={`h-5 w-5 ${active ? "text-accent" : ""}`} />
+                <span className="text-xs font-bold">{p.label}</span>
+                <span className="text-[10px] leading-tight opacity-70">{p.desc}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {/* Settings */}
