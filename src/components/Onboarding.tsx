@@ -276,7 +276,7 @@ export const Onboarding = () => {
               <ArrowLeft className="mr-1 h-4 w-4" /> Back
             </Button>
           )}
-          {step < 4 && (
+          {step < 5 && (
             <Button
               onClick={next}
               className="ml-auto h-14 flex-1 bg-accent text-base font-bold text-primary shadow-button hover:bg-accent-glow"
@@ -284,7 +284,7 @@ export const Onboarding = () => {
               Continue <ArrowRight className="ml-1 h-5 w-5" />
             </Button>
           )}
-          {step === 4 && (
+          {step === 5 && (
             <Button
               onClick={finish}
               className="ml-auto h-14 flex-1 bg-accent px-3 text-sm font-bold text-primary shadow-button hover:bg-accent-glow"
