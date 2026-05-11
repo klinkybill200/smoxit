@@ -47,6 +47,11 @@ export const HealthScreen = () => {
   if (!user) return null;
   const d = getDuration(user.quitDate);
   const today = todayKey();
+  const paceMult = paceUnlockMultiplier(user.pace);
+  const milestones = useMemo(
+    () => baseMilestones.map((m) => ({ ...m, hours: m.hours * paceMult })),
+    [paceMult]
+  );
 
   const todayMood = user.moods.find((m) => m.date === today);
   const todayLog: DailyLog =
