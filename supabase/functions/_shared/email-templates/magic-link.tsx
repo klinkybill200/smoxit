@@ -18,25 +18,34 @@ interface MagicLinkEmailProps {
   token?: string
 }
 
-export const MagicLinkEmail = ({
-  siteName,
-  token,
-}: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const MagicLinkEmail = ({ siteName, token }: MagicLinkEmailProps) => (
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Your {siteName} login code: {token}</Preview>
+    <Preview>Dein Anmelde-Code für {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login code</Heading>
+        <Heading style={brand}>smoxit</Heading>
+        <Heading style={h1}>Schön, dich zu sehen 💙</Heading>
         <Text style={text}>
-          Enter this code in the {siteName} app to sign in. The code
-          expires in 10 minutes.
+          Hier ist dein Anmelde-Code. Gib ihn einfach in der App ein – kein
+          Passwort nötig.
         </Text>
-        <Section style={codeBox}>
-          <Text style={codeText}>{token}</Text>
-        </Section>
+
+        {token ? (
+          <Section style={codeBox}>
+            <Text style={codeLabel}>Dein Anmelde-Code</Text>
+            <Text style={codeStyle}>{token}</Text>
+            <Text style={codeHint}>Gültig für kurze Zeit.</Text>
+          </Section>
+        ) : null}
+
+        <Text style={text}>
+          Du gehst deinen Weg in deinem Tempo – wir sind froh, dass du wieder da bist. 🌱
+        </Text>
+
         <Text style={footer}>
-          If you didn't request this code, you can safely ignore this email.
+          Du hast diesen Code nicht angefordert? Dann kannst du diese Mail
+          einfach ignorieren.
         </Text>
       </Container>
     </Body>
@@ -45,37 +54,64 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
+const NAVY = '#0a1f3d'
+const CYAN = '#00b8e0'
+
 const main = {
   backgroundColor: '#ffffff',
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
-const container = { padding: '32px 25px', maxWidth: '480px' }
+const container = { padding: '32px 24px', maxWidth: '560px' }
+const brand = {
+  fontSize: '20px',
+  fontWeight: 'bold' as const,
+  color: NAVY,
+  letterSpacing: '-0.5px',
+  margin: '0 0 24px',
+}
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
-  color: 'hsl(215, 60%, 10%)',
+  color: NAVY,
   margin: '0 0 16px',
 }
 const text = {
   fontSize: '15px',
-  color: 'hsl(215, 20%, 40%)',
-  lineHeight: '1.5',
-  margin: '0 0 24px',
+  color: '#3d4a5c',
+  lineHeight: '1.6',
+  margin: '0 0 16px',
 }
 const codeBox = {
-  backgroundColor: 'hsl(210, 33%, 96%)',
+  backgroundColor: '#f0fbfd',
+  border: `1px solid ${CYAN}`,
   borderRadius: '16px',
-  padding: '24px',
+  padding: '20px',
   textAlign: 'center' as const,
-  margin: '0 0 24px',
+  margin: '24px 0',
 }
-const codeText = {
-  fontSize: '36px',
+const codeLabel = {
+  fontSize: '12px',
+  color: '#6b7280',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '1px',
+  margin: '0 0 8px',
+}
+const codeStyle = {
+  fontSize: '32px',
   fontWeight: 'bold' as const,
+  color: NAVY,
   letterSpacing: '6px',
-  color: 'hsl(215, 60%, 10%)',
-  margin: '0',
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+  margin: '0 0 8px',
+  fontFamily: 'monospace',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '24px 0 0' }
+const codeHint = {
+  fontSize: '12px',
+  color: '#6b7280',
+  margin: '0',
+}
+const footer = {
+  fontSize: '12px',
+  color: '#9ca3af',
+  margin: '32px 0 0',
+  lineHeight: '1.5',
+}
