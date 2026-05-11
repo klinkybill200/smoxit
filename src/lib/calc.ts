@@ -106,3 +106,12 @@ export const quoteOfDay = () => {
   const idx = Math.floor((Date.now() / 86400000)) % dailyQuotes.length;
   return dailyQuotes[idx];
 };
+
+export const paceLabel = (pace?: Pace) =>
+  pace === "gentle" ? "Gentle" : pace === "fast" ? "Fast" : "Steady";
+
+export const paceDescription = (pace?: Pace) => {
+  if (pace === "gentle") return "Slow and forgiving — no rush at all, slips are 100% expected.";
+  if (pace === "fast") return "More momentum — you want regular nudges and quicker milestones.";
+  return "A steady, balanced rhythm — encouragement without pressure.";
+};
