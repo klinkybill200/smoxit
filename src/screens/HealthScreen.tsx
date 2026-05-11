@@ -594,9 +594,11 @@ const LungModal = ({
 const TimelineModal = ({
   onClose,
   totalHours,
+  milestones,
 }: {
   onClose: () => void;
   totalHours: number;
+  milestones: { hours: number; title: string; desc: string }[];
 }) => (
   <ModalShell onClose={onClose} title="Recovery Timeline">
     <div className="relative">
