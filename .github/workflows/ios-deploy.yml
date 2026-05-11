@@ -1,4 +1,4 @@
-name: iOS Deploy to TestFlight
+name: iOS Deploy to TestFlight 
 
 on:
   push:
@@ -29,19 +29,11 @@ jobs:
 
       - name: Setup iOS project
         run: |
-          # Fix App ID in capacitor config
-          sed -i "s/app\.lovable\.[a-zA-Z0-9]*/app.smoxit.ios/g" capacitor.config.ts
-          cat capacitor.config.ts
-          
-          # Install @capacitor/ios
+          # Install @capacitor/ios if not in package.json
           npm install @capacitor/ios
           
           # Add iOS platform
           npx cap add ios
-          
-          # Verify iOS folder was created
-          ls -la ios/ || echo "iOS folder not found!"
-          ls -la ios/App/ || echo "iOS/App folder not found!"
           
           # Sync
           npx cap sync ios
