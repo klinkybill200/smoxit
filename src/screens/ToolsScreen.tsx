@@ -120,7 +120,7 @@ export const ToolsScreen = () => {
       <section className="smoxit-card">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Recent Cravings</p>
         {user.cravings.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">None logged yet. Stay strong. 💙</p>
+          <p className="mt-2 text-sm text-muted-foreground">Nothing logged yet. Whenever you're ready. 💙</p>
         ) : (
           <div className="mt-2 space-y-2">
             {user.cravings.slice(0, 5).map((c) => (
@@ -128,7 +128,7 @@ export const ToolsScreen = () => {
                 <span className="font-semibold capitalize">{c.trigger}</span>
                 <span className="text-xs text-muted-foreground">{new Date(c.timestamp).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 <span className={`text-xs font-bold ${c.resisted ? "text-success" : "text-muted-foreground"}`}>
-                  {c.resisted ? "✓ Resisted" : "Slipped"}
+                  {c.resisted ? "✓ Sat with it" : "Smoked — that's ok"}
                 </span>
               </div>
             ))}
