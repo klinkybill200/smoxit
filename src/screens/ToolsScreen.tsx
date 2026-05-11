@@ -138,13 +138,13 @@ export const ToolsScreen = () => {
 
       {/* Modals */}
       {showCravingFlow && (
-        <CravingModal onClose={() => setShowCravingFlow(false)} whyQuit={user.whyQuit} onLog={logCraving} />
+        <CravingModal onClose={() => setShowCravingFlow(false)} whyQuit={user.whyQuit} pace={user.pace} onLog={logCraving} />
       )}
       {active === "breathing" && <BreathingModal onClose={() => setActive("menu")} />}
       {active === "game" && <GameModal onClose={() => setActive("menu")} />}
       {active === "audio" && <AudioModal onClose={() => setActive("menu")} />}
       {active === "tips" && <TipsModal onClose={() => setActive("menu")} />}
-      {active === "coach" && <CoachChat onClose={() => setActive("menu")} whyQuit={user.whyQuit} />}
+      {active === "coach" && <CoachChat onClose={() => setActive("menu")} whyQuit={user.whyQuit} pace={user.pace} />}
     </div>
   );
 };
