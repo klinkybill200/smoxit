@@ -15,6 +15,7 @@ import { dailyChallenges, weeklyQuests, monthlyQuests, isQuestComplete } from "@
 import { awardXp } from "@/lib/xp";
 import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
 import { useShare, ShareButton } from "@/components/ShareSheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Badge {
   id: string;
@@ -444,16 +445,25 @@ const MilestoneWindows = ({
               label: "Smoke-free",
               value: `${Math.floor(cappedDays)} / ${Math.round(windowDays)}d`,
               pct: (cappedDays / windowDays) * 100,
+              tip: `Smoke-free days
+Actual: ${Math.floor(cappedDays)} day${Math.floor(cappedDays) === 1 ? "" : "s"}
+Target (${paceLabel(user.pace)} pace): ${Math.round(windowDays)} days`,
             },
             {
               label: "Saved",
               value: `${currency.format(moneyActual)} / ${currency.format(moneyTarget)}`,
               pct: (moneyActual / Math.max(0.01, moneyTarget)) * 100,
+              tip: `Money saved
+Actual: ${currency.format(moneyActual)}
+Target (${paceLabel(user.pace)} pace, ${Math.round(windowDays)}d): ${currency.format(moneyTarget)}`,
             },
             {
               label: "Avoided",
               value: `${Math.floor(cigsActual)} / ${Math.round(cigsTarget)}`,
               pct: (cigsActual / Math.max(1, cigsTarget)) * 100,
+              tip: `Cigarettes avoided
+Actual: ${Math.floor(cigsActual)}
+Target (${paceLabel(user.pace)} pace, ${Math.round(windowDays)}d): ${Math.round(cigsTarget)}`,
             },
           ];
 
@@ -467,22 +477,35 @@ const MilestoneWindows = ({
                   {Math.round(windowDays)}d
                 </span>
               </div>
-              <div className="mt-2 space-y-2">
-                {bars.map((b) => (
-                  <div key={b.label}>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-muted-foreground">{b.label}</span>
-                      <span className="font-mono text-foreground">{b.value}</span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card">
-                      <div
-                        className="h-full rounded-full bg-gradient-accent transition-all"
-                        style={{ width: `${Math.min(100, Math.max(0, b.pct))}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <TooltipProvider delayDuration={150}>
+                <div className="mt-2 space-y-2">
+                  {bars.map((b) => (
+                    <Tooltip key={b.label}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="block w-full text-left"
+                          aria-label={b.tip}
+                        >
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-bold text-muted-foreground">{b.label}</span>
+                            <span className="font-mono text-foreground">{b.value}</span>
+                          </div>
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card">
+                            <div
+                              className="h-full rounded-full bg-gradient-accent transition-all"
+                              style={{ width: `${Math.min(100, Math.max(0, b.pct))}%` }}
+                            />
+                          </div>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="whitespace-pre-line text-[11px] leading-snug">
+                        {b.tip}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </TooltipProvider>
             </div>
           );
         })}
