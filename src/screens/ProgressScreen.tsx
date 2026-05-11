@@ -304,6 +304,9 @@ export const ProgressScreen = () => {
         </div>
       </section>
 
+      {/* Pace-adjusted milestone windows */}
+      <MilestoneWindows user={user} currency={currency} />
+
       {/* Heatmap - compact */}
       <section className="smoxit-card p-4">
         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
