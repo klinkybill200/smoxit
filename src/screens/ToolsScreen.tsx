@@ -57,9 +57,9 @@ export const ToolsScreen = () => {
       dispatch({ type: "ADD_XP", payload: 25 });
       void awardXp("craving_resisted", { extra: crypto.randomUUID(), silent: true });
       setConfetti((c) => c + 1);
-      toast.success("+25 XP — You crushed that craving! 💪");
+      toast.success("+25 XP — Nice. You sat with it. 💙");
     } else {
-      toast("Logged. Tomorrow is a new chance. 💙");
+      toast("That's ok. One cigarette doesn't undo your progress. 🌱");
     }
     setShowCravingFlow(false);
     setActive("menu");
@@ -77,7 +77,7 @@ export const ToolsScreen = () => {
     <div className="space-y-4 pt-2">
       <Confetti trigger={confetti} />
       <h1 className="font-display text-3xl font-black">Tools</h1>
-      <p className="text-sm text-muted-foreground">You're stronger than this craving.</p>
+      <p className="text-sm text-muted-foreground">No pressure. Take it at your pace.</p>
 
       {/* Emergency action row: Craving + Coach Chat */}
       <div className="grid grid-cols-2 gap-3">
@@ -120,7 +120,7 @@ export const ToolsScreen = () => {
       <section className="smoxit-card">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Recent Cravings</p>
         {user.cravings.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">None logged yet. Stay strong. 💙</p>
+          <p className="mt-2 text-sm text-muted-foreground">Nothing logged yet. Whenever you're ready. 💙</p>
         ) : (
           <div className="mt-2 space-y-2">
             {user.cravings.slice(0, 5).map((c) => (
@@ -128,7 +128,7 @@ export const ToolsScreen = () => {
                 <span className="font-semibold capitalize">{c.trigger}</span>
                 <span className="text-xs text-muted-foreground">{new Date(c.timestamp).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 <span className={`text-xs font-bold ${c.resisted ? "text-success" : "text-muted-foreground"}`}>
-                  {c.resisted ? "✓ Resisted" : "Slipped"}
+                  {c.resisted ? "✓ Sat with it" : "Smoked — that's ok"}
                 </span>
               </div>
             ))}

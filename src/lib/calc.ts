@@ -79,16 +79,16 @@ export const milestoneTagline = (days: number) => {
 };
 
 export const dailyQuotes = [
-  "Every cigarette refused is a vote for the future you.",
-  "You are not giving anything up. You are gaining everything.",
-  "The craving lasts 5 minutes. Freedom lasts forever.",
-  "Discipline is choosing what you want most over what you want now.",
-  "Strong people aren't born. They're built — one decision at a time.",
-  "Your lungs are throwing a party right now. Don't crash it.",
-  "Quitting smoking is the best gift you'll ever give yourself.",
-  "You're not 'trying' to quit. You quit. Period.",
-  "The version of you a year from now is begging you not to smoke today.",
-  "Cravings are waves. You're the surfer.",
+  "Every step forward counts — even the tiny ones.",
+  "You're not giving anything up. You're gently making space for more.",
+  "Slips are not failures. They're part of finding your pace.",
+  "Progress isn't a straight line. Be kind to yourself today.",
+  "There's no rush. Your journey moves at your speed.",
+  "One breath at a time. That's already enough.",
+  "If you stumbled, that's ok. You can always begin again — right now.",
+  "You don't have to be perfect. You just have to keep showing up.",
+  "Every craving you sit with — even briefly — is a quiet win.",
+  "You are allowed to take this slowly. There's no deadline.",
 ];
 
 export const quoteOfDay = () => {

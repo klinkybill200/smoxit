@@ -81,7 +81,7 @@ export const Onboarding = () => {
               <h1 className="font-display text-4xl font-black leading-tight">
                 Let's get to know <span className="text-accent">you.</span>
               </h1>
-              <p className="text-white/70">No fluff. Just the basics so we can build your win.</p>
+              <p className="text-white/70">No pressure. We move at your pace — and slips are part of the journey.</p>
 
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-white/80">Your name</Label>
@@ -202,7 +202,7 @@ export const Onboarding = () => {
                 YOUR JOURNEY<br />STARTS <span className="text-accent">NOW.</span>
               </h1>
               <p className="mt-6 text-lg text-white/70 text-balance">
-                {name || "You"}, every second from here is a win. Let's go.
+                {name || "You"}, no pressure — just one small step at a time. We've got you, slips and all. 💙
               </p>
             </div>
           )}
