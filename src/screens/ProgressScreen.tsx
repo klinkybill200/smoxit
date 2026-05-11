@@ -15,7 +15,7 @@ import { dailyChallenges, weeklyQuests, monthlyQuests, isQuestComplete } from "@
 import { awardXp } from "@/lib/xp";
 import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
 import { useShare, ShareButton } from "@/components/ShareSheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface Badge {
   id: string;
@@ -477,35 +477,33 @@ Target (${paceLabel(user.pace)} pace, ${Math.round(windowDays)}d): ${Math.round(
                   {Math.round(windowDays)}d
                 </span>
               </div>
-              <TooltipProvider delayDuration={150}>
-                <div className="mt-2 space-y-2">
-                  {bars.map((b) => (
-                    <Tooltip key={b.label}>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="block w-full text-left"
-                          aria-label={b.tip}
-                        >
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="font-bold text-muted-foreground">{b.label}</span>
-                            <span className="font-mono text-foreground">{b.value}</span>
-                          </div>
-                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card">
-                            <div
-                              className="h-full rounded-full bg-gradient-accent transition-all"
-                              style={{ width: `${Math.min(100, Math.max(0, b.pct))}%` }}
-                            />
-                          </div>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="whitespace-pre-line text-[11px] leading-snug">
-                        {b.tip}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              </TooltipProvider>
+              <div className="mt-2 space-y-2">
+                {bars.map((b) => (
+                  <Popover key={b.label}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="block w-full text-left"
+                        aria-label={b.tip}
+                      >
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-bold text-muted-foreground">{b.label}</span>
+                          <span className="font-mono text-foreground">{b.value}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card">
+                          <div
+                            className="h-full rounded-full bg-gradient-accent transition-all"
+                            style={{ width: `${Math.min(100, Math.max(0, b.pct))}%` }}
+                          />
+                        </div>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" className="w-auto whitespace-pre-line text-[11px] leading-snug">
+                      {b.tip}
+                    </PopoverContent>
+                  </Popover>
+                ))}
+              </div>
             </div>
           );
         })}
