@@ -202,7 +202,7 @@ export const Onboarding = () => {
                 YOUR JOURNEY<br />STARTS <span className="text-accent">NOW.</span>
               </h1>
               <p className="mt-6 text-lg text-white/70 text-balance">
-                {name || "You"}, every second from here is a win. Let's go.
+                {name || "You"}, no pressure — just one small step at a time. We've got you, slips and all. 💙
               </p>
             </div>
           )}
