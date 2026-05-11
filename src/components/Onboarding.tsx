@@ -194,6 +194,60 @@ export const Onboarding = () => {
           )}
 
           {step === 4 && (
+            <div className="animate-slide-up space-y-6">
+              <h1 className="font-display text-4xl font-black leading-tight">
+                Your <span className="text-accent">pace.</span>
+              </h1>
+              <p className="text-white/70">
+                There's no right speed. Pick what feels kind to you today — you can change this anytime.
+              </p>
+
+              <div className="space-y-3">
+                {([
+                  {
+                    id: "gentle" as const,
+                    icon: Leaf,
+                    title: "Gentle",
+                    desc: "Slow, forgiving, no rush. Slips are 100% expected.",
+                  },
+                  {
+                    id: "normal" as const,
+                    icon: Footprints,
+                    title: "Steady",
+                    desc: "A balanced rhythm — encouragement without pressure.",
+                  },
+                  {
+                    id: "fast" as const,
+                    icon: Zap,
+                    title: "Fast",
+                    desc: "More momentum — quicker milestones and regular nudges.",
+                  },
+                ]).map(({ id, icon: Icon, title, desc }) => {
+                  const active = pace === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setPace(id)}
+                      className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-bounce ${
+                        active
+                          ? "border-accent bg-accent/15 shadow-button"
+                          : "border-white/10 bg-white/5 hover:border-white/30"
+                      }`}
+                    >
+                      <Icon className={`mt-0.5 h-6 w-6 shrink-0 ${active ? "text-accent" : "text-white/70"}`} />
+                      <div>
+                        <p className="font-bold">{title}</p>
+                        <p className="text-sm text-white/60">{desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
             <div className="animate-fade-in flex h-full flex-col items-center justify-center text-center">
               <div className="relative mb-8">
                 <div className="absolute inset-0 animate-pulse-glow rounded-full bg-gradient-glow blur-2xl" />
@@ -205,7 +259,7 @@ export const Onboarding = () => {
                 YOUR JOURNEY<br />STARTS <span className="text-accent">NOW.</span>
               </h1>
               <p className="mt-6 text-lg text-white/70 text-balance">
-                {name || "You"}, no pressure — just one small step at a time. We've got you, slips and all. 💙
+                {name || "You"}, no pressure — just one small step at a time, at your <span className="text-accent font-semibold">{pace === "gentle" ? "gentle" : pace === "fast" ? "fast" : "steady"}</span> pace. We've got you, slips and all. 💙
               </p>
             </div>
           )}
