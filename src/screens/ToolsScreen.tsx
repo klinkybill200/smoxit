@@ -77,7 +77,7 @@ export const ToolsScreen = () => {
     <div className="space-y-4 pt-2">
       <Confetti trigger={confetti} />
       <h1 className="font-display text-3xl font-black">Tools</h1>
-      <p className="text-sm text-muted-foreground">You're stronger than this craving.</p>
+      <p className="text-sm text-muted-foreground">No pressure. Take it at your pace.</p>
 
       {/* Emergency action row: Craving + Coach Chat */}
       <div className="grid grid-cols-2 gap-3">
