@@ -7,11 +7,17 @@ on:
 
 jobs:
   deploy:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.0.app/Contents/Developer || \
+          sudo xcode-select -s $(ls -d /Applications/Xcode_*.app | sort -V | tail -1)/Contents/Developer
+          xcodebuild -version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -125,4 +131,4 @@ jobs:
             -f ios/App/smoxit-export/App.ipa \
             -t ios \
             -u "$APPLE_ID" \
-            -p "$APP_SPECIFIC_PASSWORD" 
+            -p "$APP_SPECIFIC_PASSWORD"
