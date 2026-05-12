@@ -110,4 +110,4 @@ jobs:
             -f ios/App/smoxit-export/App.ipa \
             -t ios \
             -u "$APPLE_ID" \
-            -p "$APP_SPECIFIC_PASSWORD" 
+            -p "$APP_SPECIFIC_PASSWORD"
