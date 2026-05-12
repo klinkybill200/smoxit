@@ -44,8 +44,25 @@ jobs:
           # Sync
           npx cap sync ios
           
-          # Verify Podfile
-          ls -la ios/App/Podfile || echo "Podfile not found!"
+          # App Icon einbinden
+          mkdir -p ios/App/App/Assets.xcassets/AppIcon.appiconset
+          cp assets/AppIcon.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+          cat > ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json << 'EOF'
+          {
+            "images": [
+              {
+                "filename": "AppIcon.png",
+                "idiom": "universal",
+                "platform": "ios",
+                "size": "1024x1024"
+              }
+            ],
+            "info": {
+              "author": "xcode",
+              "version": 1
+            }
+          }
+          EOF
 
 
 
