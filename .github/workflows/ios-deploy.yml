@@ -30,8 +30,11 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Install Capacitor CLI
-        run: npm install -g @capacitor/cli
+      - name: Set build number
+        run: |
+          BUILD_NUMBER=${{ github.run_number }}
+          cd ios/App
+          xcrun agvtool new-version -all $BUILD_NUMBER
 
       - name: Setup iOS project
         run: |
