@@ -30,23 +30,15 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Set build number
-        run: |
-          BUILD_NUMBER=${{ github.run_number }}
-          cd ios/App
-          xcrun agvtool new-version -all $BUILD_NUMBER
-
       - name: Setup iOS project
         run: |
-          # Install @capacitor/ios if not in package.json
           npm install @capacitor/ios
-          
-          # Add iOS platform
           npx cap add ios
-          
-          # Sync
           npx cap sync ios
-          
+
+          # Build Nummer setzen
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/App/App/Info.plist
+
           # App Icon einbinden
           mkdir -p ios/App/App/Assets.xcassets/AppIcon.appiconset
           cp assets/AppIcon.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png
@@ -67,31 +59,23 @@ jobs:
           }
           EOF
 
-
-
       - name: Import Certificate
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: smoxit123
         run: |
-          # Certificate dekodieren
           echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
-          
-          # Keychain erstellen
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security list-keychains -d user -s build.keychain $(security list-keychains -d user | tr -d '"')
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          
-          # Certificate importieren
           security import certificate.p12 \
             -k build.keychain \
             -P "$CERTIFICATE_PASSWORD" \
             -T /usr/bin/codesign \
             -T /usr/bin/security \
             -f pkcs12
-          
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: \
             -s -k "$KEYCHAIN_PASSWORD" build.keychain
