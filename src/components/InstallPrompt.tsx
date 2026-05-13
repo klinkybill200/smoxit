@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { isNative } from "@/lib/platform";
 
 const DISMISS_KEY = "smoxit:install-dismissed-at";
 const DISMISS_DAYS = 7;
@@ -55,7 +56,7 @@ export function InstallPrompt() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isStandalone() || isInIframe() || recentlyDismissed()) return;
+    if (isStandalone() || isInIframe() || recentlyDismissed() || isNative()) return;
 
     setPlatform(getPlatform());
 
