@@ -12,11 +12,6 @@ export const SUBSCRIBE_URL = "https://my.smoxit.app/subscribe";
 const STRIPE_URL_EU = "https://buy.stripe.com/7sY8wPbjE8lE6KG1XjfnO01";
 const STRIPE_URL_DEFAULT = "https://buy.stripe.com/00w5kD1J48lEd94fO9fnO00";
 
-const EU_COUNTRIES = [
-  "DE", "AT", "CH", "FR", "IT", "ES", "NL", "BE", "PT", "PL",
-  "SE", "NO", "DK", "FI", "IE", "CZ", "HU", "RO", "GR", "HR",
-];
-
 /**
  * Open the external subscription page.
  * On native: shows disclaimer, detects region, opens in-app browser, and
@@ -44,7 +39,7 @@ export const openSubscribePage = async (onFinished?: () => void) => {
   try {
     const res = await fetch("https://ipapi.co/json/");
     const data = await res.json();
-    if (typeof data.country_code === "string" && EU_COUNTRIES.includes(data.country_code.toUpperCase())) {
+    if (data.currency === "EUR") {
       url = STRIPE_URL_EU;
     }
   } catch {
