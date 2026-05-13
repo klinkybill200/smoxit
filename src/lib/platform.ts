@@ -44,7 +44,7 @@ export const openSubscribePage = async (onFinished?: () => void) => {
   try {
     const res = await fetch("https://ipapi.co/json/");
     const data = await res.json();
-    if (typeof data.country_code === "string" && EU_COUNTRIES.includes(data.country_code.toUpperCase())) {
+    if (data.currency === "EUR") {
       url = STRIPE_URL_EU;
     }
   } catch {
