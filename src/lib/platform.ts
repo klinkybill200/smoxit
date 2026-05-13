@@ -12,11 +12,6 @@ export const SUBSCRIBE_URL = "https://my.smoxit.app/subscribe";
 const STRIPE_URL_EU = "https://buy.stripe.com/7sY8wPbjE8lE6KG1XjfnO01";
 const STRIPE_URL_DEFAULT = "https://buy.stripe.com/00w5kD1J48lEd94fO9fnO00";
 
-const EU_COUNTRIES = [
-  "DE", "AT", "CH", "FR", "IT", "ES", "NL", "BE", "PT", "PL",
-  "SE", "NO", "DK", "FI", "IE", "CZ", "HU", "RO", "GR", "HR",
-];
-
 /**
  * Open the external subscription page.
  * On native: shows disclaimer, detects region, opens in-app browser, and
