@@ -72,14 +72,46 @@ async function syncSubscriptionFromEvent(event: Stripe.Event) {
     periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
   }
 
-  await supaAdmin
+  await updateProfileByCustomer(customerId, {
+    subscription_status: status,
+    subscription_current_period_end: periodEnd,
+    stripe_customer_id: customerId,
+  });
+}
+
+async function updateProfileByCustomer(
+  customerId: string,
+  patch: Record<string, unknown>,
+) {
+  const { data, error } = await supaAdmin
     .from("profiles")
-    .update({
-      subscription_status: status,
-      subscription_current_period_end: periodEnd,
-      stripe_customer_id: customerId,
-    })
-    .eq("stripe_customer_id", customerId);
+    .update(patch)
+    .eq("stripe_customer_id", customerId)
+    .select("user_id");
+
+  if (error) console.error("update by customer id failed", error);
+  if (data && data.length > 0) return;
+
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ("deleted" in customer && customer.deleted) return;
+    const email = (customer as Stripe.Customer).email;
+    if (!email) {
+      console.warn("no email fallback available for customer", customerId);
+      return;
+    }
+    const { data: byEmail, error: emailErr } = await supaAdmin
+      .from("profiles")
+      .update({ ...patch, stripe_customer_id: customerId })
+      .eq("email", email)
+      .select("user_id");
+    if (emailErr) console.error("update by email failed", emailErr);
+    if (!byEmail || byEmail.length === 0) {
+      console.warn("no profile matched for customer/email", customerId, email);
+    }
+  } catch (e) {
+    console.error("stripe customer retrieve failed", e);
+  }
 }
 
 async function handleInvoicePaid(event: Stripe.Event) {
@@ -91,13 +123,11 @@ async function handleInvoicePaid(event: Stripe.Event) {
   if (inv.subscription) {
     const subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription.id;
     const sub = await stripe.subscriptions.retrieve(subId);
-    await supaAdmin
-      .from("profiles")
-      .update({
-        subscription_status: sub.status,
-        subscription_current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
-      })
-      .eq("stripe_customer_id", customerId);
+    await updateProfileByCustomer(customerId, {
+      subscription_status: sub.status,
+      subscription_current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+      stripe_customer_id: customerId,
+    });
   }
 
   // Referral conversion: only on FIRST paid invoice for a referred user
