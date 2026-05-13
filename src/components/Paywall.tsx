@@ -132,7 +132,14 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                     await openSubscribePage(async () => {
                       try {
                         await sub.refresh();
-                        if (sub.status === "active") {
+                        const { data: { user: u } } = await supabase.auth.getUser();
+                        if (!u) return;
+                        const { data: profile } = await supabase
+                          .from("profiles")
+                          .select("subscription_status")
+                          .eq("user_id", u.id)
+                          .maybeSingle();
+                        if (profile?.subscription_status === "active") {
                           onOpenChange(false);
                         }
                       } catch (e) {
