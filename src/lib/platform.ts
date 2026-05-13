@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { refreshWithRetry } from "@/lib/subscription";
 
 export const isNative = (): boolean => {
   try {
@@ -15,10 +16,10 @@ const STRIPE_URL_DEFAULT = "https://buy.stripe.com/00w5kD1J48lEd94fO9fnO00";
 /**
  * Open the external subscription page.
  * On native: shows disclaimer, detects region, opens in-app browser, and
- * invokes onFinished when the user closes the browser.
+ * retries subscription check when the user closes the browser.
  * On web: opens a new tab.
  */
-export const openSubscribePage = async (onFinished?: () => boolean | Promise<boolean> | void) => {
+export const openSubscribePage = async () => {
   if (!isNative()) {
     window.open(SUBSCRIBE_URL, "_blank", "noopener,noreferrer");
     return;
@@ -54,30 +55,10 @@ export const openSubscribePage = async (onFinished?: () => boolean | Promise<boo
   try {
     const { Browser } = await import("@capacitor/browser");
 
-    // Listen for browser close to re-check subscription
+    // Listen for browser close to re-check subscription immediately
     const handle = await Browser.addListener("browserFinished", () => {
       void handle.remove();
-      if (!onFinished) return;
-
-      const delays = [2000, 4000, 6000, 10000, 15000];
-      let attempt = 0;
-
-      const scheduleNext = () => {
-        if (attempt >= delays.length) return;
-        const delay = delays[attempt];
-        attempt++;
-        setTimeout(async () => {
-          try {
-            const shouldStop = await onFinished();
-            if (shouldStop) return;
-          } catch (e) {
-            console.error("Subscription check failed:", e);
-          }
-          scheduleNext();
-        }, delay);
-      };
-
-      scheduleNext();
+      void refreshWithRetry();
     });
 
     await Browser.open({ url });
