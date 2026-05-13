@@ -40,13 +40,11 @@ export const openSubscribePage = async () => {
   try {
     const { Device } = await import("@capacitor/device");
     const info = await Device.getLanguageCode();
-    const locale = info.value; // e.g. "de-DE", "en-US"
-    const isEU =
-      locale.includes("DE") || locale.includes("AT") || locale.includes("CH") ||
-      locale.includes("FR") || locale.includes("IT") || locale.includes("ES") ||
-      locale.includes("NL") || locale.includes("BE") || locale.includes("PT") ||
-      locale.includes("PL") || locale.includes("SE") || locale.includes("NO") ||
-      locale.includes("DK") || locale.includes("FI");
+    const locale = info.value.toLowerCase();
+
+    const isEU = ['de', 'fr', 'it', 'es', 'nl', 'pt', 'pl',
+               'sv', 'nb', 'da', 'fi', 'ga', 'cs', 'hu',
+               'ro', 'el', 'hr'].includes(locale);
     if (isEU) url = STRIPE_URL_EU;
   } catch {
     // fallback to default URL
