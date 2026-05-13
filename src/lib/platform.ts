@@ -18,7 +18,7 @@ const STRIPE_URL_DEFAULT = "https://buy.stripe.com/00w5kD1J48lEd94fO9fnO00";
  * invokes onFinished when the user closes the browser.
  * On web: opens a new tab.
  */
-export const openSubscribePage = async (onFinished?: () => void) => {
+export const openSubscribePage = async (onFinished?: () => boolean | Promise<boolean> | void) => {
   if (!isNative()) {
     window.open(SUBSCRIBE_URL, "_blank", "noopener,noreferrer");
     return;
@@ -52,9 +52,27 @@ export const openSubscribePage = async (onFinished?: () => void) => {
     // Listen for browser close to re-check subscription
     const handle = await Browser.addListener("browserFinished", () => {
       void handle.remove();
-      if (onFinished) {
-        setTimeout(() => onFinished(), 2000);
-      }
+      if (!onFinished) return;
+
+      const delays = [2000, 4000, 6000, 10000, 15000];
+      let attempt = 0;
+
+      const scheduleNext = () => {
+        if (attempt >= delays.length) return;
+        const delay = delays[attempt];
+        attempt++;
+        setTimeout(async () => {
+          try {
+            const shouldStop = await onFinished();
+            if (shouldStop) return;
+          } catch (e) {
+            console.error("Subscription check failed:", e);
+          }
+          scheduleNext();
+        }, delay);
+      };
+
+      scheduleNext();
     });
 
     await Browser.open({ url });
