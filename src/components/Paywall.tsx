@@ -129,7 +129,16 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    await openSubscribePage();
+                    await openSubscribePage(async () => {
+                      try {
+                        await sub.refresh();
+                        if (sub.status === "active") {
+                          onOpenChange(false);
+                        }
+                      } catch (e) {
+                        console.error("Failed to refresh subscription:", e);
+                      }
+                    });
                   } finally {
                     setLoading(false);
                   }
