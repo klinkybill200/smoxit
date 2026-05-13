@@ -18,7 +18,7 @@ const STRIPE_URL_DEFAULT = "https://buy.stripe.com/00w5kD1J48lEd94fO9fnO00";
  * invokes onFinished when the user closes the browser.
  * On web: opens a new tab.
  */
-export const openSubscribePage = async (onFinished?: () => void) => {
+export const openSubscribePage = async (onFinished?: () => boolean | Promise<boolean> | void) => {
   if (!isNative()) {
     window.open(SUBSCRIBE_URL, "_blank", "noopener,noreferrer");
     return;
