@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { isNative } from "@/lib/platform";
 
 const DISMISS_KEY = "smoxit:install-dismissed-at";
 const DISMISS_DAYS = 7;
