@@ -133,7 +133,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                       try {
                         await sub.refresh();
                         const { data: { user: u } } = await supabase.auth.getUser();
-                        if (!u) return;
+                        if (!u) return false;
                         const { data: profile } = await supabase
                           .from("profiles")
                           .select("subscription_status")
@@ -141,9 +141,12 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                           .maybeSingle();
                         if (profile?.subscription_status === "active") {
                           onOpenChange(false);
+                          return true;
                         }
+                        return false;
                       } catch (e) {
                         console.error("Failed to refresh subscription:", e);
+                        return false;
                       }
                     });
                   } finally {
