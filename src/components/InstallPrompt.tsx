@@ -56,7 +56,7 @@ export function InstallPrompt() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isStandalone() || isInIframe() || recentlyDismissed()) return;
+    if (isStandalone() || isInIframe() || recentlyDismissed() || isNative()) return;
 
     setPlatform(getPlatform());
 
