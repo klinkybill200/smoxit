@@ -37,11 +37,16 @@ export const openSubscribePage = async (onFinished?: () => boolean | Promise<boo
 
   let url = STRIPE_URL_DEFAULT;
   try {
-    const res = await fetch("https://ipapi.co/json/");
-    const data = await res.json();
-    if (data.currency === "EUR") {
-      url = STRIPE_URL_EU;
-    }
+    const { Device } = await import("@capacitor/device");
+    const info = await Device.getLanguageCode();
+    const locale = info.value; // e.g. "de-DE", "en-US"
+    const isEU =
+      locale.includes("DE") || locale.includes("AT") || locale.includes("CH") ||
+      locale.includes("FR") || locale.includes("IT") || locale.includes("ES") ||
+      locale.includes("NL") || locale.includes("BE") || locale.includes("PT") ||
+      locale.includes("PL") || locale.includes("SE") || locale.includes("NO") ||
+      locale.includes("DK") || locale.includes("FI");
+    if (isEU) url = STRIPE_URL_EU;
   } catch {
     // fallback to default URL
   }
