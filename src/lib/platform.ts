@@ -12,14 +12,24 @@ export const SUBSCRIBE_URL = "https://my.smoxit.app/subscribe";
 const STRIPE_URL_EU = "https://buy.stripe.com/7sY8wPbjE8lE6KG1XjfnO01";
 const STRIPE_URL_DEFAULT = "https://buy.stripe.com/00w5kD1J48lEd94fO9fnO00";
 
-/** Open the external subscription page. On native uses in-app browser, on web opens a new tab. */
-export const openSubscribePage = async () => {
+const EU_COUNTRIES = [
+  "DE", "AT", "CH", "FR", "IT", "ES", "NL", "BE", "PT", "PL",
+  "SE", "NO", "DK", "FI", "IE", "CZ", "HU", "RO", "GR", "HR",
+];
+
+/**
+ * Open the external subscription page.
+ * On native: shows disclaimer, detects region, opens in-app browser, and
+ * invokes onFinished when the user closes the browser.
+ * On web: opens a new tab.
+ */
+export const openSubscribePage = async (onFinished?: () => void) => {
   if (!isNative()) {
     window.open(SUBSCRIBE_URL, "_blank", "noopener,noreferrer");
     return;
   }
 
-  // Show Apple-mandated external purchase disclaimer with native dialog
+  // Apple-mandated external purchase disclaimer
   const { Dialog } = await import("@capacitor/dialog");
   const { value } = await Dialog.confirm({
     title: "External Purchase",
@@ -34,15 +44,24 @@ export const openSubscribePage = async () => {
   try {
     const res = await fetch("https://ipapi.co/json/");
     const data = await res.json();
-    if (data.continent_code === "EU") {
+    if (typeof data.country_code === "string" && EU_COUNTRIES.includes(data.country_code.toUpperCase())) {
       url = STRIPE_URL_EU;
     }
   } catch {
-    // fallback to default (non-EU) URL
+    // fallback to default URL
   }
 
   try {
     const { Browser } = await import("@capacitor/browser");
+
+    // Listen for browser close to re-check subscription
+    const handle = await Browser.addListener("browserFinished", () => {
+      void handle.remove();
+      if (onFinished) {
+        setTimeout(() => onFinished(), 2000);
+      }
+    });
+
     await Browser.open({ url });
   } catch (err) {
     console.error("Failed to open in-app browser:", err);
