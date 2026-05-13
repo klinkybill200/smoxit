@@ -114,7 +114,34 @@ export const useSubscription = (): SubscriptionInfo => {
   };
 };
 
-/** Captures ?ref= from URL into localStorage so we can apply it after signup. */
+/**
+ * Polls the database for an active subscription status.
+ * Retries every 3 seconds up to 10 times (30s total).
+ * Returns true if status becomes "active", false otherwise.
+ */
+export const refreshWithRetry = async (): Promise<boolean> => {
+  const check = async (): Promise<boolean> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return profile?.subscription_status === "active";
+  };
+
+  if (await check()) return true;
+
+  for (let i = 0; i < 10; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    if (await check()) return true;
+  }
+
+  return false;
+};
+
+
 export const REFERRAL_STORAGE_KEY = "smoxit:pending_referral";
 
 export const captureReferralFromUrl = () => {
