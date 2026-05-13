@@ -126,10 +126,18 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
           {isNative() ? (
             <>
               <Button
-                onClick={() => { void openSubscribePage(); }}
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    await openSubscribePage();
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
                 className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90"
               >
-                Subscribe Now
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Subscribe Now"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 You'll return here automatically after subscribing.
