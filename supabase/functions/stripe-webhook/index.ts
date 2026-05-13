@@ -123,13 +123,11 @@ async function handleInvoicePaid(event: Stripe.Event) {
   if (inv.subscription) {
     const subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription.id;
     const sub = await stripe.subscriptions.retrieve(subId);
-    await supaAdmin
-      .from("profiles")
-      .update({
-        subscription_status: sub.status,
-        subscription_current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
-      })
-      .eq("stripe_customer_id", customerId);
+    await updateProfileByCustomer(customerId, {
+      subscription_status: sub.status,
+      subscription_current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+      stripe_customer_id: customerId,
+    });
   }
 
   // Referral conversion: only on FIRST paid invoice for a referred user
