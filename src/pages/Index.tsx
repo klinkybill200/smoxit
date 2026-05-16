@@ -57,6 +57,16 @@ const Index = () => {
     })();
   }, [session?.user?.id]);
 
+  // Native iOS/Android: refresh APNs/FCM device token on each launch when signed in.
+  // Silently no-ops if the user previously denied permission.
+  useEffect(() => {
+    if (!session?.user) return;
+    try {
+      if (!Capacitor.isNativePlatform()) return;
+    } catch { return; }
+    void subscribeToPush();
+  }, [session?.user?.id]);
+
   // Handle Stripe checkout return
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
