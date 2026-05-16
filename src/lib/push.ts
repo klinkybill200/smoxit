@@ -1,7 +1,82 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Capacitor } from "@capacitor/core";
 
-// Fallback VAPID public key. The authoritative key is fetched from the
-// send-push edge function at runtime so client and server can never drift.
+// ============================================================
+// Native (iOS/Android) push via Capacitor + APNs/FCM
+// ============================================================
+
+const isNative = (): boolean => {
+  try { return Capacitor.isNativePlatform(); } catch { return false; }
+};
+
+async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+
+    const perm = await PushNotifications.checkPermissions();
+    let state = perm.receive;
+    if (state === "prompt" || state === "prompt-with-rationale") {
+      const req = await PushNotifications.requestPermissions();
+      state = req.receive;
+    }
+    if (state !== "granted") return { ok: false, error: "denied" };
+
+    return await new Promise((resolve) => {
+      let resolved = false;
+      const done = (r: { ok: boolean; error?: string }) => {
+        if (resolved) return;
+        resolved = true;
+        resolve(r);
+      };
+
+      PushNotifications.addListener("registration", async (t) => {
+        try {
+          const { data: userResp } = await supabase.auth.getUser();
+          const userId = userResp.user?.id;
+          if (!userId) return done({ ok: false, error: "not_authed" });
+
+          const platform = Capacitor.getPlatform() === "ios" ? "ios" : "android";
+          await supabase
+            .from("native_push_tokens")
+            .upsert(
+              {
+                user_id: userId,
+                platform,
+                token: t.value,
+                last_used_at: new Date().toISOString(),
+              },
+              { onConflict: "token" },
+            );
+
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+          await supabase
+            .from("profiles")
+            .update({ push_opt_in: true, push_timezone: tz })
+            .eq("user_id", userId);
+
+          done({ ok: true });
+        } catch (e: any) {
+          done({ ok: false, error: e?.message || "error" });
+        }
+      });
+
+      PushNotifications.addListener("registrationError", (err) => {
+        done({ ok: false, error: err?.error || "registration_error" });
+      });
+
+      PushNotifications.register().catch((e) => {
+        done({ ok: false, error: e?.message || "register_failed" });
+      });
+    });
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "error" };
+  }
+}
+
+// ============================================================
+// Web Push (PWA) via VAPID + Service Worker
+// ============================================================
+
 const VAPID_PUBLIC_KEY_FALLBACK =
   "BJV2AFTTZYZ88-XMtxCJCAKcxTfV0wfZqO1woI_GrWEM_TgbcCImO1SbKKe4nTiqG224AgAUUBCeM6qPjPnxKfI";
 
@@ -39,11 +114,12 @@ function arrBufToBase64(buf: ArrayBuffer | null): string {
 }
 
 export function isPushSupported(): boolean {
+  // Native always supports push via Capacitor plugin
+  if (isNative()) return true;
   if (typeof window === "undefined") return false;
   if (!("serviceWorker" in navigator)) return false;
   if (!("PushManager" in window)) return false;
   if (!("Notification" in window)) return false;
-  // Skip in iframe / preview to avoid SW pollution
   try {
     if (window.self !== window.top) return false;
   } catch {
@@ -53,11 +129,18 @@ export function isPushSupported(): boolean {
 }
 
 export function getPushPermission(): NotificationPermission | "unsupported" {
+  if (isNative()) {
+    // Treat native as "default" until the user runs subscribe; the prompt
+    // card will trigger the native permission dialog on tap.
+    return "default";
+  }
   if (!isPushSupported()) return "unsupported";
   return Notification.permission;
 }
 
 export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }> {
+  if (isNative()) return registerNativePush();
+
   if (!isPushSupported()) return { ok: false, error: "unsupported" };
 
   try {
@@ -67,7 +150,6 @@ export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }
     const reg = await navigator.serviceWorker.register(SW_PATH);
     await navigator.serviceWorker.ready;
 
-    // Always fetch the authoritative key from the server.
     const serverKey = await getServerVapidKey();
     const desiredKeyBytes = urlBase64ToUint8Array(serverKey);
 
@@ -87,7 +169,6 @@ export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }
         applicationServerKey: desiredKeyBytes.buffer as ArrayBuffer,
       });
     }
-
 
     const json = sub.toJSON() as any;
     const endpoint = sub.endpoint;
@@ -126,8 +207,19 @@ export async function subscribeToPush(): Promise<{ ok: boolean; error?: string }
 }
 
 export async function unsubscribeFromPush(): Promise<void> {
-  if (!isPushSupported()) return;
   try {
+    if (isNative()) {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+      try { await PushNotifications.unregister(); } catch {}
+      const { data: userResp } = await supabase.auth.getUser();
+      if (userResp.user?.id) {
+        await supabase.from("native_push_tokens").delete().eq("user_id", userResp.user.id);
+        await supabase.from("profiles").update({ push_opt_in: false }).eq("user_id", userResp.user.id);
+      }
+      return;
+    }
+
+    if (!isPushSupported()) return;
     const reg = await navigator.serviceWorker.getRegistration(SW_PATH);
     const sub = await reg?.pushManager.getSubscription();
     if (sub) {
