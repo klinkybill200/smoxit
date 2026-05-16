@@ -180,17 +180,101 @@ async function sendWebPush(subscription: { endpoint: string; keys: { p256dh: str
   }
 }
 
+// ============================================================
+// APNs (native iOS) — JWT (ES256) over HTTP/2 to api.push.apple.com
+// ============================================================
+const APNS_AUTH_KEY = Deno.env.get("APNS_AUTH_KEY") || "";
+const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID") || "";
+const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID") || "";
+const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") || "app.smoxit.ios";
+const APNS_ENV = (Deno.env.get("APNS_ENV") || "production").toLowerCase();
+const APNS_HOST = APNS_ENV === "sandbox"
+  ? "https://api.sandbox.push.apple.com"
+  : "https://api.push.apple.com";
+
+let cachedApnsJwt: { token: string; iat: number } | null = null;
+
+function pemToPkcs8Bytes(pem: string): Uint8Array {
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\s+/g, "");
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function getApnsJwt(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  // APNs requires refresh at most every 20 minutes, max age 60.
+  if (cachedApnsJwt && now - cachedApnsJwt.iat < 30 * 60) return cachedApnsJwt.token;
+  if (!APNS_AUTH_KEY || !APNS_KEY_ID || !APNS_TEAM_ID) {
+    throw new Error("APNs not configured");
+  }
+
+  const pkcs8 = pemToPkcs8Bytes(APNS_AUTH_KEY);
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    pkcs8.buffer as ArrayBuffer,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"],
+  );
+  const header = jsonToBase64Url({ alg: "ES256", kid: APNS_KEY_ID, typ: "JWT" });
+  const payload = jsonToBase64Url({ iss: APNS_TEAM_ID, iat: now });
+  const signingInput = `${header}.${payload}`;
+  const sig = derEcdsaToRaw(new Uint8Array(await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    key,
+    new TextEncoder().encode(signingInput),
+  )));
+  const token = `${signingInput}.${bytesToBase64Url(sig)}`;
+  cachedApnsJwt = { token, iat: now };
+  return token;
+}
+
+async function sendApns(token: string, payload: PushPayload): Promise<void> {
+  const jwt = await getApnsJwt();
+  const apsBody = {
+    aps: {
+      alert: { title: payload.title, body: payload.body },
+      sound: "default",
+      "thread-id": payload.tag || "smoxit",
+      badge: 1,
+    },
+    url: payload.url || "/",
+  };
+  const res = await fetch(`${APNS_HOST}/3/device/${token}`, {
+    method: "POST",
+    headers: {
+      "authorization": `bearer ${jwt}`,
+      "apns-topic": APNS_BUNDLE_ID,
+      "apns-push-type": "alert",
+      "apns-priority": "10",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(apsBody),
+  });
+  if (!res.ok) {
+    const err: any = new Error(`APNs ${res.status}`);
+    err.statusCode = res.status;
+    err.body = await res.text().catch(() => "");
+    throw err;
+  }
+}
+
 async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent: number; cleaned: number }> {
-  const { data: subs, error } = await supabase
+  let sent = 0;
+  let cleaned = 0;
+
+  // ---- Web Push (PWA) ----
+  const { data: subs } = await supabase
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
     .eq("user_id", userId);
 
-  if (error || !subs || subs.length === 0) return { sent: 0, cleaned: 0 };
-
-  let sent = 0;
-  let cleaned = 0;
-  for (const s of subs) {
+  for (const s of subs ?? []) {
     try {
       await sendWebPush(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
@@ -210,6 +294,42 @@ async function sendToUser(userId: string, payload: PushPayload): Promise<{ sent:
       }
     }
   }
+
+  // ---- Native (APNs / iOS) ----
+  const { data: nativeTokens } = await supabase
+    .from("native_push_tokens")
+    .select("id, platform, token")
+    .eq("user_id", userId);
+
+  const apnsConfigured = !!(APNS_AUTH_KEY && APNS_KEY_ID && APNS_TEAM_ID);
+
+  for (const t of nativeTokens ?? []) {
+    if (t.platform === "ios") {
+      if (!apnsConfigured) {
+        console.warn("APNs not configured — skipping native token", t.id);
+        continue;
+      }
+      try {
+        await sendApns(t.token, payload);
+        sent++;
+      } catch (e: any) {
+        const code = e?.statusCode;
+        const bodyStr = typeof e?.body === "string" ? e.body : JSON.stringify(e?.body || {});
+        if (code === 400 || code === 410) {
+          // BadDeviceToken / Unregistered — remove
+          await supabase.from("native_push_tokens").delete().eq("id", t.id);
+          cleaned++;
+          console.log("cleaned stale APNs token", t.id, code, bodyStr);
+        } else {
+          console.error("APNs error", code, bodyStr);
+        }
+      }
+    } else {
+      // Android/FCM not yet wired
+      console.log("skip non-ios native token", t.id, t.platform);
+    }
+  }
+
   return { sent, cleaned };
 }
 
