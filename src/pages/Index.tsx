@@ -18,6 +18,8 @@ import { ProfileScreen } from "@/screens/ProfileScreen";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { captureSquadInviteFromUrl, applyPendingSquadInvite } from "@/lib/squadInvite";
+import { Capacitor } from "@capacitor/core";
+import { subscribeToPush } from "@/lib/push";
 
 const Index = () => {
   const { session, loading: authLoading } = useAuth();
@@ -53,6 +55,16 @@ const Index = () => {
         setTab("community");
       }
     })();
+  }, [session?.user?.id]);
+
+  // Native iOS/Android: refresh APNs/FCM device token on each launch when signed in.
+  // Silently no-ops if the user previously denied permission.
+  useEffect(() => {
+    if (!session?.user) return;
+    try {
+      if (!Capacitor.isNativePlatform()) return;
+    } catch { return; }
+    void subscribeToPush();
   }, [session?.user?.id]);
 
   // Handle Stripe checkout return
