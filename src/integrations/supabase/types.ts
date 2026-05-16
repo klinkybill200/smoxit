@@ -204,6 +204,36 @@ export type Database = {
         }
         Relationships: []
       }
+      native_push_tokens: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          id: string
+          last_used_at: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          platform?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_reactions: {
         Row: {
           created_at: string
