@@ -775,16 +775,43 @@ const SquadHome = ({ squad, userId, onLeave, onSwitchAway }: {
     supabase.from("squad_mutes").select("squad_id").eq("squad_id", squad.id).eq("user_id", userId).maybeSingle()
       .then(({ data }) => setMuted(!!data));
 
+    const refetchMessages = () => {
+      supabase.from("squad_messages").select("*").eq("squad_id", squad.id).order("created_at").limit(100)
+        .then(({ data }) => {
+          if (data) setMessages((prev) => {
+            const seen = new Set(prev.map((m) => m.id));
+            const merged = [...prev];
+            for (const m of data as SquadMessage[]) if (!seen.has(m.id)) merged.push(m);
+            return (data as SquadMessage[]).length >= merged.length ? (data as SquadMessage[]) : merged;
+          });
+        });
+    };
+
     const ch = supabase
       .channel(`squad-${squad.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "squad_messages", filter: `squad_id=eq.${squad.id}` }, (payload) => {
-        setMessages((m) => [...m, payload.new as SquadMessage]);
+        setMessages((m) => {
+          const incoming = payload.new as SquadMessage;
+          if (m.some((x) => x.id === incoming.id)) return m;
+          return [...m, incoming];
+        });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "squad_members", filter: `squad_id=eq.${squad.id}` }, () => {
         supabase.from("squad_members").select("*").eq("squad_id", squad.id).then(({ data }) => setMembers((data ?? []) as SquadMember[]));
       })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+
+    // Refetch when tab/app becomes visible again — realtime websocket
+    // may be dropped while backgrounded (esp. on iOS native).
+    const onVisible = () => { if (document.visibilityState === "visible") refetchMessages(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", refetchMessages);
+
+    return () => {
+      supabase.removeChannel(ch);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", refetchMessages);
+    };
   }, [squad.id, userId]);
 
   useEffect(() => {
