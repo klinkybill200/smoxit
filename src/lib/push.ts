@@ -135,6 +135,7 @@ export async function initNativePushListeners(): Promise<void> {
 async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
+    await initNativePushListeners();
 
     const perm = await PushNotifications.checkPermissions();
     let state = perm.receive;
@@ -144,61 +145,9 @@ async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
     }
     if (state !== "granted") return { ok: false, error: "denied" };
 
-    return await new Promise(async (resolve) => {
-      let resolved = false;
-      let registrationHandle: { remove: () => Promise<void> } | undefined;
-      let errorHandle: { remove: () => Promise<void> } | undefined;
-      const timeout = setTimeout(() => done({ ok: false, error: "registration_timeout" }), 15000);
-      const done = (r: { ok: boolean; error?: string }) => {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timeout);
-        void registrationHandle?.remove?.();
-        void errorHandle?.remove?.();
-        resolve(r);
-      };
-
-      registrationHandle = await PushNotifications.addListener("registration", async (t) => {
-        try {
-          const { data: userResp } = await supabase.auth.getUser();
-          const userId = userResp.user?.id;
-          if (!userId) return done({ ok: false, error: "not_authed" });
-
-          const platform = Capacitor.getPlatform() === "ios" ? "ios" : "android";
-          const { error: tokenError } = await supabase
-            .from("native_push_tokens")
-            .upsert(
-              {
-                user_id: userId,
-                platform,
-                token: t.value,
-                last_used_at: new Date().toISOString(),
-              },
-              { onConflict: "token" },
-            );
-          if (tokenError) throw tokenError;
-
-          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update({ push_opt_in: true, push_timezone: tz })
-            .eq("user_id", userId);
-          if (profileError) throw profileError;
-
-          done({ ok: true });
-        } catch (e: any) {
-          done({ ok: false, error: e?.message || "error" });
-        }
-      });
-
-      errorHandle = await PushNotifications.addListener("registrationError", (err) => {
-        done({ ok: false, error: err?.error || "registration_error" });
-      });
-
-      PushNotifications.register().catch((e) => {
-        done({ ok: false, error: e?.message || "register_failed" });
-      });
-    });
+    await setPushOptIn(true);
+    await PushNotifications.register();
+    return { ok: true };
   } catch (e: any) {
     return { ok: false, error: e?.message || "error" };
   }
