@@ -12,7 +12,7 @@ import { SubscriptionSection } from "@/components/SubscriptionSection";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateProfile } from "@/lib/profiles";
 import { toast } from "sonner";
-import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush, isNativePush, getNativePushState } from "@/lib/push";
+import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush, isNativePush, getNativePushState, type NativePushState } from "@/lib/push";
 
 export const ProfileScreen = () => {
   const { user, dispatch } = useUser();
@@ -380,7 +380,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
   const native = isNativePush();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
   const [hasSub, setHasSub] = useState(false);
-  const [nativeState, setNativeState] = useState<{ supported: boolean; granted: boolean; denied: boolean; hasToken: boolean }>({ supported: native, granted: false, denied: false, hasToken: false });
+  const [nativeState, setNativeState] = useState<NativePushState>({ supported: native, granted: false, denied: false, hasToken: false, optedIn: false });
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
 
@@ -401,7 +401,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
 
   const supported = native ? nativeState.supported : isPushSupported();
   const denied = native ? nativeState.denied : perm === "denied";
-  const enabled = native ? (nativeState.granted && nativeState.hasToken) : (perm === "granted" && hasSub);
+  const enabled = native ? (nativeState.granted && nativeState.hasToken && nativeState.optedIn) : (perm === "granted" && hasSub);
 
   const toggle = async () => {
     if (!supported) { toast.error("Push not supported here."); return; }
