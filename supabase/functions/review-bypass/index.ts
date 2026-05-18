@@ -58,36 +58,22 @@ Deno.serve(async (req) => {
       userId = created.user.id;
     }
 
-    // Ensure profile is active + onboarded
-    const farFuture = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 5).toISOString();
+    // Reset reviewer account so they go through full onboarding each review cycle.
+    // subscription_status flips to "active" only AFTER onboarding completes
+    // (handled client-side in src/lib/store.tsx).
     await admin.from("profiles").upsert(
       {
         user_id: userId,
         email: REVIEW_EMAIL,
-        subscription_status: "active",
-        onboarding_completed: true,
-        subscription_current_period_end: farFuture,
+        subscription_status: "trialing",
+        onboarding_completed: false,
         trial_start: new Date().toISOString(),
       },
       { onConflict: "user_id" },
     );
 
-    // Ensure minimal user_data so onboarding gate passes
-    const { data: ud } = await admin.from("user_data").select("id").eq("user_id", userId).maybeSingle();
-    if (!ud) {
-      await admin.from("user_data").insert({
-        user_id: userId,
-        data: {
-          name: "App Review",
-          quitDate: new Date().toISOString(),
-          cigsPerDay: 10,
-          pricePerPack: 8,
-          cigsPerPack: 20,
-          currency: "USD",
-          onboardingCompleted: true,
-        },
-      });
-    }
+    // Wipe any prior user_data so onboarding runs fresh
+    await admin.from("user_data").delete().eq("user_id", userId);
 
     return new Response(JSON.stringify({ ok: true, password: REVIEW_PASSWORD }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
