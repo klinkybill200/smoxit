@@ -67,7 +67,7 @@ const Index = () => {
     } catch { return; }
     void initNativePushListeners();
     void subscribeToPush();
-  }, [session?.user?.id, user?.onboardingCompleted]);
+  }, [session?.user?.id, !!user]);
 
   // Handle Stripe checkout return
   useEffect(() => {
