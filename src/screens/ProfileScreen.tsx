@@ -12,7 +12,7 @@ import { SubscriptionSection } from "@/components/SubscriptionSection";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateProfile } from "@/lib/profiles";
 import { toast } from "sonner";
-import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
+import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush, isNativePush, getNativePushState } from "@/lib/push";
 
 export const ProfileScreen = () => {
   const { user, dispatch } = useUser();
@@ -377,12 +377,18 @@ const Toggle = ({ icon: Icon, label }: { icon: any; label: string }) => {
 };
 
 const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
+  const native = isNativePush();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
   const [hasSub, setHasSub] = useState(false);
+  const [nativeState, setNativeState] = useState<{ supported: boolean; granted: boolean; denied: boolean; hasToken: boolean }>({ supported: native, granted: false, denied: false, hasToken: false });
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
 
   const refreshState = async () => {
+    if (native) {
+      setNativeState(await getNativePushState());
+      return;
+    }
     setPerm(getPushPermission());
     try {
       const reg = await navigator.serviceWorker?.getRegistration("/sw-push.js");
@@ -393,14 +399,16 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
 
   useEffect(() => { refreshState(); }, []);
 
-  const supported = isPushSupported();
-  const denied = perm === "denied";
-  const enabled = perm === "granted" && hasSub;
+  const supported = native ? nativeState.supported : isPushSupported();
+  const denied = native ? nativeState.denied : perm === "denied";
+  const enabled = native ? (nativeState.granted && nativeState.hasToken) : (perm === "granted" && hasSub);
 
   const toggle = async () => {
-    if (!supported) { toast.error("Push not supported in this browser/preview."); return; }
+    if (!supported) { toast.error("Push not supported here."); return; }
     if (denied) {
-      toast.error("Browser hat Push blockiert. Bitte in den Browser-Einstellungen für diese Seite Benachrichtigungen erlauben und Seite neu laden.");
+      toast.error(native
+        ? "Benachrichtigungen sind in den iOS-Einstellungen blockiert. Einstellungen → SMOXIT → Mitteilungen aktivieren."
+        : "Browser hat Push blockiert. Bitte in den Browser-Einstellungen für diese Seite Benachrichtigungen erlauben und Seite neu laden.");
       return;
     }
     setBusy(true);
@@ -411,7 +419,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       } else {
         const r = await subscribeToPush();
         if (r.ok) toast.success("Push notifications on. 🔔");
-        else if (r.error === "denied") toast.error("Permission denied. Enable in browser settings.");
+        else if (r.error === "denied") toast.error("Permission denied. Enable in settings.");
         else toast.error(r.error || "Could not enable push.");
       }
       await refreshState();
@@ -460,15 +468,17 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       </div>
       {denied && (
         <p className="mt-2 text-xs text-destructive">
-          Push ist im Browser blockiert. Klick auf das 🔒-Symbol in der Adressleiste → Benachrichtigungen → "Zulassen", dann Seite neu laden.
+          {native
+            ? "Push ist in den iOS-Einstellungen blockiert. Einstellungen → SMOXIT → Mitteilungen aktivieren."
+            : "Push ist im Browser blockiert. Klick auf das 🔒-Symbol in der Adressleiste → Benachrichtigungen → \"Zulassen\", dann Seite neu laden."}
         </p>
       )}
-      {enabled && (
-        <Button onClick={sendTest} disabled={testing} variant="outline" size="sm" className="mt-3 w-full">
+      {(enabled || native) && (
+        <Button onClick={sendTest} disabled={testing || !authUserId} variant="outline" size="sm" className="mt-3 w-full">
           {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send test notification"}
         </Button>
       )}
-      {!supported && (
+      {!supported && !native && (
         <p className="mt-2 text-xs text-muted-foreground">
           Tip: install SMOXIT to your home screen to enable push on iOS.
         </p>
