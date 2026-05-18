@@ -357,6 +357,8 @@ export const ProfileScreen = () => {
   );
 };
 
+const ENABLE_PENDING_MS = 15_000;
+
 const Row = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between">
     <span className="text-muted-foreground">{label}</span>
@@ -383,6 +385,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
   const [nativeState, setNativeState] = useState<NativePushState>({ supported: native, granted: false, denied: false, hasToken: false, optedIn: false });
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [optimisticEnabled, setOptimisticEnabled] = useState<boolean | null>(null);
 
   const refreshState = async () => {
     if (native) {
@@ -399,9 +402,21 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
 
   useEffect(() => { refreshState(); }, []);
 
+  useEffect(() => {
+    if (!native) return;
+    const refresh = () => { void refreshState(); };
+    window.addEventListener("smoxit:native_push_registered", refresh);
+    window.addEventListener("smoxit:native_push_error", refresh);
+    return () => {
+      window.removeEventListener("smoxit:native_push_registered", refresh);
+      window.removeEventListener("smoxit:native_push_error", refresh);
+    };
+  }, [native]);
+
   const supported = native ? nativeState.supported : isPushSupported();
   const denied = native ? nativeState.denied : perm === "denied";
-  const enabled = native ? (nativeState.granted && nativeState.hasToken && nativeState.optedIn) : (perm === "granted" && hasSub);
+  const actualEnabled = native ? (nativeState.granted && nativeState.optedIn) : (perm === "granted" && hasSub);
+  const enabled = optimisticEnabled ?? actualEnabled;
 
   const toggle = async () => {
     if (!supported) { toast.error("Push not supported here."); return; }
@@ -414,15 +429,21 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
     setBusy(true);
     try {
       if (enabled) {
+        setOptimisticEnabled(false);
         await unsubscribeFromPush();
         toast("Push notifications off.");
       } else {
         const r = await subscribeToPush();
-        if (r.ok) toast.success("Push notifications on. 🔔");
+        if (r.ok) {
+          setOptimisticEnabled(true);
+          toast.success(native ? "Push notifications on. Token wird im Hintergrund verbunden. 🔔" : "Push notifications on. 🔔");
+          if (native) setTimeout(() => { void refreshState(); setOptimisticEnabled(null); }, ENABLE_PENDING_MS);
+        }
         else if (r.error === "denied") toast.error("Permission denied. Enable in settings.");
         else toast.error(r.error || "Could not enable push.");
       }
       await refreshState();
+      if (!native) setOptimisticEnabled(null);
     } finally { setBusy(false); }
   };
 
@@ -438,10 +459,11 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       const cleaned = (data as any)?.cleaned ?? 0;
       if (sent === 0 && cleaned > 0) {
         toast("Refreshing push registration…");
-        await unsubscribeFromPush();
+          setOptimisticEnabled(false);
+          await unsubscribeFromPush();
         const r = await subscribeToPush();
         await refreshState();
-        if (r.ok) toast.success("Re-registered. Tap test again.");
+          if (r.ok) { setOptimisticEnabled(true); toast.success("Re-registered. Tap test again."); }
         else toast.error("Please toggle Push off and on again.");
       } else if (sent === 0) {
         toast.error("No active subscription. Toggle Push off & on.");
@@ -464,7 +486,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       </p>
       <div className="mt-3 flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
         <span className="text-sm font-semibold">Push notifications</span>
-        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported || denied} />
+        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported} />
       </div>
       {denied && (
         <p className="mt-2 text-xs text-destructive">
