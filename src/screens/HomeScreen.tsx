@@ -35,7 +35,8 @@ export const HomeScreen = () => {
   const money = moneySaved(user);
   const avoided = cigsAvoided(user);
   const life = lifeGainedMinutes(user);
-  const goalPct = user.dreamGoal.target > 0 ? Math.min(100, (money / user.dreamGoal.target) * 100) : 0;
+  const dreamGoal = dreamGoal ?? { name: "My dream goal", target: 0 };
+  const goalPct = dreamGoal.target > 0 ? Math.min(100, (money / dreamGoal.target) * 100) : 0;
   const today = todayKey();
   const todayMood = user.moods.find((m) => m.date === today);
   const checkinStreak = (() => {
@@ -168,7 +169,7 @@ export const HomeScreen = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Dream Goal</p>
-            <p className="font-display text-lg font-black">{user.dreamGoal.name}</p>
+            <p className="font-display text-lg font-black">{dreamGoal.name}</p>
           </div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-bold text-accent">{goalPct.toFixed(0)}%</p>
@@ -176,7 +177,7 @@ export const HomeScreen = () => {
               intent={{
                 kind: "dream_goal",
                 title: "My dream goal",
-                text: `I'm ${goalPct.toFixed(0)}% closer to my dream "${user.dreamGoal.name}" — funded by quitting smoking with SMOXIT 🎯`,
+                text: `I'm ${goalPct.toFixed(0)}% closer to my dream "${dreamGoal.name}" — funded by quitting smoking with SMOXIT 🎯`,
               }}
             />
           </div>
@@ -185,7 +186,7 @@ export const HomeScreen = () => {
           <div className="h-full rounded-full bg-gradient-accent transition-all duration-500" style={{ width: `${goalPct}%` }} />
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          {currency.format(money)} of {currency.format(user.dreamGoal.target)} saved 🎯
+          {currency.format(money)} of {currency.format(dreamGoal.target)} saved 🎯
         </p>
       </section>
 
