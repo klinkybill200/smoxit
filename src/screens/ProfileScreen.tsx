@@ -12,7 +12,7 @@ import { SubscriptionSection } from "@/components/SubscriptionSection";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateProfile } from "@/lib/profiles";
 import { toast } from "sonner";
-import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
+import { isPushSupported, getPushPermission, subscribeToPush, unsubscribeFromPush, isNativePush, getNativePushState } from "@/lib/push";
 
 export const ProfileScreen = () => {
   const { user, dispatch } = useUser();
