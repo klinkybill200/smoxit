@@ -58,14 +58,16 @@ const Index = () => {
   }, [session?.user?.id]);
 
   // Native iOS/Android: refresh APNs/FCM device token on each launch when signed in.
-  // Silently no-ops if the user previously denied permission.
+  // Also runs right after onboarding completes (user becomes truthy). Silently
+  // no-ops if the user previously denied permission.
   useEffect(() => {
     if (!session?.user) return;
     try {
       if (!Capacitor.isNativePlatform()) return;
     } catch { return; }
+    void initNativePushListeners();
     void subscribeToPush();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, user?.onboardingCompleted]);
 
   // Handle Stripe checkout return
   useEffect(() => {
