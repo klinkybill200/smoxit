@@ -43,17 +43,61 @@ export async function getNativePushState(): Promise<NativePushState> {
   }
 }
 
-let foregroundListenerSet = false;
+let nativeListenersSet = false;
+
+async function saveNativePushToken(token: string): Promise<void> {
+  const { data: userResp } = await supabase.auth.getUser();
+  const userId = userResp.user?.id;
+  if (!userId) throw new Error("not_authed");
+
+  const platform = Capacitor.getPlatform() === "ios" ? "ios" : "android";
+  const { error: tokenError } = await supabase
+    .from("native_push_tokens")
+    .upsert(
+      {
+        user_id: userId,
+        platform,
+        token,
+        last_used_at: new Date().toISOString(),
+      },
+      { onConflict: "token" },
+    );
+  if (tokenError) throw tokenError;
+}
+
+async function setPushOptIn(enabled: boolean): Promise<void> {
+  const { data: userResp } = await supabase.auth.getUser();
+  const userId = userResp.user?.id;
+  if (!userId) throw new Error("not_authed");
+  const tz = enabled ? (Intl.DateTimeFormat().resolvedOptions().timeZone || null) : undefined;
+
+  const payload = enabled ? { push_opt_in: true, push_timezone: tz } : { push_opt_in: false };
+  const { error } = await supabase.from("profiles").update(payload).eq("user_id", userId);
+  if (error) throw error;
+}
 
 /**
  * Set up listeners that display incoming push notifications while the app
  * is in the foreground and handle taps. Safe to call multiple times.
  */
 export async function initNativePushListeners(): Promise<void> {
-  if (!isNative() || foregroundListenerSet) return;
+  if (!isNative() || nativeListenersSet) return;
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
     const { LocalNotifications } = await import("@capacitor/local-notifications");
+
+    await PushNotifications.addListener("registration", async (t) => {
+      try {
+        await saveNativePushToken(t.value);
+        window.dispatchEvent(new CustomEvent("smoxit:native_push_registered"));
+      } catch (e: any) {
+        window.dispatchEvent(new CustomEvent("smoxit:native_push_error", { detail: e?.message || "registration_error" }));
+      }
+    });
+
+    await PushNotifications.addListener("registrationError", (err) => {
+      window.dispatchEvent(new CustomEvent("smoxit:native_push_error", { detail: err?.error || "registration_error" }));
+    });
 
     // Ask local-notification permission once so foreground banners can render
     try {
@@ -84,7 +128,7 @@ export async function initNativePushListeners(): Promise<void> {
       }
     });
 
-    foregroundListenerSet = true;
+    nativeListenersSet = true;
   } catch {}
 }
 
