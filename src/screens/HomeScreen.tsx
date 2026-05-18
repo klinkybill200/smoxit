@@ -38,12 +38,13 @@ export const HomeScreen = () => {
   const dreamGoal = user.dreamGoal ?? { name: "My dream goal", target: 0 };
   const goalPct = dreamGoal.target > 0 ? Math.min(100, (money / dreamGoal.target) * 100) : 0;
   const today = todayKey();
-  const todayMood = user.moods.find((m) => m.date === today);
+  const moodEntries = user.moods ?? [];
+  const todayMood = moodEntries.find((m) => m.date === today);
   const checkinStreak = (() => {
     let s = 0;
     for (let i = 0; ; i++) {
       const k = todayKey(new Date(Date.now() - i * 86400000));
-      if (user.moods.some((m) => m.date === k)) s++;
+      if (moodEntries.some((m) => m.date === k)) s++;
       else break;
     }
     return s;
