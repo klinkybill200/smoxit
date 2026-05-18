@@ -447,18 +447,31 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
     } finally { setBusy(false); }
   };
 
-  const waitForNativeRegistration = (timeoutMs = 12000) =>
+  const waitForNativeRegistration = (timeoutMs = 30000) =>
     new Promise<{ ok: boolean; error?: string }>((resolve) => {
       let done = false;
-      const onOk = () => { if (done) return; done = true; cleanup(); resolve({ ok: true }); };
-      const onErr = (e: Event) => { if (done) return; done = true; cleanup(); resolve({ ok: false, error: (e as CustomEvent).detail || "registration_error" }); };
+      let poll: ReturnType<typeof setInterval> | undefined;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const finish = (result: { ok: boolean; error?: string }) => { if (done) return; done = true; cleanup(); resolve(result); };
+      const onOk = () => finish({ ok: true });
+      const onErr = (e: Event) => finish({ ok: false, error: (e as CustomEvent).detail || "registration_error" });
       const cleanup = () => {
         window.removeEventListener("smoxit:native_push_registered", onOk);
         window.removeEventListener("smoxit:native_push_error", onErr as EventListener);
+        if (poll) clearInterval(poll);
+        if (timeout) clearTimeout(timeout);
+      };
+      const checkStoredToken = async () => {
+        try {
+          const st = await getNativePushState();
+          if (st.hasToken) finish({ ok: true });
+        } catch {}
       };
       window.addEventListener("smoxit:native_push_registered", onOk);
       window.addEventListener("smoxit:native_push_error", onErr as EventListener);
-      setTimeout(() => { if (!done) { done = true; cleanup(); resolve({ ok: false, error: "timeout" }); } }, timeoutMs);
+      void checkStoredToken();
+      poll = setInterval(() => { void checkStoredToken(); }, 1500);
+      timeout = setTimeout(() => finish({ ok: false, error: "timeout" }), timeoutMs);
     });
 
   const ensureNativeToken = async (): Promise<{ ok: boolean; error?: string }> => {
@@ -483,7 +496,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
           if (ensured.error === "denied") {
             toast.error("Push ist in den iOS-Einstellungen blockiert. Einstellungen → SMOXIT → Mitteilungen aktivieren.");
           } else if (ensured.error === "timeout") {
-            toast.error("Apple hat noch keinen Push-Token zurückgegeben. Bitte App neu starten und nochmal testen.");
+            toast.error("Noch kein iOS-Push-Token angekommen. Bitte Push nach dem nächsten TestFlight-Build einmal aus- und wieder einschalten.");
           } else {
             toast.error(`Konnte Push nicht registrieren (${ensured.error || "unknown"}).`);
           }
