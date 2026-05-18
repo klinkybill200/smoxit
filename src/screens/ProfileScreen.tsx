@@ -357,6 +357,8 @@ export const ProfileScreen = () => {
   );
 };
 
+const ENABLE_PENDING_MS = 15_000;
+
 const Row = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between">
     <span className="text-muted-foreground">{label}</span>
@@ -383,6 +385,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
   const [nativeState, setNativeState] = useState<NativePushState>({ supported: native, granted: false, denied: false, hasToken: false, optedIn: false });
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [optimisticEnabled, setOptimisticEnabled] = useState<boolean | null>(null);
 
   const refreshState = async () => {
     if (native) {
@@ -399,9 +402,21 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
 
   useEffect(() => { refreshState(); }, []);
 
+  useEffect(() => {
+    if (!native) return;
+    const refresh = () => { void refreshState(); };
+    window.addEventListener("smoxit:native_push_registered", refresh);
+    window.addEventListener("smoxit:native_push_error", refresh);
+    return () => {
+      window.removeEventListener("smoxit:native_push_registered", refresh);
+      window.removeEventListener("smoxit:native_push_error", refresh);
+    };
+  }, [native]);
+
   const supported = native ? nativeState.supported : isPushSupported();
   const denied = native ? nativeState.denied : perm === "denied";
-  const enabled = native ? (nativeState.granted && nativeState.hasToken && nativeState.optedIn) : (perm === "granted" && hasSub);
+  const actualEnabled = native ? (nativeState.granted && nativeState.hasToken && nativeState.optedIn) : (perm === "granted" && hasSub);
+  const enabled = optimisticEnabled ?? actualEnabled;
 
   const toggle = async () => {
     if (!supported) { toast.error("Push not supported here."); return; }
