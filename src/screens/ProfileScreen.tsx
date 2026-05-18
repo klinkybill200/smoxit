@@ -486,7 +486,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       </p>
       <div className="mt-3 flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
         <span className="text-sm font-semibold">Push notifications</span>
-        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported || denied} />
+        <Switch checked={enabled} onCheckedChange={toggle} disabled={busy || !supported} />
       </div>
       {denied && (
         <p className="mt-2 text-xs text-destructive">
