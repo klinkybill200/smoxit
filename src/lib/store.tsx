@@ -122,10 +122,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         { user_id: authUser.id, data: user as any },
         { onConflict: "user_id" }
       );
-      // Mark onboarding complete on profile
+      // Mark onboarding complete on profile.
+      // For the Apple App Review bypass account, also flip subscription to
+      // "active" so the reviewer can see all premium features after onboarding.
+      const isReviewer =
+        (authUser.email ?? "").toLowerCase() === "review@smoxit.app";
+      const farFuture = new Date(
+        Date.now() + 1000 * 60 * 60 * 24 * 365 * 5
+      ).toISOString();
       await supabase
         .from("profiles")
-        .update({ onboarding_completed: true })
+        .update(
+          isReviewer
+            ? {
+                onboarding_completed: true,
+                subscription_status: "active",
+                subscription_current_period_end: farFuture,
+              }
+            : { onboarding_completed: true }
+        )
         .eq("user_id", authUser.id);
     }, 600);
   }, [user, authUser]);
