@@ -50,12 +50,30 @@ export const AuthScreen = () => {
   const handleVerify = async (token: string) => {
     setVerifying(true);
     try {
+      // Apple App Review bypass — ONLY for this exact email + code combo.
+      if (email.trim().toLowerCase() === "review@smoxit.app" && token === "12345678") {
+        const { data: fn, error: fnErr } = await supabase.functions.invoke("review-bypass", {
+          body: { email: "review@smoxit.app", code: "12345678" },
+        });
+        if (fnErr || !fn?.ok || !fn?.password) {
+          throw new Error(fnErr?.message ?? "Review bypass unavailable.");
+        }
+        const { error: signErr } = await supabase.auth.signInWithPassword({
+          email: "review@smoxit.app",
+          password: fn.password as string,
+        });
+        if (signErr) throw signErr;
+        toast.success("Signed in!");
+        return;
+      }
+
       const { error } = await supabase.auth.verifyOtp({
         email,
         token,
         type: "email",
       });
       if (error) throw error;
+
       toast.success("Signed in!");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Invalid or expired code.";
