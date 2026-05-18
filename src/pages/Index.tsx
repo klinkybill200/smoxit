@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
 import { useUser } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
@@ -19,13 +19,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { captureSquadInviteFromUrl, applyPendingSquadInvite } from "@/lib/squadInvite";
 import { Capacitor } from "@capacitor/core";
-import { subscribeToPush, initNativePushListeners } from "@/lib/push";
+import { initNativePushListeners, syncNativePushIfOptedIn } from "@/lib/push";
 
 const Index = () => {
   const { session, loading: authLoading } = useAuth();
   const { user, loading: userLoading } = useUser();
   const sub = useSubscription();
   const [tab, setTab] = useState<Tab>("home");
+  const seenUserRef = useRef(false);
 
   // Capture squad invite from URL early so it survives sign-up
   useEffect(() => {
@@ -66,7 +67,8 @@ const Index = () => {
       if (!Capacitor.isNativePlatform()) return;
     } catch { return; }
     void initNativePushListeners();
-    void subscribeToPush();
+    void syncNativePushIfOptedIn();
+    seenUserRef.current = true;
   }, [session?.user?.id, !!user]);
 
   // Handle Stripe checkout return
