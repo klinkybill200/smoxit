@@ -447,10 +447,52 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
     } finally { setBusy(false); }
   };
 
+  const waitForNativeRegistration = (timeoutMs = 12000) =>
+    new Promise<{ ok: boolean; error?: string }>((resolve) => {
+      let done = false;
+      const onOk = () => { if (done) return; done = true; cleanup(); resolve({ ok: true }); };
+      const onErr = (e: Event) => { if (done) return; done = true; cleanup(); resolve({ ok: false, error: (e as CustomEvent).detail || "registration_error" }); };
+      const cleanup = () => {
+        window.removeEventListener("smoxit:native_push_registered", onOk);
+        window.removeEventListener("smoxit:native_push_error", onErr as EventListener);
+      };
+      window.addEventListener("smoxit:native_push_registered", onOk);
+      window.addEventListener("smoxit:native_push_error", onErr as EventListener);
+      setTimeout(() => { if (!done) { done = true; cleanup(); resolve({ ok: false, error: "timeout" }); } }, timeoutMs);
+    });
+
+  const ensureNativeToken = async (): Promise<{ ok: boolean; error?: string }> => {
+    const st = await getNativePushState();
+    if (st.hasToken) return { ok: true };
+    if (st.denied) return { ok: false, error: "denied" };
+    const waiter = waitForNativeRegistration();
+    const r = await subscribeToPush();
+    if (!r.ok) return r;
+    const w = await waiter;
+    if (!w.ok) return w;
+    return { ok: true };
+  };
+
   const sendTest = async () => {
     if (!authUserId) return;
     setTesting(true);
     try {
+      if (native) {
+        const ensured = await ensureNativeToken();
+        if (!ensured.ok) {
+          if (ensured.error === "denied") {
+            toast.error("Push ist in den iOS-Einstellungen blockiert. Einstellungen → SMOXIT → Mitteilungen aktivieren.");
+          } else if (ensured.error === "timeout") {
+            toast.error("Apple hat noch keinen Push-Token zurückgegeben. Bitte App neu starten und nochmal testen.");
+          } else {
+            toast.error(`Konnte Push nicht registrieren (${ensured.error || "unknown"}).`);
+          }
+          await refreshState();
+          return;
+        }
+        await refreshState();
+      }
+
       const { data, error } = await supabase.functions.invoke("send-push", {
         body: { mode: "test", user_id: authUserId, title: "SMOXIT test 🔔", body: "Push works! Tap to open." },
       });
@@ -459,14 +501,16 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       const cleaned = (data as any)?.cleaned ?? 0;
       if (sent === 0 && cleaned > 0) {
         toast("Refreshing push registration…");
-          setOptimisticEnabled(false);
-          await unsubscribeFromPush();
+        setOptimisticEnabled(false);
+        await unsubscribeFromPush();
         const r = await subscribeToPush();
         await refreshState();
-          if (r.ok) { setOptimisticEnabled(true); toast.success("Re-registered. Tap test again."); }
+        if (r.ok) { setOptimisticEnabled(true); toast.success("Re-registered. Tap test again."); }
         else toast.error("Please toggle Push off and on again.");
       } else if (sent === 0) {
-        toast.error("No active subscription. Toggle Push off & on.");
+        toast.error(native
+          ? "Kein Gerät registriert. Bitte Push aus- und wieder einschalten."
+          : "No active subscription. Toggle Push off & on.");
       } else {
         toast.success(`Test sent (${sent}) — check your notifications.`);
       }
