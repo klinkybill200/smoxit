@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { captureSquadInviteFromUrl, applyPendingSquadInvite } from "@/lib/squadInvite";
 import { Capacitor } from "@capacitor/core";
-import { subscribeToPush } from "@/lib/push";
+import { subscribeToPush, initNativePushListeners } from "@/lib/push";
 
 const Index = () => {
   const { session, loading: authLoading } = useAuth();
