@@ -9,6 +9,51 @@ const isNative = (): boolean => {
   try { return Capacitor.isNativePlatform(); } catch { return false; }
 };
 
+let foregroundListenerSet = false;
+
+/**
+ * Set up listeners that display incoming push notifications while the app
+ * is in the foreground and handle taps. Safe to call multiple times.
+ */
+export async function initNativePushListeners(): Promise<void> {
+  if (!isNative() || foregroundListenerSet) return;
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
+
+    // Ask local-notification permission once so foreground banners can render
+    try {
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== "granted") {
+        await LocalNotifications.requestPermissions();
+      }
+    } catch {}
+
+    await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
+      // App is in foreground — surface as a local notification so it appears
+      try {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: Math.floor(Math.random() * 2_000_000_000),
+            title: notification.title || "SMOXIT",
+            body: notification.body || "",
+            extra: notification.data || {},
+          }],
+        });
+      } catch {}
+    });
+
+    await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+      const url = (action.notification?.data as any)?.url;
+      if (url && typeof window !== "undefined") {
+        try { window.location.assign(url); } catch {}
+      }
+    });
+
+    foregroundListenerSet = true;
+  } catch {}
+}
+
 async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
