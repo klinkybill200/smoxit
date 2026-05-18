@@ -35,7 +35,8 @@ export const HomeScreen = () => {
   const money = moneySaved(user);
   const avoided = cigsAvoided(user);
   const life = lifeGainedMinutes(user);
-  const goalPct = user.dreamGoal.target > 0 ? Math.min(100, (money / user.dreamGoal.target) * 100) : 0;
+  const dreamGoal = user.dreamGoal ?? { name: "My dream goal", target: 0 };
+  const goalPct = dreamGoal.target > 0 ? Math.min(100, (money / dreamGoal.target) * 100) : 0;
   const today = todayKey();
   const todayMood = user.moods.find((m) => m.date === today);
   const checkinStreak = (() => {
