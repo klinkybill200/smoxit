@@ -415,7 +415,7 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
 
   const supported = native ? nativeState.supported : isPushSupported();
   const denied = native ? nativeState.denied : perm === "denied";
-  const actualEnabled = native ? (nativeState.granted && nativeState.hasToken && nativeState.optedIn) : (perm === "granted" && hasSub);
+  const actualEnabled = native ? (nativeState.granted && nativeState.optedIn) : (perm === "granted" && hasSub);
   const enabled = optimisticEnabled ?? actualEnabled;
 
   const toggle = async () => {
