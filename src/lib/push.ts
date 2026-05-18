@@ -14,30 +14,32 @@ const isNative = isNativePush;
  * Native push state for settings UI: whether OS permission is granted and
  * whether we currently have a stored APNs/FCM token for this user.
  */
-export async function getNativePushState(): Promise<{ supported: boolean; granted: boolean; denied: boolean; hasToken: boolean }> {
-  if (!isNative()) return { supported: false, granted: false, denied: false, hasToken: false };
+export type NativePushState = { supported: boolean; granted: boolean; denied: boolean; hasToken: boolean; optedIn: boolean };
+
+export async function getNativePushState(): Promise<NativePushState> {
+  if (!isNative()) return { supported: false, granted: false, denied: false, hasToken: false, optedIn: false };
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
     const perm = await PushNotifications.checkPermissions();
     const granted = perm.receive === "granted";
     const denied = perm.receive === "denied";
     let hasToken = false;
+    let optedIn = false;
     try {
       const { data: userResp } = await supabase.auth.getUser();
       const uid = userResp.user?.id;
       if (uid) {
-        const { data } = await supabase
-          .from("native_push_tokens")
-          .select("id")
-          .eq("user_id", uid)
-          .limit(1)
-          .maybeSingle();
-        hasToken = !!data;
+        const [{ data: token }, { data: profile }] = await Promise.all([
+          supabase.from("native_push_tokens").select("id").eq("user_id", uid).limit(1).maybeSingle(),
+          supabase.from("profiles").select("push_opt_in").eq("user_id", uid).maybeSingle(),
+        ]);
+        hasToken = !!token;
+        optedIn = !!profile?.push_opt_in;
       }
     } catch {}
-    return { supported: true, granted, denied, hasToken };
+    return { supported: true, granted, denied, hasToken, optedIn };
   } catch {
-    return { supported: true, granted: false, denied: false, hasToken: false };
+    return { supported: true, granted: false, denied: false, hasToken: false, optedIn: false };
   }
 }
 
@@ -98,22 +100,28 @@ async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
     }
     if (state !== "granted") return { ok: false, error: "denied" };
 
-    return await new Promise((resolve) => {
+    return await new Promise(async (resolve) => {
       let resolved = false;
+      let registrationHandle: { remove: () => Promise<void> } | undefined;
+      let errorHandle: { remove: () => Promise<void> } | undefined;
+      const timeout = setTimeout(() => done({ ok: false, error: "registration_timeout" }), 15000);
       const done = (r: { ok: boolean; error?: string }) => {
         if (resolved) return;
         resolved = true;
+        clearTimeout(timeout);
+        void registrationHandle?.remove?.();
+        void errorHandle?.remove?.();
         resolve(r);
       };
 
-      PushNotifications.addListener("registration", async (t) => {
+      registrationHandle = await PushNotifications.addListener("registration", async (t) => {
         try {
           const { data: userResp } = await supabase.auth.getUser();
           const userId = userResp.user?.id;
           if (!userId) return done({ ok: false, error: "not_authed" });
 
           const platform = Capacitor.getPlatform() === "ios" ? "ios" : "android";
-          await supabase
+          const { error: tokenError } = await supabase
             .from("native_push_tokens")
             .upsert(
               {
@@ -124,12 +132,14 @@ async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
               },
               { onConflict: "token" },
             );
+          if (tokenError) throw tokenError;
 
           const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
-          await supabase
+          const { error: profileError } = await supabase
             .from("profiles")
             .update({ push_opt_in: true, push_timezone: tz })
             .eq("user_id", userId);
+          if (profileError) throw profileError;
 
           done({ ok: true });
         } catch (e: any) {
@@ -137,7 +147,7 @@ async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
         }
       });
 
-      PushNotifications.addListener("registrationError", (err) => {
+      errorHandle = await PushNotifications.addListener("registrationError", (err) => {
         done({ ok: false, error: err?.error || "registration_error" });
       });
 
@@ -148,6 +158,21 @@ async function registerNativePush(): Promise<{ ok: boolean; error?: string }> {
   } catch (e: any) {
     return { ok: false, error: e?.message || "error" };
   }
+}
+
+export async function syncNativePushIfOptedIn(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const { data: userResp } = await supabase.auth.getUser();
+    const userId = userResp.user?.id;
+    if (!userId) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("push_opt_in")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (profile?.push_opt_in) await registerNativePush();
+  } catch {}
 }
 
 // ============================================================
