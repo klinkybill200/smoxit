@@ -429,15 +429,21 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
     setBusy(true);
     try {
       if (enabled) {
+        setOptimisticEnabled(false);
         await unsubscribeFromPush();
         toast("Push notifications off.");
       } else {
         const r = await subscribeToPush();
-        if (r.ok) toast.success("Push notifications on. 🔔");
+        if (r.ok) {
+          setOptimisticEnabled(true);
+          toast.success(native ? "Push notifications on. Token wird im Hintergrund verbunden. 🔔" : "Push notifications on. 🔔");
+          if (native) setTimeout(() => { void refreshState(); setOptimisticEnabled(null); }, ENABLE_PENDING_MS);
+        }
         else if (r.error === "denied") toast.error("Permission denied. Enable in settings.");
         else toast.error(r.error || "Could not enable push.");
       }
       await refreshState();
+      if (!native) setOptimisticEnabled(null);
     } finally { setBusy(false); }
   };
 
@@ -453,10 +459,11 @@ const NotificationsSection = ({ authUserId }: { authUserId?: string }) => {
       const cleaned = (data as any)?.cleaned ?? 0;
       if (sent === 0 && cleaned > 0) {
         toast("Refreshing push registration…");
-        await unsubscribeFromPush();
+          setOptimisticEnabled(false);
+          await unsubscribeFromPush();
         const r = await subscribeToPush();
         await refreshState();
-        if (r.ok) toast.success("Re-registered. Tap test again.");
+          if (r.ok) { setOptimisticEnabled(true); toast.success("Re-registered. Tap test again."); }
         else toast.error("Please toggle Push off and on again.");
       } else if (sent === 0) {
         toast.error("No active subscription. Toggle Push off & on.");
