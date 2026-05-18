@@ -19,14 +19,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { captureSquadInviteFromUrl, applyPendingSquadInvite } from "@/lib/squadInvite";
 import { Capacitor } from "@capacitor/core";
-import { initNativePushListeners, syncNativePushIfOptedIn } from "@/lib/push";
+import { initNativePushListeners, subscribeToPush, syncNativePushIfOptedIn } from "@/lib/push";
 
 const Index = () => {
   const { session, loading: authLoading } = useAuth();
   const { user, loading: userLoading } = useUser();
   const sub = useSubscription();
   const [tab, setTab] = useState<Tab>("home");
-  const seenUserRef = useRef(false);
+  const hadCompletedOnboardingRef = useRef<boolean | null>(null);
 
   // Capture squad invite from URL early so it survives sign-up
   useEffect(() => {
@@ -67,9 +67,12 @@ const Index = () => {
       if (!Capacitor.isNativePlatform()) return;
     } catch { return; }
     void initNativePushListeners();
-    void syncNativePushIfOptedIn();
-    seenUserRef.current = true;
-  }, [session?.user?.id, !!user]);
+    if (userLoading) return;
+    const hasCompletedOnboarding = !!user;
+    const justCompletedOnboarding = hadCompletedOnboardingRef.current === false && hasCompletedOnboarding;
+    hadCompletedOnboardingRef.current = hasCompletedOnboarding;
+    void (justCompletedOnboarding ? subscribeToPush() : syncNativePushIfOptedIn());
+  }, [session?.user?.id, userLoading, !!user]);
 
   // Handle Stripe checkout return
   useEffect(() => {
