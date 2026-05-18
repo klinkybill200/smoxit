@@ -39,9 +39,21 @@ jobs:
           # Build Nummer setzen
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/App/App/Info.plist
 
-          # Push Notifications Background Mode hinzufügen
+          # Push Notifications Capability hinzufügen
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string remote-notification" ios/App/App/Info.plist 2>/dev/null || true
+
+          # Push Notifications in Entitlements aktivieren
+          cat > ios/App/App/App.entitlements << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>aps-environment</key>
+              <string>production</string>
+          </dict>
+          </plist>
+          EOF
 
           # App Icon einbinden
           mkdir -p ios/App/App/Assets.xcassets/AppIcon.appiconset
