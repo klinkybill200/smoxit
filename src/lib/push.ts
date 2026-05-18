@@ -99,14 +99,6 @@ export async function initNativePushListeners(): Promise<void> {
       window.dispatchEvent(new CustomEvent("smoxit:native_push_error", { detail: err?.error || "registration_error" }));
     });
 
-    // Ask local-notification permission once so foreground banners can render
-    try {
-      const perm = await LocalNotifications.checkPermissions();
-      if (perm.display !== "granted") {
-        await LocalNotifications.requestPermissions();
-      }
-    } catch {}
-
     await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
       // App is in foreground — surface as a local notification so it appears
       try {
