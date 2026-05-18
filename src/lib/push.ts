@@ -5,9 +5,41 @@ import { Capacitor } from "@capacitor/core";
 // Native (iOS/Android) push via Capacitor + APNs/FCM
 // ============================================================
 
-const isNative = (): boolean => {
+export const isNativePush = (): boolean => {
   try { return Capacitor.isNativePlatform(); } catch { return false; }
 };
+const isNative = isNativePush;
+
+/**
+ * Native push state for settings UI: whether OS permission is granted and
+ * whether we currently have a stored APNs/FCM token for this user.
+ */
+export async function getNativePushState(): Promise<{ supported: boolean; granted: boolean; denied: boolean; hasToken: boolean }> {
+  if (!isNative()) return { supported: false, granted: false, denied: false, hasToken: false };
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    const perm = await PushNotifications.checkPermissions();
+    const granted = perm.receive === "granted";
+    const denied = perm.receive === "denied";
+    let hasToken = false;
+    try {
+      const { data: userResp } = await supabase.auth.getUser();
+      const uid = userResp.user?.id;
+      if (uid) {
+        const { data } = await supabase
+          .from("native_push_tokens")
+          .select("id")
+          .eq("user_id", uid)
+          .limit(1)
+          .maybeSingle();
+        hasToken = !!data;
+      }
+    } catch {}
+    return { supported: true, granted, denied, hasToken };
+  } catch {
+    return { supported: true, granted: false, denied: false, hasToken: false };
+  }
+}
 
 let foregroundListenerSet = false;
 
