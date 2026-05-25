@@ -10,7 +10,8 @@ import { getDuration, moneySaved } from "@/lib/calc";
 import { useCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { isNative, openSubscribePage } from "@/lib/platform";
+import { isNative } from "@/lib/platform";
+import { purchasePremium, restorePurchases } from "@/lib/iap";
 
 interface PaywallProps {
   open: boolean;
@@ -90,13 +91,13 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
 
         <div className="px-6 py-6 space-y-5">
           {isNative() ? (
-            <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)] text-center">
+            <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]">
               <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
-              <h3 className="mt-2 font-display text-2xl font-black text-foreground">Get Full Access</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Subscribe on smoxit.app to unlock all features.
-              </p>
-              <ul className="mt-4 space-y-2.5 text-left">
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="font-display text-4xl font-black text-foreground">€4.99</span>
+                <span className="text-sm text-muted-foreground">/ month</span>
+              </div>
+              <ul className="mt-4 space-y-2.5">
                 {FEATURES.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
@@ -129,9 +130,18 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    await openSubscribePage();
+                    const ok = await purchasePremium();
                     await sub.refresh();
-                    if (sub.hasAccess) onOpenChange(false);
+                    if (ok) {
+                      toast.success("Welcome to Smoxit Premium! 🎉");
+                      onOpenChange(false);
+                    }
+                  } catch (e: any) {
+                    if (e?.userCancelled || e?.code === "1" || /cancel/i.test(e?.message ?? "")) {
+                      // user cancelled — silent
+                    } else {
+                      toast.error(e?.message ?? "Purchase failed");
+                    }
                   } finally {
                     setLoading(false);
                   }
@@ -141,8 +151,27 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
               >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Subscribe Now"}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                You'll return here automatically after subscribing.
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const ok = await restorePurchases();
+                    await sub.refresh();
+                    toast[ok ? "success" : "message"](ok ? "Purchase restored 🎉" : "No previous purchase found");
+                    if (ok) onOpenChange(false);
+                  } catch (e: any) {
+                    toast.error(e?.message ?? "Restore failed");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="block w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
+              >
+                Restore Purchase
+              </button>
+              <p className="text-center text-[10px] text-muted-foreground leading-snug">
+                Auto-renewable subscription. Payment will be charged to your Apple ID. Subscription renews unless canceled at least 24 hours before the end of the period. Manage in Settings → Apple ID → Subscriptions.
               </p>
             </>
           ) : (

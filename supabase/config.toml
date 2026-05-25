@@ -21,3 +21,5 @@ project_id = "lbtkcmrpdosvsyvtogkn"
     verify_jwt = false
   [functions.review-bypass]
     verify_jwt = false
+  [functions.revenuecat-webhook]
+    verify_jwt = false
