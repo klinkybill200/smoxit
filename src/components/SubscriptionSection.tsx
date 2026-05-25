@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isNative } from "@/lib/platform";
+import { restorePurchases } from "@/lib/iap";
 
 const formatDate = (d: Date | null) =>
   d ? d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—";
@@ -23,6 +25,15 @@ export const SubscriptionSection = () => {
   const [loading, setLoading] = useState(false);
 
   const openPortal = async () => {
+    if (isNative()) {
+      try {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: "https://apps.apple.com/account/subscriptions" });
+      } catch {
+        window.open("https://apps.apple.com/account/subscriptions", "_blank");
+      }
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("get-portal-session", {});
@@ -36,6 +47,16 @@ export const SubscriptionSection = () => {
   };
 
   const restore = async () => {
+    if (isNative()) {
+      try {
+        const ok = await restorePurchases();
+        await sub.refresh();
+        toast[ok ? "success" : "message"](ok ? "Purchase restored 🎉" : "No previous purchase found");
+      } catch (e: any) {
+        toast.error(e?.message ?? "Restore failed");
+      }
+      return;
+    }
     await sub.refresh();
     toast.success("Subscription status refreshed");
   };
