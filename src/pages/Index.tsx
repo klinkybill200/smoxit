@@ -74,6 +74,13 @@ const Index = () => {
     void (justCompletedOnboarding ? subscribeToPush() : syncNativePushIfOptedIn());
   }, [session?.user?.id, userLoading, !!user]);
 
+  // Native iOS: configure RevenueCat and link to the signed-in user.
+  useEffect(() => {
+    if (!session?.user) return;
+    try { if (!Capacitor.isNativePlatform()) return; } catch { return; }
+    void import("@/lib/iap").then((m) => m.configureIAP(session.user.id));
+  }, [session?.user?.id]);
+
   // Handle Stripe checkout return
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
