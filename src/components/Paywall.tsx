@@ -94,7 +94,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
             <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]">
               <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-display text-4xl font-black text-foreground">€4.99</span>
+                <span className="font-display text-4xl font-black text-foreground">€9.99</span>
                 <span className="text-sm text-muted-foreground">/ month</span>
               </div>
               <ul className="mt-4 space-y-2.5">
