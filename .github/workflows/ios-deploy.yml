@@ -128,6 +128,51 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/smoxit.mobileprovision
 
+      - name: Fix RevenueCat entitlements bug
+        run: |
+          cd ios/App
+
+          # Package Dependencies auflösen damit DerivedData befüllt wird
+          xcodebuild \
+            -resolvePackageDependencies \
+            -project App.xcodeproj \
+            -scheme App || true
+
+          # Build cache leeren
+          find ~/Library/Developer/Xcode/DerivedData -name "*.xcbuilddata" -delete 2>/dev/null || true
+
+          # Leere Entitlements-Datei im RevenueCat SPM checkout erstellen
+          # (Xcode 26 Bug: purchases-ios-spm sucht App.entitlements im falschen Pfad)
+          REVENUECAT_PATH=$(find ~/Library/Developer/Xcode/DerivedData -path "*/purchases-ios-spm/App/App.entitlements" 2>/dev/null | head -1)
+          if [ -n "$REVENUECAT_PATH" ]; then
+            echo "Found RevenueCat entitlements path: $REVENUECAT_PATH"
+            mkdir -p "$(dirname "$REVENUECAT_PATH")"
+            cat > "$REVENUECAT_PATH" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict/>
+          </plist>
+          EOF
+            echo "Created placeholder entitlements file"
+          else
+            echo "RevenueCat entitlements path not found, pre-creating it"
+            # Pfad prophylaktisch anlegen falls noch nicht gecacht
+            DERIVED=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name "App-*" 2>/dev/null | head -1)
+            if [ -n "$DERIVED" ]; then
+              TARGET="$DERIVED/SourcePackages/checkouts/purchases-ios-spm/App/App.entitlements"
+              mkdir -p "$(dirname "$TARGET")"
+              cat > "$TARGET" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict/>
+          </plist>
+          EOF
+              echo "Pre-created at: $TARGET"
+            fi
+          fi
+
       - name: Archive
         run: |
           cd ios/App
@@ -177,4 +222,4 @@ jobs:
             -f ios/App/smoxit-export/App.ipa \
             -t ios \
             -u "$APPLE_ID" \
-            -p "$APP_SPECIFIC_PASSWORD" 
+            -p "$APP_SPECIFIC_PASSWORD"
