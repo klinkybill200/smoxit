@@ -108,14 +108,14 @@ export const useRevenueCat = () => {
       }
       debug("purchasing", pkg);
       const result = await Purchases.purchasePackage({ aPackage: pkg });
-      const entitled = !!result.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT];
+      const ent = result.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT];
+      const entitled = !!ent;
       setIsProMember(entitled);
 
       if (entitled) {
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
-            const ent = result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT];
             const periodEnd = ent?.expirationDate ? new Date(ent.expirationDate).toISOString() : null;
             await supabase
               .from("profiles")
@@ -126,6 +126,22 @@ export const useRevenueCat = () => {
           debug("profile sync failed", e);
         }
       }
+
+      // Immediately refresh hook state (offerings, customerInfo, diagnostics)
+      await refresh();
+
+      if (entitled) {
+        const productId = (pkg as any)?.product?.identifier ?? (pkg as any)?.identifier ?? "unknown";
+        const expiresAt = ent?.expirationDate
+          ? new Date(ent.expirationDate).toLocaleDateString()
+          : "—";
+        toast.success("Smoxit Premium aktiviert 🎉", {
+          description: `Paket: ${productId} · Entitlement: ${PREMIUM_ENTITLEMENT} · gültig bis ${expiresAt}`,
+        });
+      } else {
+        toast.error("Kauf abgeschlossen, aber Entitlement nicht aktiv");
+      }
+
       return entitled;
     } catch (e: any) {
       const msg = e?.message ?? String(e);
