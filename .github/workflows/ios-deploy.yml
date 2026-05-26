@@ -36,7 +36,13 @@ jobs:
           npm install @capacitor/ios
           npx cap add ios
           npx cap sync ios
-
+      - name: Debug — check RevenueCat plugin registration
+        run: |
+          echo "=== Checking if RevenueCat is in CapApp-SPM ==="
+          cat ios/App/CapApp-SPM/Package.swift || true
+          echo "=== Checking capacitor.config ==="
+          cat ios/App/App/capacitor.config.json || true
+          
           python3 <<'PY'
           from pathlib import Path
           path = Path('ios/App/App/AppDelegate.swift')
