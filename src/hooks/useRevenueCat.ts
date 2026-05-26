@@ -150,7 +150,7 @@ export const useRevenueCat = () => {
       if (!userCancelled) toast.error(`Purchase failed: ${msg}`);
       throw e;
     }
-  }, []);
+  }, [refresh]);
 
   return { offerings, isProMember, isLoading, error, diagnostics, purchaseMonthly, refresh };
 };
