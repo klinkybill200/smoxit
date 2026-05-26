@@ -21,28 +21,57 @@ export const useRevenueCat = () => {
   const [isProMember, setIsProMember] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [diagnostics, setDiagnostics] = useState<{
+    native: boolean;
+    pluginLoaded: boolean;
+    appUserId?: string;
+    offeringId?: string;
+    packageIds: string[];
+    productIds: string[];
+    customerInfoFetched: boolean;
+    lastStep?: string;
+  }>({ native: false, pluginLoaded: false, packageIds: [], productIds: [], customerInfoFetched: false });
 
   const refresh = useCallback(async () => {
-    if (!isNative()) {
+    const native = isNative();
+    setDiagnostics((d) => ({ ...d, native, lastStep: "start" }));
+    if (!native) {
       setIsLoading(false);
       return;
     }
     try {
+      setDiagnostics((d) => ({ ...d, lastStep: "loading plugin" }));
       const Purchases = await loadPurchases();
+      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "getOfferings" }));
       const offs = await Purchases.getOfferings();
       debug("offerings", offs);
-      setOfferings(offs.current ?? null);
-      if (!offs.current) {
+      const current = offs.current ?? null;
+      setOfferings(current);
+      setDiagnostics((d) => ({
+        ...d,
+        offeringId: current?.identifier,
+        packageIds: current?.availablePackages?.map((p: any) => p.identifier) ?? [],
+        productIds: current?.availablePackages?.map((p: any) => p.product?.identifier) ?? [],
+        lastStep: "getCustomerInfo",
+      }));
+      if (!current) {
         const msg = "No current offering configured in RevenueCat";
         setError(msg);
         toast.error(msg);
       }
       const info = await Purchases.getCustomerInfo();
       setIsProMember(!!info.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT]);
+      setDiagnostics((d) => ({
+        ...d,
+        customerInfoFetched: true,
+        appUserId: (info.customerInfo as any)?.originalAppUserId,
+        lastStep: "done",
+      }));
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       debug("init error", e);
       setError(msg);
+      setDiagnostics((d) => ({ ...d, lastStep: `error: ${msg}` }));
       toast.error(`RevenueCat: ${msg}`);
     } finally {
       setIsLoading(false);
@@ -107,5 +136,5 @@ export const useRevenueCat = () => {
     }
   }, []);
 
-  return { offerings, isProMember, isLoading, error, purchaseMonthly, refresh };
+  return { offerings, isProMember, isLoading, error, diagnostics, purchaseMonthly, refresh };
 };
