@@ -5,13 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 // RevenueCat public SDK key (safe to ship in the client bundle).
 // Paste the iOS key from RevenueCat → Project Settings → API keys (starts with "appl_").
-export const REVENUECAT_IOS_KEY = "appl_REPLACE_ME";
+export const REVENUECAT_IOS_KEY = "appl_GscuTNtKMssRYXJfBsAxtgcXquv";
 
 // Entitlement identifier configured in RevenueCat (Project → Entitlements).
 export const PREMIUM_ENTITLEMENT = "premium";
 
 // Product identifier as defined in App Store Connect.
-export const PREMIUM_PRODUCT_ID = "smoxit_pro";
+export const PREMIUM_PRODUCT_ID = "app.smoxit.ios.pro.monthly";
 
 let configured = false;
 
