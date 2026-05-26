@@ -68,7 +68,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string remote-notification" ios/App/App/Info.plist 2>/dev/null || true
 
-          # Push Notifications in Entitlements aktivieren
+          # Push Notifications + In-App Purchase in Entitlements aktivieren
           cat > ios/App/App/App.entitlements << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -128,65 +128,27 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/smoxit.mobileprovision
 
-      - name: Fix RevenueCat entitlements bug
-        run: |
-          cd ios/App
-
-          # Package Dependencies auflösen damit DerivedData befüllt wird
-          xcodebuild \
-            -resolvePackageDependencies \
-            -project App.xcodeproj \
-            -scheme App || true
-
-          # Build cache leeren
-          find ~/Library/Developer/Xcode/DerivedData -name "*.xcbuilddata" -delete 2>/dev/null || true
-
-          # Leere Entitlements-Datei im RevenueCat SPM checkout erstellen
-          # (Xcode 26 Bug: purchases-ios-spm sucht App.entitlements im falschen Pfad)
-          REVENUECAT_PATH=$(find ~/Library/Developer/Xcode/DerivedData -path "*/purchases-ios-spm/App/App.entitlements" 2>/dev/null | head -1)
-          if [ -n "$REVENUECAT_PATH" ]; then
-            echo "Found RevenueCat entitlements path: $REVENUECAT_PATH"
-            mkdir -p "$(dirname "$REVENUECAT_PATH")"
-            cat > "$REVENUECAT_PATH" << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict/>
-          </plist>
-          EOF
-            echo "Created placeholder entitlements file"
-          else
-            echo "RevenueCat entitlements path not found, pre-creating it"
-            # Pfad prophylaktisch anlegen falls noch nicht gecacht
-            DERIVED=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name "App-*" 2>/dev/null | head -1)
-            if [ -n "$DERIVED" ]; then
-              TARGET="$DERIVED/SourcePackages/checkouts/purchases-ios-spm/App/App.entitlements"
-              mkdir -p "$(dirname "$TARGET")"
-              cat > "$TARGET" << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict/>
-          </plist>
-          EOF
-              echo "Pre-created at: $TARGET"
-            fi
-          fi
-
       - name: Archive
         run: |
           cd ios/App
+
+          # xcconfig erstellen: setzt Code Signing NUR für den App-Target
+          # SPM Packages wie RevenueCat erben diese Werte NICHT
+          cat > smoxit-signing.xcconfig << EOF
+          CODE_SIGN_STYLE = Manual
+          CODE_SIGN_IDENTITY = Apple Distribution
+          DEVELOPMENT_TEAM = ${{ secrets.TEAM_ID }}
+          PROVISIONING_PROFILE_SPECIFIER = smoxit AppStore
+          CODE_SIGN_ENTITLEMENTS = App/App.entitlements
+          EOF
+
           xcodebuild \
             -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath ./smoxit.xcarchive \
-            DEVELOPMENT_TEAM=${{ secrets.TEAM_ID }} \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGN_ENTITLEMENTS=App/App.entitlements \
-            PROVISIONING_PROFILE_SPECIFIER="smoxit AppStore" \
+            -xcconfig smoxit-signing.xcconfig \
             archive
 
       - name: Export IPA
