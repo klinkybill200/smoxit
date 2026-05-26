@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
+import { Purchases } from "@revenuecat/purchases-capacitor";
 
 const PREMIUM_ENTITLEMENT = "pro";
 const MONTHLY_PACKAGE_ID = "$rc_monthly";
