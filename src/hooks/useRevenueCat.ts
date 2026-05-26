@@ -7,10 +7,7 @@ import { Purchases } from "@revenuecat/purchases-capacitor";
 const PREMIUM_ENTITLEMENT = "pro";
 const MONTHLY_PACKAGE_ID = "$rc_monthly";
 
-const loadPurchases = async () => {
-  const mod = await import("@revenuecat/purchases-capacitor");
-  return mod.Purchases;
-};
+const loadPurchases = async () => Purchases;
 
 const debug = (msg: string, extra?: unknown) => {
   // eslint-disable-next-line no-console
