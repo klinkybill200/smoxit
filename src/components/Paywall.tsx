@@ -34,6 +34,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
   const sub = useSubscription();
   const currency = useCurrency();
   const [loading, setLoading] = useState(false);
+  const rc = useRevenueCat();
 
   const days = user ? getDuration(user.quitDate).days : 0;
   const saved = user ? moneySaved(user) : 0;
