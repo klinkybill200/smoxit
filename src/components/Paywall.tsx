@@ -137,10 +137,11 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                       onOpenChange(false);
                     }
                   } catch (e: any) {
-                    if (e?.userCancelled || e?.code === "1" || /cancel/i.test(e?.message ?? "")) {
-                      // user cancelled — silent
-                    } else {
-                      toast.error(e?.message ?? "Purchase failed");
+                    console.error("[Paywall] purchase error", e);
+                    const msg = e?.message ?? String(e);
+                    const userCancelled = e?.userCancelled === true || /user cancel|cancelled by user/i.test(msg);
+                    if (!userCancelled) {
+                      toast.error(msg || "Purchase failed");
                     }
                   } finally {
                     setLoading(false);
