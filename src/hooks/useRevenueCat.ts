@@ -136,5 +136,5 @@ export const useRevenueCat = () => {
     }
   }, []);
 
-  return { offerings, isProMember, isLoading, error, purchaseMonthly, refresh };
+  return { offerings, isProMember, isLoading, error, diagnostics, purchaseMonthly, refresh };
 };
