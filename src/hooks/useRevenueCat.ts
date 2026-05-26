@@ -51,10 +51,21 @@ export const useRevenueCat = () => {
     // Add 1 second delay to ensure native bridge is fully ready
     await new Promise((r) => setTimeout(r, 1000));
 
-    try{
-      setDiagnostics((d) => ({ ...d, lastStep: "loading plugin" }));
-      const Purchases = await loadPurchases();
-      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "waiting for configure" }));
+    setDiagnostics((d) => ({ ...d, lastStep: "loading plugin" }));
+    let Purchases: any;
+    try {
+      Purchases = await loadPurchases();
+      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "plugin loaded ok" }));
+    } catch (importErr: any) {
+      const msg = importErr?.message ?? String(importErr);
+      setDiagnostics((d) => ({ ...d, lastStep: `import error: ${msg}` }));
+      toast.error(`Plugin import failed: ${msg}`);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setDiagnostics((d) => ({ ...d, lastStep: "waiting for configure" }));
       // Wait for RevenueCat to be configured (max 5 seconds)
       let retries = 0;
       while (retries < 10) {
