@@ -37,7 +37,21 @@ export const useRevenueCat = () => {
       setIsLoading(false);
       return;
     }
-    try {
+
+    // Wait for Capacitor to be ready
+    await new Promise<void>((resolve) => {
+      if ((window as any).Capacitor?.isNativePlatform()) {
+        resolve();
+      } else {
+        document.addEventListener("deviceready", () => resolve(), { once: true });
+        setTimeout(resolve, 3000); // fallback
+      }
+    });
+
+    // Add 1 second delay to ensure native bridge is fully ready
+    await new Promise((r) => setTimeout(r, 1000));
+
+    try{
       setDiagnostics((d) => ({ ...d, lastStep: "loading plugin" }));
       const Purchases = await loadPurchases();
       setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "waiting for configure" }));
