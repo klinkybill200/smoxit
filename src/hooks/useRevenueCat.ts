@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
 
-const PREMIUM_ENTITLEMENT = "premium";
+const PREMIUM_ENTITLEMENT = "pro";
 const MONTHLY_PACKAGE_ID = "$rc_monthly";
 
 const loadPurchases = async () => {
