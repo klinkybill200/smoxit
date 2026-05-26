@@ -36,8 +36,6 @@ jobs:
           npx cap add ios
           npx cap sync ios
 
-          # Capacitor PushNotifications needs the native APNs callbacks to be
-          # forwarded into the plugin, otherwise JS never receives a token.
           python3 <<'PY'
           from pathlib import Path
           path = Path('ios/App/App/AppDelegate.swift')
@@ -64,11 +62,11 @@ jobs:
           # Build Nummer setzen
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/App/App/Info.plist
 
-          # Push Notifications Capability hinzufügen
+          # Push Notifications Capability
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string remote-notification" ios/App/App/Info.plist 2>/dev/null || true
 
-          # Push Notifications + In-App Purchase in Entitlements aktivieren
+          # Entitlements
           cat > ios/App/App/App.entitlements << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -80,7 +78,7 @@ jobs:
           </plist>
           EOF
 
-          # App Icon einbinden
+          # App Icon
           mkdir -p ios/App/App/Assets.xcassets/AppIcon.appiconset
           cp assets/AppIcon.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png
           cat > ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json << 'EOF'
@@ -128,12 +126,44 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/smoxit.mobileprovision
 
+      - name: Resolve packages & fix RevenueCat SPM bug
+        run: |
+          cd ios/App
+
+          # Packages auflösen damit DerivedData/SourcePackages befüllt wird
+          xcodebuild \
+            -resolvePackageDependencies \
+            -project App.xcodeproj \
+            -scheme App || true
+
+          # Leere Entitlements-Datei im RevenueCat SPM Checkout anlegen
+          # Xcode 26 Bug: RevenueCat_RevenueCat erbt CODE_SIGN_ENTITLEMENTS und
+          # sucht die Datei im SPM Checkout statt im App-Verzeichnis
+          DERIVED=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name "App-*" 2>/dev/null | head -1)
+          if [ -n "$DERIVED" ]; then
+            TARGET="$DERIVED/SourcePackages/checkouts/purchases-ios-spm/App/App.entitlements"
+            mkdir -p "$(dirname "$TARGET")"
+            cat > "$TARGET" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict/>
+          </plist>
+          EOF
+            echo "Created placeholder at: $TARGET"
+          else
+            echo "ERROR: Could not find DerivedData/App-* directory"
+            ls ~/Library/Developer/Xcode/DerivedData/ || true
+            exit 1
+          fi
+
       - name: Archive
         run: |
           cd ios/App
 
-          # xcconfig erstellen: setzt Code Signing NUR für den App-Target
-          # SPM Packages wie RevenueCat erben diese Werte NICHT
+          # xcconfig: Code Signing Settings für den Build
+          # PROVISIONING_PROFILE_SPECIFIER wird über xcconfig gesetzt damit
+          # SPM Packages es nicht erben (Xcode 26 Bug Workaround)
           cat > smoxit-signing.xcconfig << EOF
           CODE_SIGN_STYLE = Manual
           CODE_SIGN_IDENTITY = Apple Distribution
