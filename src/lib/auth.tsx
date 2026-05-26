@@ -24,12 +24,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       if (sess?.user && event === "SIGNED_IN") {
         setTimeout(() => { void applyPendingReferral(sess.user.id); }, 0);
+        setTimeout(() => { void configureIAP(sess.user.id); }, 0);
+      }
+      if (event === "SIGNED_OUT") {
+        setTimeout(() => { void logoutIAP(); }, 0);
       }
     });
     // 2. Then check existing session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
+      void configureIAP(data.session?.user?.id);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
