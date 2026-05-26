@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { applyPendingReferral } from "./subscription";
+import { configureIAP, logoutIAP } from "./iap";
 
 interface AuthCtx {
   session: Session | null;
