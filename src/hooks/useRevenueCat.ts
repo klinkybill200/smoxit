@@ -42,7 +42,23 @@ export const useRevenueCat = () => {
     try {
       setDiagnostics((d) => ({ ...d, lastStep: "loading plugin" }));
       const Purchases = await loadPurchases();
-      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "getOfferings" }));
+      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "waiting for configure" }));
+      // Wait for RevenueCat to be configured (max 5 seconds)
+      let retries = 0;
+      while (retries < 10) {
+        try {
+          await Purchases.getOfferings();
+          break;
+        } catch (e: any) {
+          if (e?.message?.includes("configured") || e?.message?.includes("setup")) {
+            await new Promise((r) => setTimeout(r, 500));
+            retries++;
+          } else {
+            throw e;
+          }
+        }
+      }
+      setDiagnostics((d) => ({ ...d, lastStep: "getOfferings" }));
       const offs = await Purchases.getOfferings();
       debug("offerings", offs);
       const current = offs.current ?? null;
