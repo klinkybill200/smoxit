@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const REVENUECAT_IOS_KEY = "appl_GscuTNtKMssRYXJfBsAxtgcXquv";
 
 // Entitlement identifier configured in RevenueCat (Project → Entitlements).
-export const PREMIUM_ENTITLEMENT = "premium";
+export const PREMIUM_ENTITLEMENT = "pro";
 
 // Product identifier as defined in App Store Connect.
 export const PREMIUM_PRODUCT_ID = "app.smoxit.ios.pro.monthly";
@@ -60,9 +60,8 @@ export const purchasePremium = async (): Promise<boolean> => {
   const offerings = await Purchases.getOfferings();
   const current = offerings.current;
   const pkg =
-    current?.availablePackages?.find(
-      (p) => p.product.identifier === PREMIUM_PRODUCT_ID,
-    ) ?? current?.availablePackages?.[0];
+    current?.availablePackages?.find((p) => p.product.identifier === PREMIUM_PRODUCT_ID) ??
+    current?.availablePackages?.[0];
 
   if (!pkg) throw new Error("No subscription package available");
 
@@ -85,7 +84,9 @@ export const restorePurchases = async (): Promise<boolean> => {
 /** Mirror the entitlement into our profiles table so the rest of the app sees it. */
 const syncEntitlementToProfile = async (entitled: boolean, customerInfo: any) => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
     const ent = customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT];
     const periodEnd = ent?.expirationDate ? new Date(ent.expirationDate).toISOString() : null;
