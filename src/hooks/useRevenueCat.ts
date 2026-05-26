@@ -107,7 +107,9 @@ export const useRevenueCat = () => {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const handler = () => void refresh();
+    window.addEventListener("revenuecat:ready", handler);
+    return () => window.removeEventListener("revenuecat:ready", handler);
   }, [refresh]);
 
   const purchaseMonthly = useCallback(async (): Promise<boolean> => {
