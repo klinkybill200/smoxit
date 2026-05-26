@@ -100,82 +100,8 @@ jobs:
 
       - name: Patch project.pbxproj — Manual signing for App target only
         run: |
-          # Xcode 26 Bug: xcodebuild CLI-Overrides werden auf ALLE Targets
-          # inkl. SPM Packages angewendet. Lösung: Signing direkt in der
-          # project.pbxproj setzen, NUR für den App-Target.
-          python3 << 'PY'
-          import re
-          from pathlib import Path
-
-          pbxproj = Path('ios/App/App.xcodeproj/project.pbxproj')
-          text = pbxproj.read_text()
-
-          # Ersetze CODE_SIGN_STYLE = Automatic durch Manual
-          # und füge Provisioning Profile + Entitlements hinzu —
-          # aber nur in Blöcken die app.smoxit.ios als Bundle ID haben
-          
-          def patch_app_target_blocks(text):
-              # Finde alle buildSettings Blöcke
-              # Ein Block gehört zum App-Target wenn er app.smoxit.ios enthält
-              result = []
-              i = 0
-              while i < len(text):
-                  # Suche nach "buildSettings = {"
-                  m = re.search(r'buildSettings = \{', text[i:])
-                  if not m:
-                      result.append(text[i:])
-                      break
-                  
-                  start = i + m.start()
-                  block_start = i + m.end()
-                  result.append(text[i:start + len('buildSettings = {')])
-                  
-                  # Finde das Ende des Blocks (matching })
-                  depth = 1
-                  j = block_start
-                  while j < len(text) and depth > 0:
-                      if text[j] == '{':
-                          depth += 1
-                      elif text[j] == '}':
-                          depth -= 1
-                      j += 1
-                  
-                  block_content = text[block_start:j-1]
-                  block_end = text[j-1:j]
-                  
-                  # Nur App-Target Blöcke patchen
-                  if 'app.smoxit.ios' in block_content:
-                      # Entferne alte Signing-Einstellungen falls vorhanden
-                      block_content = re.sub(r'\s*CODE_SIGN_IDENTITY[^;]*;', '', block_content)
-                      block_content = re.sub(r'\s*CODE_SIGN_STYLE[^;]*;', '', block_content)
-                      block_content = re.sub(r'\s*DEVELOPMENT_TEAM[^;]*;', '', block_content)
-                      block_content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER[^;]*;', '', block_content)
-                      block_content = re.sub(r'\s*CODE_SIGN_ENTITLEMENTS[^;]*;', '', block_content)
-                      
-                      # Füge neue Signing-Einstellungen ein
-                      signing = '''
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Distribution";
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = TEAM_PLACEHOLDER;
-				PROVISIONING_PROFILE_SPECIFIER = "smoxit AppStore";'''
-                      block_content = signing + block_content
-                      print(f"Patched App target block (contains app.smoxit.ios)")
-                  
-                  result.append(block_content)
-                  result.append(block_end)
-                  i = j
-              
-              return ''.join(result)
-          
-          patched = patch_app_target_blocks(text)
-          pbxproj.write_text(patched)
-          print("Done patching project.pbxproj")
-          PY
-
-          # TEAM_PLACEHOLDER durch echte Team ID ersetzen
-          sed -i '' "s/TEAM_PLACEHOLDER/${{ secrets.TEAM_ID }}/g" ios/App/App.xcodeproj/project.pbxproj
-          echo "Team ID injected"
+          # patch_pbxproj.py liegt im Repo-Root (scripts/patch_pbxproj.py)
+          python3 scripts/patch_pbxproj.py ${{ secrets.TEAM_ID }}
 
       - name: Import Certificate
         env:
@@ -236,8 +162,7 @@ jobs:
       - name: Archive
         run: |
           cd ios/App
-
-          # Kein Signing-Override mehr auf CLI — alles in project.pbxproj
+          # Kein Signing-Override auf CLI — alles in project.pbxproj gesetzt
           xcodebuild \
             -project App.xcodeproj \
             -scheme App \
