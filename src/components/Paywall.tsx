@@ -132,19 +132,14 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const ok = await purchasePremium();
+                    const ok = await rc.purchaseMonthly();
                     await sub.refresh();
                     if (ok) {
                       toast.success("Welcome to Smoxit Premium! 🎉");
                       onOpenChange(false);
                     }
-                  } catch (e: any) {
-                    console.error("[Paywall] purchase error", e);
-                    const msg = e?.message ?? String(e);
-                    const userCancelled = e?.userCancelled === true || /user cancel|cancelled by user/i.test(msg);
-                    if (!userCancelled) {
-                      toast.error(msg || "Purchase failed");
-                    }
+                  } catch (e) {
+                    // error toast already shown by hook
                   } finally {
                     setLoading(false);
                   }
