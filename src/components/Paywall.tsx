@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isNative } from "@/lib/platform";
 import { purchasePremium, restorePurchases } from "@/lib/iap";
+import { useRevenueCat } from "@/hooks/useRevenueCat";
 
 interface PaywallProps {
   open: boolean;
@@ -33,6 +34,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
   const sub = useSubscription();
   const currency = useCurrency();
   const [loading, setLoading] = useState(false);
+  const rc = useRevenueCat();
 
   const days = user ? getDuration(user.quitDate).days : 0;
   const saved = user ? moneySaved(user) : 0;
@@ -130,19 +132,14 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    const ok = await purchasePremium();
+                    const ok = await rc.purchaseMonthly();
                     await sub.refresh();
                     if (ok) {
                       toast.success("Welcome to Smoxit Premium! 🎉");
                       onOpenChange(false);
                     }
-                  } catch (e: any) {
-                    console.error("[Paywall] purchase error", e);
-                    const msg = e?.message ?? String(e);
-                    const userCancelled = e?.userCancelled === true || /user cancel|cancelled by user/i.test(msg);
-                    if (!userCancelled) {
-                      toast.error(msg || "Purchase failed");
-                    }
+                  } catch (e) {
+                    // error toast already shown by hook
                   } finally {
                     setLoading(false);
                   }
