@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isNative } from "@/lib/platform";
 import { purchasePremium, restorePurchases } from "@/lib/iap";
+import { useRevenueCat } from "@/hooks/useRevenueCat";
 
 interface PaywallProps {
   open: boolean;
