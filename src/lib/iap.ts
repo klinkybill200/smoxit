@@ -1,5 +1,6 @@
 // Apple In-App Purchase integration via RevenueCat.
 // Web is a no-op — web users continue to use Stripe Checkout.
+export let configureStatus = "not called";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
 

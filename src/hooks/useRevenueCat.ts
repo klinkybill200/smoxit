@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { configureStatus } from "@/lib/iap";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,13 +20,14 @@ export const useRevenueCat = () => {
   const [diagnostics, setDiagnostics] = useState<{
     native: boolean;
     pluginLoaded: boolean;
+    configureStatus?: string;
     appUserId?: string;
     offeringId?: string;
     packageIds: string[];
     productIds: string[];
     customerInfoFetched: boolean;
     lastStep?: string;
-  }>({ native: false, pluginLoaded: false, packageIds: [], productIds: [], customerInfoFetched: false });
+  }>({ native: false, pluginLoaded: false, configureStatus, packageIds: [], productIds: [], customerInfoFetched: false });
 
   const refresh = useCallback(async () => {
     const native = isNative();
