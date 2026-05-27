@@ -22,6 +22,7 @@ const getPurchases = async () => {
 
 /** Configure RevenueCat once per app session and link to the Supabase user id. */
 export const configureIAP = async (userId: string | null | undefined) => {
+  console.log("[IAP] configureIAP called, isNative:", isNative(), "userId:", userId);
   if (!isNative()) return;
   try {
     const Purchases = await getPurchases();
@@ -31,6 +32,8 @@ export const configureIAP = async (userId: string | null | undefined) => {
         appUserID: userId ?? undefined,
       });
       configured = true;
+      console.log("[IAP] RevenueCat configured successfully");
+      window.dispatchEvent(new CustomEvent('revenuecat:configured'));
     } else if (userId) {
       await Purchases.logIn({ appUserID: userId });
     }
