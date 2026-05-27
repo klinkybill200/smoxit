@@ -11,7 +11,7 @@ import { useCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isNative } from "@/lib/platform";
-import { purchasePremium, restorePurchases } from "@/lib/iap";
+import { purchasePremium, restorePurchases, configureStatus } from "@/lib/iap";
 import { useRevenueCat } from "@/hooks/useRevenueCat";
 
 interface PaywallProps {
@@ -206,6 +206,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
               <div>products: {rc.diagnostics.productIds.join(", ") || "(none)"}</div>
               <div>customerInfo: {String(rc.diagnostics.customerInfoFetched)}</div>
               <div>appUserId: {rc.diagnostics.appUserId ?? "—"}</div>
+              <div>configureStatus: {configureStatus}</div>
               <div>pro: {String(rc.isProMember)}</div>
               {rc.error && <div className="text-destructive break-words">err: {rc.error}</div>}
             </div>
