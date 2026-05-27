@@ -2,12 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
-import { Purchases } from "@revenuecat/purchases-capacitor";
 
 const PREMIUM_ENTITLEMENT = "pro";
 const MONTHLY_PACKAGE_ID = "$rc_monthly";
-
-const loadPurchases = async () => Purchases;
 
 const debug = (msg: string, extra?: unknown) => {
   // eslint-disable-next-line no-console
@@ -51,16 +48,16 @@ export const useRevenueCat = () => {
     // Add 1 second delay to ensure native bridge is fully ready
     await new Promise((r) => setTimeout(r, 1000));
 
-    setDiagnostics((d) => ({ ...d, lastStep: "loading plugin" }));
+    setDiagnostics((d) => ({ ...d, lastStep: "before import" }));
+    await new Promise((r) => setTimeout(r, 100));
+    setDiagnostics((d) => ({ ...d, lastStep: "after timeout" }));
     let Purchases: any;
     try {
-      Purchases = await loadPurchases();
-      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "plugin loaded ok" }));
-    } catch (importErr: any) {
-      const msg = importErr?.message ?? String(importErr);
-      setDiagnostics((d) => ({ ...d, lastStep: `import error: ${msg}` }));
-      toast.error(`Plugin import failed: ${msg}`);
-      setIsLoading(false);
+      const mod = await import("@revenuecat/purchases-capacitor");
+      Purchases = mod.Purchases;
+      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "import ok" }));
+    } catch (e: any) {
+      setDiagnostics((d) => ({ ...d, lastStep: `import failed: ${e?.message}` }));
       return;
     }
 
@@ -128,7 +125,8 @@ export const useRevenueCat = () => {
       return false;
     }
     try {
-      const Purchases = await loadPurchases();
+      const mod = await import("@revenuecat/purchases-capacitor");
+      const Purchases = mod.Purchases;
       const offs = await Purchases.getOfferings();
       const current = offs.current;
       if (!current) {
