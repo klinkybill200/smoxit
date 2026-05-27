@@ -115,8 +115,13 @@ export const useRevenueCat = () => {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => void refresh(), 2000);
-    return () => clearTimeout(timer);
+    const handler = () => void refresh();
+    window.addEventListener('revenuecat:configured', handler);
+    const timer = setTimeout(() => void refresh(), 5000); // fallback
+    return () => {
+      window.removeEventListener('revenuecat:configured', handler);
+      clearTimeout(timer);
+    };
   }, [refresh]);
 
   const purchaseMonthly = useCallback(async (): Promise<boolean> => {
