@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { configureStatus } from "@/lib/iap";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,17 +20,18 @@ export const useRevenueCat = () => {
   const [diagnostics, setDiagnostics] = useState<{
     native: boolean;
     pluginLoaded: boolean;
+    configureStatus?: string;
     appUserId?: string;
     offeringId?: string;
     packageIds: string[];
     productIds: string[];
     customerInfoFetched: boolean;
     lastStep?: string;
-  }>({ native: false, pluginLoaded: false, packageIds: [], productIds: [], customerInfoFetched: false });
+  }>({ native: false, pluginLoaded: false, configureStatus, packageIds: [], productIds: [], customerInfoFetched: false });
 
   const refresh = useCallback(async () => {
     const native = isNative();
-    setDiagnostics((d) => ({ ...d, native, lastStep: "start" }));
+    setDiagnostics((d) => ({ ...d, native, configureStatus, lastStep: "start" }));
     if (!native) {
       setIsLoading(false);
       return;
@@ -48,21 +50,21 @@ export const useRevenueCat = () => {
     // Add 1 second delay to ensure native bridge is fully ready
     await new Promise((r) => setTimeout(r, 1000));
 
-    setDiagnostics((d) => ({ ...d, lastStep: "before import" }));
+    setDiagnostics((d) => ({ ...d, configureStatus, lastStep: "before import" }));
     await new Promise((r) => setTimeout(r, 100));
-    setDiagnostics((d) => ({ ...d, lastStep: "after timeout" }));
+    setDiagnostics((d) => ({ ...d, configureStatus, lastStep: "after timeout" }));
     let Purchases: any;
     try {
       const mod = await import("@revenuecat/purchases-capacitor");
       Purchases = mod.Purchases;
-      setDiagnostics((d) => ({ ...d, pluginLoaded: true, lastStep: "import ok" }));
+      setDiagnostics((d) => ({ ...d, pluginLoaded: true, configureStatus, lastStep: "import ok" }));
     } catch (e: any) {
-      setDiagnostics((d) => ({ ...d, lastStep: `import failed: ${e?.message}` }));
+      setDiagnostics((d) => ({ ...d, configureStatus, lastStep: `import failed: ${e?.message}` }));
       return;
     }
 
     try {
-      setDiagnostics((d) => ({ ...d, lastStep: "waiting for configure" }));
+      setDiagnostics((d) => ({ ...d, configureStatus, lastStep: "waiting for configure" }));
       let offs: any = null;
       let retries = 0;
       while (retries < 10) {
@@ -79,12 +81,13 @@ export const useRevenueCat = () => {
         }
       }
       if (!offs) throw new Error("RevenueCat not configured after 5 seconds");
-      setDiagnostics((d) => ({ ...d, lastStep: "getOfferings" }));
+      setDiagnostics((d) => ({ ...d, configureStatus, lastStep: "getOfferings" }));
       debug("offerings", offs);
       const current = offs.current ?? null;
       setOfferings(current);
       setDiagnostics((d) => ({
         ...d,
+        configureStatus,
         offeringId: current?.identifier,
         packageIds: current?.availablePackages?.map((p: any) => p.identifier) ?? [],
         productIds: current?.availablePackages?.map((p: any) => p.product?.identifier) ?? [],
@@ -99,6 +102,7 @@ export const useRevenueCat = () => {
       setIsProMember(!!info.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT]);
       setDiagnostics((d) => ({
         ...d,
+        configureStatus,
         customerInfoFetched: true,
         appUserId: (info.customerInfo as any)?.originalAppUserId,
         lastStep: "done",
@@ -107,7 +111,7 @@ export const useRevenueCat = () => {
       const msg = e?.message ?? String(e);
       debug("init error", e);
       setError(msg);
-      setDiagnostics((d) => ({ ...d, lastStep: `error: ${msg}` }));
+      setDiagnostics((d) => ({ ...d, configureStatus, lastStep: `error: ${msg}` }));
       toast.error(`RevenueCat: ${msg}`);
     } finally {
       setIsLoading(false);
