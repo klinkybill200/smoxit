@@ -67,7 +67,7 @@ export const useRevenueCat = () => {
       setDiagnostics((d) => ({ ...d, configureStatus, lastStep: "waiting for configure" }));
       let offs: any = null;
       let retries = 0;
-      while (retries < 10) {
+      while (retries < 30) {
         try {
           offs = await Purchases.getOfferings();
           break;
@@ -80,7 +80,7 @@ export const useRevenueCat = () => {
           }
         }
       }
-      if (!offs) throw new Error("RevenueCat not configured after 5 seconds");
+      if (!offs) throw new Error("RevenueCat not configured after 15 seconds");
       setDiagnostics((d) => ({ ...d, configureStatus, lastStep: "getOfferings" }));
       debug("offerings", offs);
       const current = offs.current ?? null;
