@@ -17,8 +17,6 @@ export const PREMIUM_PRODUCT_ID = "app.smoxit.ios.pro.monthly";
 
 let configured = false;
 
-const getPurchases = async () => PurchasesPlugin;
-
 /** Configure RevenueCat once per app session and link to the Supabase user id. */
 export const configureIAP = async (userId: string | null | undefined) => {
   configureStatus = "called, isNative: " + String(isNative());
@@ -27,10 +25,8 @@ export const configureIAP = async (userId: string | null | undefined) => {
     return;
   }
   try {
-    configureStatus = "getting purchases module";
-    const Purchases = await getPurchases();
-    configureStatus = "calling configure";
-    await Purchases.configure({
+    configureStatus = "calling configure directly";
+    await PurchasesPlugin.configure({
       apiKey: REVENUECAT_IOS_KEY,
       appUserID: userId ?? undefined,
     });
@@ -46,8 +42,7 @@ export const configureIAP = async (userId: string | null | undefined) => {
 export const logoutIAP = async () => {
   if (!isNative() || !configured) return;
   try {
-    const Purchases = await getPurchases();
-    await Purchases.logOut();
+    await PurchasesPlugin.logOut();
   } catch (e) {
     console.error("RevenueCat logout failed", e);
   }
@@ -59,17 +54,16 @@ export const logoutIAP = async () => {
  */
 export const purchasePremium = async (): Promise<boolean> => {
   if (!isNative()) throw new Error("IAP only available in the iOS app");
-  const Purchases = await getPurchases();
 
-  const offerings = await Purchases.getOfferings();
+  const offerings = await PurchasesPlugin.getOfferings();
   const current = offerings.current;
   const pkg =
-    current?.availablePackages?.find((p) => p.product.identifier === PREMIUM_PRODUCT_ID) ??
+    current?.availablePackages?.find((p: any) => p.product.identifier === PREMIUM_PRODUCT_ID) ??
     current?.availablePackages?.[0];
 
   if (!pkg) throw new Error("No subscription package available");
 
-  const result = await Purchases.purchasePackage({ aPackage: pkg });
+  const result = await PurchasesPlugin.purchasePackage({ aPackage: pkg });
   const entitled = !!result.customerInfo.entitlements.active?.[PREMIUM_ENTITLEMENT];
   if (entitled) await syncEntitlementToProfile(true, result.customerInfo);
   return entitled;
@@ -78,8 +72,7 @@ export const purchasePremium = async (): Promise<boolean> => {
 /** Restore previous purchases — required by Apple guidelines. */
 export const restorePurchases = async (): Promise<boolean> => {
   if (!isNative()) return false;
-  const Purchases = await getPurchases();
-  const { customerInfo } = await Purchases.restorePurchases();
+  const { customerInfo } = await PurchasesPlugin.restorePurchases();
   const entitled = !!customerInfo.entitlements.active?.[PREMIUM_ENTITLEMENT];
   await syncEntitlementToProfile(entitled, customerInfo);
   return entitled;
@@ -105,4 +98,3 @@ const syncEntitlementToProfile = async (entitled: boolean, customerInfo: any) =>
     console.error("syncEntitlementToProfile failed", e);
   }
 };
- 
