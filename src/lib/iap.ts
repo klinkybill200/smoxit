@@ -3,6 +3,7 @@
 export let configureStatus = "not called";
 import { isNative } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
+import { Purchases as PurchasesPlugin } from "@revenuecat/purchases-capacitor";
 
 // RevenueCat public SDK key (safe to ship in the client bundle).
 // Paste the iOS key from RevenueCat → Project Settings → API keys (starts with "appl_").
@@ -16,10 +17,7 @@ export const PREMIUM_PRODUCT_ID = "app.smoxit.ios.pro.monthly";
 
 let configured = false;
 
-const getPurchases = async () => {
-  const mod = await import("@revenuecat/purchases-capacitor");
-  return mod.Purchases;
-};
+const getPurchases = async () => PurchasesPlugin;
 
 /** Configure RevenueCat once per app session and link to the Supabase user id. */
 export const configureIAP = async (userId: string | null | undefined) => {
