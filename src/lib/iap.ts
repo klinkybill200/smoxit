@@ -23,22 +23,24 @@ const getPurchases = async () => {
 
 /** Configure RevenueCat once per app session and link to the Supabase user id. */
 export const configureIAP = async (userId: string | null | undefined) => {
-  configureStatus = "called";
+  configureStatus = "called, isNative: " + String(isNative());
   if (!isNative()) {
-    configureStatus = "not native";
+    configureStatus = "skipped: not native";
     return;
   }
   try {
+    configureStatus = "getting purchases module";
     const Purchases = await getPurchases();
+    configureStatus = "calling configure";
     await Purchases.configure({
       apiKey: REVENUECAT_IOS_KEY,
       appUserID: userId ?? undefined,
     });
-    configured = true;
     configureStatus = "configured ok";
+    configured = true;
     window.dispatchEvent(new CustomEvent('revenuecat:configured'));
-  } catch (e) {
-    configureStatus = "error: " + String(e);
+  } catch (e: any) {
+    configureStatus = "error: " + String(e?.message ?? e);
     console.error("RevenueCat configure failed", e);
   }
 };

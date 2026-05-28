@@ -206,7 +206,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
               <div>products: {rc.diagnostics.productIds.join(", ") || "(none)"}</div>
               <div>customerInfo: {String(rc.diagnostics.customerInfoFetched)}</div>
               <div>appUserId: {rc.diagnostics.appUserId ?? "—"}</div>
-              <div>configureStatus: {configureStatus}</div>
+              <div>cfg: {configureStatus}</div>
               <div>pro: {String(rc.isProMember)}</div>
               {rc.error && <div className="text-destructive break-words">err: {rc.error}</div>}
             </div>
