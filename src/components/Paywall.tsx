@@ -187,30 +187,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
             </>
           )}
 
-          {isNative() && (
-            <div className="rounded-xl border border-border bg-muted/40 p-3 text-[10px] font-mono text-muted-foreground space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-bold uppercase tracking-wider">RC Debug</span>
-                <button
-                  onClick={() => rc.refresh()}
-                  className="rounded bg-foreground/10 px-2 py-0.5 text-[10px] hover:bg-foreground/20"
-                >
-                  Refresh
-                </button>
-              </div>
-              <div>native: {String(rc.diagnostics.native)}</div>
-              <div>plugin loaded: {String(rc.diagnostics.pluginLoaded)}</div>
-              <div>last step: {rc.diagnostics.lastStep ?? "—"}</div>
-              <div>offering: {rc.diagnostics.offeringId ?? "(none)"}</div>
-              <div>packages: {rc.diagnostics.packageIds.join(", ") || "(none)"}</div>
-              <div>products: {rc.diagnostics.productIds.join(", ") || "(none)"}</div>
-              <div>customerInfo: {String(rc.diagnostics.customerInfoFetched)}</div>
-              <div>appUserId: {rc.diagnostics.appUserId ?? "—"}</div>
-              <div>cfg: {configureStatus}</div>
-              <div>pro: {String(rc.isProMember)}</div>
-              {rc.error && <div className="text-destructive break-words">err: {rc.error}</div>}
-            </div>
-          )}
+          {/* Debug panel disabled for App Store submission */}
 
           {!dismissible && (
             <button
