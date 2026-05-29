@@ -132,7 +132,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
             </div>
           )}
 
-          {isNative() ? (
+          {isIosApp ? (
             <>
               <Button
                 onClick={async () => {
