@@ -28,6 +28,12 @@ const FEATURES = [
   "Health app integration",
 ];
 
+const isIosApp =
+  isNative() ||
+  (typeof navigator !== "undefined" &&
+    /iPhone|iPad|iPod/.test(navigator.userAgent) &&
+    !(window as any).MSStream);
+
 export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps) => {
   const { user } = useUser();
   const { signOut } = useAuth();
