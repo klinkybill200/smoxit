@@ -98,7 +98,7 @@ export const Paywall = ({ open, onOpenChange, dismissible = true }: PaywallProps
         </div>
 
         <div className="px-6 py-6 space-y-5">
-          {isNative() ? (
+          {isIosApp ? (
             <div className="rounded-2xl border-2 border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]">
               <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Smoxit Premium</p>
               <div className="mt-2 flex items-baseline gap-2">
